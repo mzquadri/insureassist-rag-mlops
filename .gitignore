@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+finetune/adapter/
+k8s/secret.yaml
+eval/ragas_report.csv
+mlruns/
+*.gguf
+.DS_Store

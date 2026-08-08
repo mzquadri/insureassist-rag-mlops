@@ -1,0 +1,9 @@
+# Core RAG app (Phase 1). Fine-tuning deps live in finetune/ (run on Colab);
+# evaluation deps live in eval/requirements.txt (install when you reach Phase 3).
+fastapi>=0.111
+uvicorn[standard]>=0.30
+qdrant-client>=1.9
+sentence-transformers>=3.0
+python-dotenv>=1.0
+requests>=2.31
+pydantic>=2.7

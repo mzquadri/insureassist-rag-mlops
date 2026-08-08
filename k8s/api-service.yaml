@@ -1,0 +1,14 @@
+# Service exposes the API pods behind one stable address.
+# type: LoadBalancer -> on GKE this gives a PUBLIC IP so anyone can call your API.
+# (On minikube locally, use `minikube service insureassist-api` to open it.)
+apiVersion: v1
+kind: Service
+metadata:
+  name: insureassist-api
+spec:
+  type: LoadBalancer
+  selector:
+    app: insureassist-api
+  ports:
+    - port: 80          # public port
+      targetPort: 8000  # container port

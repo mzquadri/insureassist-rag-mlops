@@ -1,0 +1,35 @@
+# Phase 1: run Qdrant (the vector database) locally, FULLY ISOLATED from any other stack.
+#
+# This project is standalone and personal. To make sure it never clashes with another
+# Docker stack on your machine (e.g. a work stack that also runs Qdrant on 6333):
+#   - a dedicated compose project name ("insureassist") prefixes its network/volume
+#   - a unique container name
+#   - host ports 6533/6534 (NOT the default 6333/6334)
+#
+# Start it:   docker compose up -d qdrant
+# Stop it:    docker compose down          (add -v to also delete its data volume)
+
+name: insureassist
+
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: insureassist-qdrant
+    ports:
+      - "6533:6333"   # host 6533 -> container 6333 (REST). Avoids clashing with :6333
+      - "6534:6334"   # host 6534 -> container 6334 (gRPC)
+    volumes:
+      - qdrant_storage:/qdrant/storage
+
+  # Uncomment once you build the app image in Phase 4:
+  # api:
+  #   build: .
+  #   container_name: insureassist-api
+  #   ports:
+  #     - "8000:8000"
+  #   env_file: .env
+  #   depends_on:
+  #     - qdrant
+
+volumes:
+  qdrant_storage:      # becomes "insureassist_qdrant_storage" — isolated from other stacks
