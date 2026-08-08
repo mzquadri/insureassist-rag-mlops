@@ -8,3 +8,7 @@ eval/ragas_report.csv
 mlruns/
 *.gguf
 .DS_Store
+
+# stray files sometimes created by tooling
+pip
+python
