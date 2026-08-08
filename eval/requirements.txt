@@ -1,8 +1,0 @@
-# Install when you reach Phase 3:  pip install -r eval/requirements.txt
-ragas>=0.1.21
-datasets>=2.20
-pandas>=2.2
-langsmith>=0.1
-# RAGAS uses an LLM judge. Easiest: set OPENAI_API_KEY. (A local-judge option is
-# possible but slower to set up — start with a small OpenAI budget for the judge.)
-openai>=1.40

@@ -1,0 +1,11 @@
+question,answer,faithfulness,answer_relevancy,context_precision,answer_correctness
+Does home insurance cover water damage from a burst pipe?,"Yes, according to the context, sudden and accidental water damage caused by a burst pipe is covered under the home insurance policy. The cost of tracing and accessing the source of the leak is also included in the coverage, and the policyholder pays an excess of EUR 250 (or EUR 500 for claims related to escape of water).",0.8,0.8,0.8,0.8
+What is the excess for an escape of water claim on the home policy?,EUR 500.,0.5,0.5,0.8,0.5
+"Is jewellery covered, and up to how much per item?","Yes, jewelry is covered under the household contents. The coverage is up to a single-item limit of EUR 2,000, unless specified separately on the schedule.",0.8,0.8,0.8,0.5
+How long do I have to report a home insurance claim?,You must report a home insurance claim within 30 days of the incident.,0.5,0.8,0.8,0.5
+Does comprehensive auto cover give me a courtesy car?,"Yes, according to the context, Comprehensive cover includes a courtesy car for up to 14 days while the insured vehicle is being repaired by an approved garage.",0.8,0.8,0.8,0.9
+What extra excess applies to drivers under 25 on the auto policy?,EUR 300.,0.5,0.0,0.8,0.8
+What is the maximum no-claims discount on the auto policy?,The maximum no-claims discount on the auto policy is 65%.,0.5,0.5,0.8,0.5
+Is mechanical breakdown covered by the auto policy?,"Don't know. The context only discusses types of cover, comprehensive cover, third-party liability, excess, and no-claims discount for auto insurance, but does not mention mechanical breakdown.",0.0,0.0,0.8,0.5
+Is damage covered if the home is left unoccupied for two months?,"No, the policy does not cover damage caused by leaving the home unoccupied for more than 60 consecutive days.",0.5,0.5,0.8,0.5
+What is required before a car theft claim can be processed?,A police report reference number.,0.5,0.5,0.8,0.5
