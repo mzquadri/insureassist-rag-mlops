@@ -15,21 +15,22 @@ from src.config import cfg
 
 # Load once at import time (heavy objects)
 _embedder = SentenceTransformer(cfg.EMBEDDING_MODEL)
-_client = QdrantClient(url=cfg.QDRANT_URL)
+_client = QdrantClient(url=cfg.QDRANT_URL, check_compatibility=False)
 
 
 def retrieve(question: str, top_k: int | None = None) -> list[dict]:
     """Return the top-k most relevant chunks for a question."""
     top_k = top_k or cfg.TOP_K
     qvec = _embedder.encode(question, normalize_embeddings=True).tolist()
-    hits = _client.search(
+    result = _client.query_points(
         collection_name=cfg.QDRANT_COLLECTION,
-        query_vector=qvec,
+        query=qvec,
         limit=top_k,
+        with_payload=True,
     )
     return [
         {"text": h.payload["text"], "source": h.payload["source"], "score": h.score}
-        for h in hits
+        for h in result.points
     ]
 
 
