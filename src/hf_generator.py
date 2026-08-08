@@ -16,8 +16,8 @@ from src.config import cfg
 def _load():
     """Load base model + LoRA adapter once and cache it."""
     import torch
-    from transformers import AutoModelForCausalLM, AutoTokenizer
     from peft import PeftModel
+    from transformers import AutoModelForCausalLM, AutoTokenizer
 
     tokenizer = AutoTokenizer.from_pretrained(cfg.HF_BASE_MODEL, trust_remote_code=True)
     base = AutoModelForCausalLM.from_pretrained(

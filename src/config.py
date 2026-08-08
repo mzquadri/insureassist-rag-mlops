@@ -1,5 +1,6 @@
 """Central configuration, loaded from environment variables (.env)."""
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv()  # reads the .env file if present

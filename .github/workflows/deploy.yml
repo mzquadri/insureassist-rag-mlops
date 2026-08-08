@@ -13,9 +13,10 @@
 name: build-and-deploy
 
 on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:        # lets you run it manually from the Actions tab
+  # MANUAL ONLY. This deploy needs GCP secrets (added in Phase 5/6), so it must NOT run
+  # on every push (that would fail). Run it yourself from the GitHub "Actions" tab once
+  # you've added the secrets: GCP_PROJECT, GCP_SA_KEY, GKE_CLUSTER, GKE_LOCATION.
+  workflow_dispatch:
 
 env:
   REGION: europe-west3
@@ -28,6 +29,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Verify GCP secrets are configured
+        run: |
+          if [ -z "${{ secrets.GCP_PROJECT }}" ] || [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
+            echo "::error::GCP secrets are not set yet. Add GCP_PROJECT, GCP_SA_KEY, GKE_CLUSTER, GKE_LOCATION under Settings > Secrets and variables > Actions, then re-run.";
+            exit 1;
+          fi
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
