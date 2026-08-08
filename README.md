@@ -53,6 +53,28 @@ LLM fine-tuning (LoRA/PEFT), RAG evaluation, and experiment tracking.**
 
 ---
 
+## Quickstart (Phase 1 — verified working, ~10 min)
+
+```bash
+python -m venv .venv && .venv\Scripts\Activate.ps1      # Windows PowerShell
+pip install -r requirements.txt
+copy .env.example .env
+docker compose up -d qdrant                             # starts Qdrant on port 6533
+ollama pull llama3.2:3b                                 # local LLM
+python -m src.ingest                                    # docs -> embeddings -> Qdrant
+uvicorn src.api:app --reload                            # API at http://localhost:8000/docs
+```
+
+Example (real output):
+
+```text
+Q: Does home insurance cover water damage from a burst pipe?
+A: Yes, home insurance covers sudden and accidental water damage caused by a burst pipe,
+   including the cost of tracing and accessing the source of the leak. Damage from gradual
+   leakage, lack of maintenance, or wear and tear is NOT covered.
+   sources: [home_insurance_policy.md (0.71), home_insurance_policy.md (0.70), ...]
+```
+
 ## Repo layout
 
 ```

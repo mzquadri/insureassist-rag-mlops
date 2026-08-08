@@ -43,12 +43,19 @@ def chunk_text(text: str, size: int, overlap: int) -> list[str]:
 def main():
     print(f"Loading embedding model: {cfg.EMBEDDING_MODEL} ...")
     embedder = SentenceTransformer(cfg.EMBEDDING_MODEL)
-    dim = embedder.get_sentence_embedding_dimension()
+    # Vector size of this embedding model (handles both old/new method names).
+    try:
+        dim = embedder.get_embedding_dimension()
+    except AttributeError:
+        dim = embedder.get_sentence_embedding_dimension()
 
-    client = QdrantClient(url=cfg.QDRANT_URL)
+    client = QdrantClient(url=cfg.QDRANT_URL, check_compatibility=False)
 
-    # (Re)create the collection with the right vector size + cosine similarity
-    client.recreate_collection(
+    # Start the collection fresh: delete if it exists, then create it with the
+    # right vector size + cosine similarity.
+    if client.collection_exists(cfg.QDRANT_COLLECTION):
+        client.delete_collection(cfg.QDRANT_COLLECTION)
+    client.create_collection(
         collection_name=cfg.QDRANT_COLLECTION,
         vectors_config=VectorParams(size=dim, distance=Distance.COSINE),
     )
