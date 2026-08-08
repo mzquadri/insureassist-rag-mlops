@@ -18,13 +18,13 @@ import json
 from datasets import Dataset
 from ragas import evaluate
 from ragas.metrics import (
-    faithfulness,
     answer_relevancy,
     context_precision,
     context_recall,
+    faithfulness,
 )
 
-from src.rag import retrieve, build_prompt, generate
+from src.rag import build_prompt, generate, retrieve
 
 
 def load_testset(path: str = "data/qa_testset.jsonl") -> list[dict]:

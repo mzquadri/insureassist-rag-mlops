@@ -1,0 +1,38 @@
+# CI = Continuous Integration. Runs on every push/PR and checks the code is healthy.
+# It's intentionally lightweight (no heavy ML installs) so it's fast and reliable — it
+# gives your repo a green checkmark and demonstrates CI without needing any cloud secrets.
+
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Syntax-check all Python files
+        # compileall verifies every .py parses correctly (no execution, no dependencies).
+        run: python -m compileall -q src eval
+
+      - name: Lint with ruff (style + obvious bugs)
+        run: |
+          pip install ruff
+          ruff check src eval --output-format=github
+
+      - name: Validate the Colab notebook is well-formed JSON
+        run: python -c "import json, glob; [json.load(open(f)) for f in glob.glob('finetune/*.ipynb')]; print('notebook OK')"
+
+      - name: Validate Kubernetes YAML parses
+        run: |
+          pip install pyyaml
+          python -c "import yaml, glob; [list(yaml.safe_load_all(open(f))) for f in glob.glob('k8s/*.yaml')]; print('k8s YAML OK')"
