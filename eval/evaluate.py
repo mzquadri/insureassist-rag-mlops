@@ -16,6 +16,7 @@ Run:
 """
 import csv
 import json
+import math
 import re
 import statistics
 
@@ -123,7 +124,7 @@ def main(limit: int | None = None):
     print("\n=== Average scores ===")
     averages = {}
     for m in metrics:
-        vals = [r[m] for r in per_row if not (r[m] != r[m])]  # drop NaN
+        vals = [r[m] for r in per_row if not math.isnan(r[m])]  # drop NaN
         avg = statistics.mean(vals) if vals else float("nan")
         averages[m] = avg
         print(f"  {m:<20} {avg:.3f}")
