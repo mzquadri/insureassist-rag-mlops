@@ -1,5 +1,9 @@
 # InsureAssist — Fine-Tuned, Cloud-Native RAG Assistant with Evaluation & MLOps
 
+![CI](https://github.com/mzquadri/insureassist-rag-mlops/actions/workflows/ci.yml/badge.svg)
+![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 An end-to-end **Retrieval-Augmented Generation (RAG)** assistant for insurance/policy
 question-answering, built to production standards. It extends common RAG work with the
 skills that AI/ML Engineer job postings ask for most: **cloud deployment, Kubernetes,
@@ -8,6 +12,18 @@ LLM fine-tuning (LoRA/PEFT), RAG evaluation, and experiment tracking.**
 > Domain note: the sample data here is generic insurance-policy Q&A so it maps directly
 > to the kind of document-intelligence work done in industry, but you can swap in any
 > corpus (legal, medical, HR) without changing the architecture.
+
+## Project status
+
+| Phase | Component | Status |
+|---|---|---|
+| 1 | RAG pipeline (FastAPI + Qdrant + BGE embeddings) | ✅ Working |
+| 2 | LoRA fine-tuning (Hugging Face PEFT) + MLflow tracking | ✅ Done |
+| 3 | Evaluation — LLM-as-judge (faithfulness, relevancy, precision, correctness) | ✅ Done |
+| 4 | Docker containerization | ✅ Verified (`/health`, `/ask`) |
+| 4 | Kubernetes manifests (Deployment, Service, ConfigMap, HPA) | ✅ Authored |
+| 5 | Cloud deploy — GKE + Cloud Storage + Artifact Registry | ⏳ Guide ready (`docs/gcp_deploy.md`) |
+| 6 | CI/CD — GitHub Actions | ✅ CI green · deploy pipeline ready |
 
 ---
 
