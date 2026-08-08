@@ -1,0 +1,10 @@
+{"question": "Does home insurance cover water damage from a burst pipe?", "ground_truth": "Yes. Sudden and accidental water damage from a burst pipe is covered, including the cost of tracing and accessing the leak. Gradual leakage or wear and tear is not covered."}
+{"question": "What is the excess for an escape of water claim on the home policy?", "ground_truth": "A higher excess of EUR 500 applies to escape of water claims, compared to the standard EUR 250 excess."}
+{"question": "Is jewellery covered, and up to how much per item?", "ground_truth": "High-value items like jewellery are covered up to a single-item limit of EUR 2,000 unless separately specified on the schedule."}
+{"question": "How long do I have to report a home insurance claim?", "ground_truth": "Home insurance claims must be reported within 30 days of the incident."}
+{"question": "Does comprehensive auto cover give me a courtesy car?", "ground_truth": "Yes, comprehensive cover includes a courtesy car for up to 14 days while the insured vehicle is repaired by an approved garage."}
+{"question": "What extra excess applies to drivers under 25 on the auto policy?", "ground_truth": "Drivers under 25 pay an additional young-driver excess of EUR 300 on top of the standard EUR 400 own-damage excess."}
+{"question": "What is the maximum no-claims discount on the auto policy?", "ground_truth": "The maximum no-claims discount is 65%, reached after five claim-free years."}
+{"question": "Is mechanical breakdown covered by the auto policy?", "ground_truth": "No, mechanical or electrical breakdown is excluded from the auto policy."}
+{"question": "Is damage covered if the home is left unoccupied for two months?", "ground_truth": "No. Damage is not covered if the home is unoccupied for more than 60 consecutive days."}
+{"question": "What is required before a car theft claim can be processed?", "ground_truth": "A police report reference number is required before a theft claim can be processed."}

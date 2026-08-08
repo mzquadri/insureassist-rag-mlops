@@ -1,0 +1,38 @@
+# The RAG API. Kubernetes keeps 'replicas' copies running and restarts crashed pods.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: insureassist-api
+spec:
+  replicas: 2                       # 2 copies for availability; HPA can scale this up
+  selector:
+    matchLabels:
+      app: insureassist-api
+  template:
+    metadata:
+      labels:
+        app: insureassist-api
+    spec:
+      containers:
+        - name: api
+          # In Phase 5 this becomes your Artifact Registry image, e.g.
+          # europe-west3-docker.pkg.dev/PROJECT/insureassist/api:latest
+          image: insureassist:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef: { name: insureassist-config }
+            - secretRef:    { name: insureassist-secrets }
+          # Probes tell Kubernetes if the pod is alive/ready (uses our /health endpoint).
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests: { cpu: "500m", memory: "1Gi" }
+            limits:   { cpu: "2",    memory: "4Gi" }
