@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 170" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#5D6D7E"/>
+    </marker>
+    <style>
+      .step  { fill:#EAF2F8; stroke:#1F3A5F; stroke-width:1.5; }
+      .h     { fill:#1F3A5F; font-size:13.5px; font-weight:600; }
+      .s     { fill:#5D6D7E; font-size:11px; }
+      .a     { stroke:#5D6D7E; stroke-width:1.6; fill:none; marker-end:url(#arrow2); }
+      .ttl   { fill:#1F3A5F; font-size:18px; font-weight:700; }
+    </style>
+  </defs>
+
+  <text x="500" y="30" text-anchor="middle" class="ttl">MLOps Lifecycle</text>
+
+  <!-- 5 steps -->
+  <rect class="step" x="20"  y="60" width="168" height="66" rx="10"/>
+  <text x="104" y="90"  text-anchor="middle" class="h">1 · Fine-tune</text>
+  <text x="104" y="108" text-anchor="middle" class="s">LoRA (PEFT) + MLflow</text>
+
+  <path class="a" d="M188,93 L212,93"/>
+  <rect class="step" x="212" y="60" width="168" height="66" rx="10"/>
+  <text x="296" y="90"  text-anchor="middle" class="h">2 · Evaluate</text>
+  <text x="296" y="108" text-anchor="middle" class="s">LLM-as-judge metrics</text>
+
+  <path class="a" d="M380,93 L404,93"/>
+  <rect class="step" x="404" y="60" width="168" height="66" rx="10"/>
+  <text x="488" y="90"  text-anchor="middle" class="h">3 · Containerize</text>
+  <text x="488" y="108" text-anchor="middle" class="s">Docker image</text>
+
+  <path class="a" d="M572,93 L596,93"/>
+  <rect class="step" x="596" y="60" width="168" height="66" rx="10"/>
+  <text x="680" y="90"  text-anchor="middle" class="h">4 · Deploy</text>
+  <text x="680" y="108" text-anchor="middle" class="s">Kubernetes / GKE</text>
+
+  <path class="a" d="M764,93 L788,93"/>
+  <rect class="step" x="788" y="60" width="192" height="66" rx="10"/>
+  <text x="884" y="90"  text-anchor="middle" class="h">5 · Automate</text>
+  <text x="884" y="108" text-anchor="middle" class="s">GitHub Actions CI/CD</text>
+</svg>

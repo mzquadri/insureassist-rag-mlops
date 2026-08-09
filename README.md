@@ -1,109 +1,127 @@
-# InsureAssist — Fine-Tuned, Cloud-Native RAG Assistant with Evaluation & MLOps
+# InsureAssist
 
 ![CI](https://github.com/mzquadri/insureassist-rag-mlops/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-An end-to-end **Retrieval-Augmented Generation (RAG)** assistant for insurance/policy
-question-answering, built to production standards. It extends common RAG work with the
-skills that AI/ML Engineer job postings ask for most: **cloud deployment, Kubernetes,
-LLM fine-tuning (LoRA/PEFT), RAG evaluation, and experiment tracking.**
+**A fine-tuned, cloud-native RAG assistant for insurance-policy questions — with the full
+MLOps loop around it: fine-tuning, evaluation, containerization, Kubernetes, and CI/CD.**
 
-> Domain note: the sample data here is generic insurance-policy Q&A so it maps directly
-> to the kind of document-intelligence work done in industry, but you can swap in any
-> corpus (legal, medical, HR) without changing the architecture.
+Ask a question in plain English (*"Does my home policy cover a burst pipe?"*) and the
+service retrieves the relevant policy clauses and answers with citations — grounded in the
+documents, not made up.
 
-## Project status
-
-| Phase | Component | Status |
-|---|---|---|
-| 1 | RAG pipeline (FastAPI + Qdrant + BGE embeddings) | ✅ Working |
-| 2 | LoRA fine-tuning (Hugging Face PEFT) + MLflow tracking | ✅ Done |
-| 3 | Evaluation — LLM-as-judge (faithfulness, relevancy, precision, correctness) | ✅ Done |
-| 4 | Docker containerization | ✅ Verified (`/health`, `/ask`) |
-| 4 | Kubernetes manifests (Deployment, Service, ConfigMap, HPA) | ✅ Authored |
-| 5 | Cloud deploy — GKE + Cloud Storage + Artifact Registry | ⏳ Guide ready (`docs/gcp_deploy.md`) |
-| 6 | CI/CD — GitHub Actions | ✅ CI green · deploy pipeline ready |
-
----
-
-## What this project demonstrates (maps 1:1 to CV gaps)
-
-| Gap it fills | Where in this project |
-|---|---|
-| **Cloud (GCP)** | GKE (Kubernetes), Cloud Storage (model + docs), Artifact Registry (images) |
-| **Kubernetes** | `k8s/` manifests: Deployment, Service, ConfigMap, Secret, HPA autoscaling |
-| **LLM fine-tuning (LoRA/PEFT)** | `finetune/` — Hugging Face PEFT + TRL SFT on a small open model |
-| **RAG evaluation (RAGAS / LangSmith)** | `eval/` — RAGAS metrics + LangSmith tracing |
-| **Experiment tracking (MLflow)** | fine-tuning runs, eval metrics, and the LoRA adapter registered in MLflow |
-| Reinforces | Hugging Face Transformers, Docker, FastAPI, Qdrant vector DB, CI/CD (GitHub Actions) |
+> The sample data is generic insurance-policy Q&A, but the architecture is domain-agnostic:
+> point it at legal, medical, or HR documents and it works the same way.
 
 ---
 
 ## Architecture
 
-```
-                    ┌─────────────────────────────────────────────┐
-                    │                 GKE (Kubernetes)             │
-  User ──HTTP──▶  FastAPI  ──retrieve──▶  Qdrant (vector DB)       │
-                    │  │                                           │
-                    │  └──generate──▶  Fine-tuned LLM (LoRA)       │
-                    └───────┬─────────────────────┬───────────────┘
-                            │                     │
-                     GCS bucket            MLflow (tracking +
-                 (docs + LoRA adapter)      model registry)
+![System architecture](docs/architecture.svg)
 
-  Offline: RAGAS evaluation + LangSmith tracing on a test question set
-  CI/CD:   GitHub Actions → build image → push to Artifact Registry → deploy to GKE
+At query time the flow is simple: embed the question, find the most similar policy chunks
+in **Qdrant**, hand those chunks to the **LLM**, and return a grounded answer with its
+sources. Documents are embedded and stored once, ahead of time.
+
+---
+
+## What's inside
+
+- **Retrieval-Augmented Generation** — FastAPI service, Qdrant vector search, BGE embeddings.
+- **A fine-tuned model** — a small open LLM (Phi-3-mini) adapted to the insurance domain
+  with **LoRA (Hugging Face PEFT)**, trained on a free GPU and tracked with **MLflow**.
+- **Real evaluation** — an **LLM-as-judge** harness that scores faithfulness, answer
+  relevancy, context precision, and correctness (the same metrics RAGAS popularized).
+- **Production packaging** — a **Docker** image and **Kubernetes** manifests (Deployment,
+  Service, ConfigMap, HPA autoscaling), ready for **Google Kubernetes Engine (GKE)**.
+- **Automation** — a **GitHub Actions** CI pipeline, plus a deploy workflow for the cloud.
+
+---
+
+## MLOps lifecycle
+
+![MLOps lifecycle](docs/mlops-pipeline.svg)
+
+---
+
+## Quickstart (runs locally in ~10 minutes)
+
+```bash
+python -m venv .venv && .venv\Scripts\Activate.ps1     # Windows PowerShell
+pip install -r requirements.txt
+copy .env.example .env
+
+docker compose up -d qdrant        # start the vector database (port 6533)
+ollama pull llama3.2:3b            # local LLM for generation
+python -m src.ingest              # documents -> embeddings -> Qdrant
+uvicorn src.api:app --reload      # API at http://localhost:8000/docs
+```
+
+Then open http://localhost:8000/docs and try the `/ask` endpoint:
+
+```text
+Q: Does home insurance cover water damage from a burst pipe?
+A: Yes — sudden and accidental water damage from a burst pipe is covered, including the
+   cost of tracing and accessing the leak. Gradual leakage or wear and tear is not covered.
+   sources: home_insurance_policy.md (0.87), home_insurance_policy.md (0.70), ...
+```
+
+Full, phase-by-phase instructions are in [`ROADMAP.md`](ROADMAP.md), and a plain-English
+walkthrough of every file is in [`docs/PROJECT_EXPLAINED.md`](docs/PROJECT_EXPLAINED.md).
+
+---
+
+## Project structure
+
+```
+insurance-rag-mlops/
+├── src/                    # RAG service
+│   ├── api.py              #   FastAPI app (/ask, /health)
+│   ├── rag.py              #   retrieve + generate
+│   ├── ingest.py           #   documents -> embeddings -> Qdrant
+│   ├── hf_generator.py     #   generation with the fine-tuned model
+│   └── config.py           #   settings from .env
+├── finetune/               # LoRA fine-tuning (Colab notebook) + guide
+├── eval/                   # LLM-as-judge evaluation harness + sample report
+├── k8s/                    # Kubernetes manifests + guide
+├── data/                   # sample policies + Q&A test set
+├── docs/                   # architecture diagrams, deep-dive, GCP deploy guide
+├── .github/workflows/      # CI and deploy pipelines
+├── Dockerfile              # container image
+├── docker-compose.yml      # local Qdrant
+└── requirements.txt
 ```
 
 ---
 
 ## Tech stack
 
-- **LLM / GenAI:** Hugging Face Transformers, PEFT (LoRA), TRL, sentence-transformers (BGE)
-- **RAG:** Qdrant (vector DB), FastAPI serving
-- **Evaluation:** RAGAS, LangSmith
-- **MLOps:** MLflow (tracking + registry), Docker, Kubernetes, GitHub Actions
-- **Cloud:** Google Cloud (GKE, Cloud Storage, Artifact Registry)
+| Area | Tools |
+|---|---|
+| ML / GenAI | PyTorch, Hugging Face Transformers, PEFT (LoRA), sentence-transformers (BGE) |
+| RAG | Qdrant (vector DB), FastAPI |
+| Fine-tuning & tracking | LoRA, MLflow |
+| Evaluation | LLM-as-judge (faithfulness, relevancy, context precision, correctness) |
+| Packaging & ops | Docker, Kubernetes, GitHub Actions |
+| Cloud | Google Cloud — GKE, Cloud Storage, Artifact Registry |
 
 ---
 
-## Quickstart (Phase 1 — verified working, ~10 min)
+## Project status
 
-```bash
-python -m venv .venv && .venv\Scripts\Activate.ps1      # Windows PowerShell
-pip install -r requirements.txt
-copy .env.example .env
-docker compose up -d qdrant                             # starts Qdrant on port 6533
-ollama pull llama3.2:3b                                 # local LLM
-python -m src.ingest                                    # docs -> embeddings -> Qdrant
-uvicorn src.api:app --reload                            # API at http://localhost:8000/docs
-```
+| Phase | Component | Status |
+|---|---|---|
+| 1 | RAG pipeline (FastAPI + Qdrant + BGE) | ✅ Working |
+| 2 | LoRA fine-tuning (PEFT) + MLflow | ✅ Done |
+| 3 | LLM-as-judge evaluation | ✅ Done |
+| 4 | Docker image | ✅ Verified |
+| 4 | Kubernetes manifests | ✅ Authored |
+| 5 | GKE cloud deployment | ⏳ Guide in [`docs/gcp_deploy.md`](docs/gcp_deploy.md) |
+| 6 | CI / CD (GitHub Actions) | ✅ CI green · deploy ready |
 
-Example (real output):
+---
 
-```text
-Q: Does home insurance cover water damage from a burst pipe?
-A: Yes, home insurance covers sudden and accidental water damage caused by a burst pipe,
-   including the cost of tracing and accessing the source of the leak. Damage from gradual
-   leakage, lack of maintenance, or wear and tear is NOT covered.
-   sources: [home_insurance_policy.md (0.71), home_insurance_policy.md (0.70), ...]
-```
+## License
 
-## Repo layout
-
-```
-insurance-rag-mlops/
-├── src/           # RAG app: ingestion, retrieval+generation, FastAPI
-├── data/          # sample insurance policy docs + Q&A test set
-├── finetune/      # LoRA fine-tuning (runs on Google Colab free GPU)
-├── eval/          # RAGAS + LangSmith evaluation
-├── k8s/           # Kubernetes manifests
-├── .github/workflows/  # CI/CD pipeline
-├── requirements.txt
-├── docker-compose.yml
-└── ROADMAP.md     # step-by-step learning plan (START HERE)
-```
-
-**New here? Open `ROADMAP.md` and start at Phase 0.**
+Released under the [MIT License](LICENSE).

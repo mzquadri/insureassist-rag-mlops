@@ -16,7 +16,7 @@ can also work but the tooling (PEFT/TRL/bitsandbytes) is smoother on Colab, so w
 - A LoRA **adapter** (a few MB) that adapts Phi-3-mini to insurance answers.
 - MLflow logs (params, loss, adapter artifact) — proof of experiment tracking.
 
-## Concepts (interview-ready)
+## Concepts
 - **LoRA**: train small low-rank matrices added to attention layers; base model frozen.
 - **4-bit quantization (bitsandbytes)**: store the base model compactly to fit the GPU.
 - **SFT (Supervised Fine-Tuning)**: train on (instruction, answer) pairs.

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 460" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#5D6D7E"/>
+    </marker>
+    <style>
+      .box   { fill:#EAF2F8; stroke:#1F3A5F; stroke-width:1.5; rx:10; }
+      .store { fill:#D5F5E3; stroke:#196F3D; stroke-width:1.5; rx:10; }
+      .t     { fill:#1F3A5F; font-size:15px; font-weight:600; }
+      .ts    { fill:#1F3A5F; font-size:12.5px; }
+      .lbl   { fill:#7F8C8D; font-size:12px; font-style:italic; }
+      .arw   { stroke:#5D6D7E; stroke-width:1.6; fill:none; marker-end:url(#arrow); }
+      .title { fill:#1F3A5F; font-size:20px; font-weight:700; }
+    </style>
+  </defs>
+
+  <text x="500" y="34" text-anchor="middle" class="title">InsureAssist — System Architecture</text>
+
+  <!-- Ingestion lane -->
+  <text x="40" y="74" class="lbl">Ingestion (offline, run once)</text>
+  <rect class="box" x="40" y="86" width="160" height="58" rx="10"/>
+  <text x="120" y="112" text-anchor="middle" class="t">Policy</text>
+  <text x="120" y="130" text-anchor="middle" class="ts">documents</text>
+
+  <path class="arw" d="M200,115 L232,115"/>
+  <rect class="box" x="232" y="86" width="188" height="58" rx="10"/>
+  <text x="326" y="112" text-anchor="middle" class="t">Chunk &amp; embed</text>
+  <text x="326" y="130" text-anchor="middle" class="ts">BGE (sentence-transformers)</text>
+
+  <path class="arw" d="M420,120 C500,140 520,150 560,158"/>
+
+  <!-- Vector store (shared between lanes) -->
+  <rect class="store" x="560" y="120" width="180" height="72" rx="10"/>
+  <text x="650" y="150" text-anchor="middle" class="t">Qdrant</text>
+  <text x="650" y="170" text-anchor="middle" class="ts">vector database</text>
+
+  <!-- Query lane -->
+  <text x="40" y="266" class="lbl">Query (online, per question)</text>
+  <rect class="box" x="40" y="280" width="110" height="58" rx="10"/>
+  <text x="95" y="315" text-anchor="middle" class="t">User</text>
+
+  <path class="arw" d="M150,309 L188,309"/>
+  <rect class="box" x="188" y="280" width="150" height="58" rx="10"/>
+  <text x="263" y="306" text-anchor="middle" class="t">FastAPI</text>
+  <text x="263" y="324" text-anchor="middle" class="ts">/ask endpoint</text>
+
+  <!-- retrieve arrow up to Qdrant -->
+  <path class="arw" d="M300,280 C360,235 470,205 560,188"/>
+  <text x="360" y="232" class="lbl">retrieve top-k</text>
+
+  <!-- FastAPI -> LLM -->
+  <path class="arw" d="M338,309 L636,309"/>
+  <text x="420" y="300" class="lbl">prompt + context</text>
+
+  <rect class="store" x="636" y="280" width="196" height="58" rx="10"/>
+  <text x="734" y="306" text-anchor="middle" class="t">LLM</text>
+  <text x="734" y="324" text-anchor="middle" class="ts">Phi-3 + LoRA / Ollama</text>
+
+  <path class="arw" d="M832,309 L866,309"/>
+  <rect class="box" x="866" y="280" width="118" height="58" rx="10"/>
+  <text x="925" y="306" text-anchor="middle" class="t">Answer</text>
+  <text x="925" y="324" text-anchor="middle" class="ts">+ citations</text>
+
+  <!-- footer note -->
+  <line x1="40" y1="392" x2="960" y2="392" stroke="#D5DBDB" stroke-width="1"/>
+  <text x="500" y="418" text-anchor="middle" class="lbl">Fine-tuned with LoRA (PEFT) · tracked in MLflow · evaluated with an LLM-as-judge</text>
+  <text x="500" y="438" text-anchor="middle" class="lbl">containerized with Docker · deployed on Kubernetes (GKE) · CI/CD via GitHub Actions</text>
+</svg>
