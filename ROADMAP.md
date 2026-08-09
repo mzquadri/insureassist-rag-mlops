@@ -1,137 +1,101 @@
-# Learning Roadmap — build it phase by phase
+# Roadmap — build it phase by phase
 
-Each phase is self-contained, teaches one gap, and ends with **one strong CV bullet**.
-Do them in order. Estimated total: ~2–3 weekends. You do NOT need to know any of this
-beforehand — each phase explains the concept, then the commands.
+Each phase is self-contained and adds one capability to the project. Do them in order;
+every phase ends with something you can run and verify. No prior experience with these
+tools is assumed — each phase explains the idea first, then the commands.
 
-Legend:  🎯 = the skill you learn   ✅ = the CV bullet you earn
+Legend:  🎯 the skill it teaches   ✔ what you can run at the end
 
 ---
 
-## Phase 0 — Setup (30–45 min)  🎯 tooling, accounts
+## Phase 0 — Setup (~30 min)  🎯 tooling & accounts
 
-1. Install tools (Windows):
-   - [Python 3.11+](https://www.python.org/downloads/) — check: `python --version`
-   - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (you already know Docker)
-   - [Git](https://git-scm.com/download/win)
-2. Create **free accounts** (all free tier):
-   - GitHub (you have this: github.com/mzquadri)
-   - Google Cloud — https://cloud.google.com/free ($300 free credit, 90 days) → for Phase 5
-   - Hugging Face — https://huggingface.co/join → for models + optional adapter hosting
-   - LangSmith — https://smith.langchain.com → free tracing (for Phase 3)
-3. Clone/prepare this repo, create a virtual environment:
-   ```powershell
-   cd "C:\Users\MohdZaminQuadri\Downloads\insurance-rag-mlops"
-   python -m venv .venv
-   .\.venv\Scripts\Activate.ps1
+1. Install: [Python 3.11+](https://www.python.org/downloads/),
+   [Docker Desktop](https://www.docker.com/products/docker-desktop/),
+   [Git](https://git-scm.com/download/win).
+2. Create free accounts (only needed for later phases): GitHub, Google Cloud
+   (for GKE), Hugging Face, and — optionally — LangSmith.
+3. Set up the environment:
+   ```bash
+   python -m venv .venv && .venv\Scripts\Activate.ps1
    pip install -r requirements.txt
+   copy .env.example .env
    ```
-4. Copy `.env.example` to `.env` and fill keys as you get them (leave blank for now).
 
 ---
 
-## Phase 1 — Local RAG baseline (½ day)  🎯 RAG you already know, cleanly structured
+## Phase 1 — Local RAG baseline (~½ day)  🎯 embeddings, vector search, serving
 
-Goal: a working RAG API on your laptop, no cloud yet.
-- Start Qdrant with Docker: `docker compose up -d qdrant`
-- Ingest sample docs:   `python src/ingest.py`
-- Run the API:          `uvicorn src.api:app --reload`
-- Ask a question:       open http://localhost:8000/docs and try `/ask`
+A working RAG API on your machine, no cloud required.
 
-What you learn: embeddings (BGE via sentence-transformers), vector search (Qdrant),
-retrieve-then-generate, FastAPI serving. (Base LLM for now; we fine-tune in Phase 2.)
+```bash
+docker compose up -d qdrant
+ollama pull llama3.2:3b
+python -m src.ingest
+uvicorn src.api:app --reload
+```
 
-✅ *"Built a production-structured RAG service (FastAPI + Qdrant + BGE embeddings) for
-insurance-policy Q&A."*
-
----
-
-## Phase 2 — LoRA fine-tuning + MLflow (1 day)  🎯 LLM fine-tuning, experiment tracking
-
-Concept: instead of training a whole LLM (impossible on a laptop), **LoRA** trains a
-tiny set of extra weights (adapters) — cheap, fast, runs on a free Colab GPU.
-
-- Open `finetune/lora_finetune.ipynb` in **Google Colab** (free T4 GPU).
-- It fine-tunes a small open model (e.g. `Phi-3-mini` or `Llama-3.2-3B`) with
-  Hugging Face **PEFT + TRL** on an insurance Q&A dataset.
-- Every run is logged to **MLflow** (loss, params, the LoRA adapter as an artifact).
-- Download the adapter → we'll use it in Phase 3.
-
-What you learn: Hugging Face Transformers/PEFT/TRL, LoRA, supervised fine-tuning (SFT),
-MLflow tracking + model registry.
-
-✅ *"Fine-tuned a small open LLM with LoRA (Hugging Face PEFT/TRL) and tracked all
-experiments and the adapter registry in MLflow."*
+✔ Ask questions at http://localhost:8000/docs → `/ask`. You now have retrieval
+(BGE embeddings + Qdrant) feeding an LLM, served through FastAPI.
 
 ---
 
-## Phase 3 — Evaluation: RAGAS + LangSmith (½ day)  🎯 LLM/RAG evaluation
+## Phase 2 — LoRA fine-tuning + MLflow (~1 day)  🎯 LLM fine-tuning, experiment tracking
 
-Concept: you can't ship an LLM you haven't measured. **RAGAS** scores your RAG on
-faithfulness, answer relevancy, and context precision/recall. **LangSmith** traces every
-call so you can debug the pipeline.
+Instead of training a whole model, **LoRA** trains a tiny adapter (a few MB) — cheap enough
+to run on a free Colab GPU.
 
-- Plug the fine-tuned adapter into the RAG (`src/rag.py`).
-- Run `python eval/ragas_eval.py` on `data/qa_testset.jsonl` → get a metrics table.
-- Turn on LangSmith tracing via `.env` and inspect traces in the dashboard.
+- Open `finetune/lora_finetune.ipynb` in Google Colab, set the runtime to a **T4 GPU**,
+  and run all cells. It fine-tunes Phi-3-mini with Hugging Face **PEFT** and logs the run
+  to **MLflow**.
+- Download the resulting `adapter/` folder.
 
-What you learn: RAG evaluation metrics, RAGAS, LangSmith tracing/observability.
-
-✅ *"Evaluated the RAG pipeline with RAGAS (faithfulness, context precision/recall) and
-instrumented tracing with LangSmith."*
+✔ A fine-tuned adapter that adapts the base model to the insurance domain.
 
 ---
 
-## Phase 4 — Kubernetes locally (½ day)  🎯 Kubernetes
+## Phase 3 — Evaluation (~½ day)  🎯 RAG evaluation
 
-Concept: Docker runs one container; **Kubernetes** runs, heals, and scales many.
-Practice locally first with **minikube** (free, on your laptop).
+You can't ship what you haven't measured. `eval/evaluate.py` scores the RAG pipeline with
+an **LLM-as-judge** on four metrics: faithfulness, answer relevancy, context precision,
+and answer correctness.
 
-- Build image: `docker build -t insureassist:latest .`
-- `minikube start` → apply `k8s/` manifests → `kubectl get pods`
-- Access the service, send a request.
+```bash
+python -m eval.evaluate
+```
 
-What you learn: pods, Deployments, Services, ConfigMaps/Secrets, `kubectl`.
-
-✅ *"Containerized the service and deployed it on Kubernetes (Deployment, Service,
-ConfigMap/Secret) with health checks."*
+✔ A metrics table and `eval/eval_report.csv` you can track over time.
 
 ---
 
-## Phase 5 — Cloud on GCP (1 day)  🎯 Cloud (GCP), managed Kubernetes
+## Phase 4 — Docker & Kubernetes (~½ day)  🎯 containerization, orchestration
 
-- Store docs + LoRA adapter in **Cloud Storage (GCS)**.
-- Push image to **Artifact Registry**.
-- Create a **GKE** cluster, deploy the same `k8s/` manifests, expose a public URL.
+```bash
+docker build -t insureassist:latest .
+docker run -d -p 8010:8000 --env-file .env insureassist:latest   # (see k8s/README.md)
+```
 
-What you learn: GCP fundamentals, GKE, GCS, Artifact Registry, cloud IAM basics.
+Then deploy to a cluster with the manifests in `k8s/` (Deployment, Service, ConfigMap,
+HorizontalPodAutoscaler). See [`k8s/README.md`](k8s/README.md).
 
-✅ *"Deployed the system to Google Cloud (GKE + Cloud Storage + Artifact Registry) with a
-public inference endpoint."*
-
----
-
-## Phase 6 — CI/CD + autoscaling (½ day)  🎯 CI/CD, production scaling
-
-- `.github/workflows/deploy.yml`: on push → build image → push → deploy to GKE.
-- Add a **HorizontalPodAutoscaler** so pods scale with load.
-
-✅ *"Automated build-and-deploy with GitHub Actions and configured Kubernetes HPA
-autoscaling."*
+✔ The service running as a container, and Kubernetes manifests ready to deploy.
 
 ---
 
-## Phase 7 — Write-up (½ day)
+## Phase 5 — Google Cloud (GKE) (~1 day)  🎯 managed Kubernetes in the cloud
 
-- Polish `README.md`, add an architecture diagram + a short demo GIF/screenshots.
-- Push to GitHub (github.com/mzquadri).
-- Add ONE project entry to the CV (I'll help word it).
+Store artifacts in Cloud Storage, push the image to Artifact Registry, and deploy to a
+managed **GKE** cluster with a public endpoint. Full steps in
+[`docs/gcp_deploy.md`](docs/gcp_deploy.md).
 
-✅ Final CV line: *"InsureAssist — end-to-end fine-tuned RAG assistant deployed on GCP
-(GKE) with LoRA fine-tuning, RAGAS evaluation, MLflow tracking, and CI/CD."*
+✔ A publicly reachable inference endpoint on GKE.
 
 ---
 
-### After this project, your CV honestly covers:
-Cloud (GCP) · Kubernetes · LoRA/PEFT fine-tuning · Hugging Face · RAGAS/LangSmith eval ·
-MLflow · CI/CD — **all the red/orange gaps, on top of skills you already have.**
+## Phase 6 — CI/CD (~½ day)  🎯 automation
+
+`.github/workflows/ci.yml` runs checks on every push. `.github/workflows/deploy.yml`
+builds and deploys to GKE (add your GCP secrets to enable it). Add an autoscaler
+(`k8s/hpa.yaml`) so pods scale with load.
+
+✔ Push code → it's tested and (once secrets are set) deployed automatically.

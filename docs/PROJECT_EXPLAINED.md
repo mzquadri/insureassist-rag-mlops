@@ -1,7 +1,8 @@
-# InsureAssist — The Whole Project, Explained (read this in VS Code)
+# InsureAssist — Project Deep-Dive
 
-This is a beginner-friendly, end-to-end walkthrough. Read top to bottom once; then use it
-as a reference while you build each phase. No prior knowledge of these tools is assumed.
+A beginner-friendly, end-to-end walkthrough of how the project works and why each piece is
+there. Read it top to bottom once, then use it as a reference. No prior knowledge of these
+tools is assumed.
 
 ---
 
@@ -93,7 +94,7 @@ Key terms:
 
 ---
 
-## 5. The phases (each = one new skill + one CV bullet)
+## 5. The phases (each adds one capability)
 
 | Phase | You learn | Runs where |
 |---|---|---|
@@ -108,7 +109,7 @@ Follow `ROADMAP.md` for the exact commands of each phase.
 
 ---
 
-## 6. Glossary (interview-ready one-liners)
+## 6. Glossary (quick reference)
 
 - **RAG**: retrieve relevant text, then let the LLM answer using it (grounded, cited).
 - **Embedding**: text → vector capturing meaning.
@@ -127,11 +128,14 @@ Follow `ROADMAP.md` for the exact commands of each phase.
 
 ---
 
-## 7. How this maps to your CV gaps
+## 7. Skills demonstrated
 
-After you actually run each phase, you can truthfully add:
-- **Cloud (GCP)**, **Kubernetes**, **LoRA/PEFT fine-tuning**, **Hugging Face**,
-  **RAG evaluation (RAGAS/LangSmith)**, **MLflow**, **CI/CD**.
+Working through the project touches the core of a modern applied-AI stack:
 
-Only claim a phase once you've run it and seen it work — that's how you'll also be able to
-talk about it confidently in an interview.
+- **Retrieval-Augmented Generation** — embeddings, vector search, grounded generation.
+- **LLM fine-tuning** — LoRA / PEFT, and experiment tracking with MLflow.
+- **Evaluation** — measuring RAG quality with an LLM-as-judge instead of eyeballing it.
+- **MLOps & deployment** — Docker, Kubernetes, Google Cloud (GKE), and CI/CD.
+
+Each phase is small enough to understand end to end, which is the point: not just wiring
+libraries together, but knowing *why* each piece is there.
