@@ -23,7 +23,6 @@ spec:
             - containerPort: 8000
           envFrom:
             - configMapRef: { name: insureassist-config }
-            - secretRef:    { name: insureassist-secrets }
           # Probes tell Kubernetes if the pod is alive/ready (uses our /health endpoint).
           livenessProbe:
             httpGet: { path: /health, port: 8000 }

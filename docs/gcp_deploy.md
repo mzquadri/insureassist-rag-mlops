@@ -1,73 +1,72 @@
-# Phase 5 — Deploy to Google Cloud (GKE)
+# Deploying to Google Cloud (GKE)
 
-You'll put the app on **GKE** (managed Kubernetes), store artifacts in **Cloud Storage
-(GCS)**, and host the container image in **Artifact Registry**.
+This deploys the whole system — Qdrant, Ollama (the LLM), and the API — to a managed
+**GKE Autopilot** cluster, with a public endpoint. It's self-contained: no external API
+keys needed.
 
-> Cost: uses the **free $300 credit**. Delete the cluster at the end (last section) so you
-> don't get charged after the trial.
+> Uses the **$300 free credit**. Delete the cluster at the end (last section) so you don't
+> get charged after the trial. A short setup + test session costs only a few cents.
 
-## 0. One-time setup (you do this)
-1. Create a Google Cloud account: https://cloud.google.com/free
-2. Install the CLI: `winget install Google.CloudSDK` then restart the terminal.
-3. Login and pick a project:
-   ```powershell
-   gcloud auth login
-   gcloud projects create insureassist-<yourname> --name="InsureAssist"
-   gcloud config set project insureassist-<yourname>
-   gcloud auth configure-docker europe-west3-docker.pkg.dev
-   ```
-4. Enable the services:
-   ```powershell
-   gcloud services enable container.googleapis.com artifactregistry.googleapis.com storage.googleapis.com
-   ```
-
-## 1. Store the LoRA adapter + docs in Cloud Storage (GCS)
+Set a few shell variables first (PowerShell):
 ```powershell
-gcloud storage buckets create gs://insureassist-<yourname> --location=europe-west3
-gcloud storage cp -r finetune/adapter gs://insureassist-<yourname>/adapter
-gcloud storage cp -r data gs://insureassist-<yourname>/data
+$PROJECT = "insureassist-<yourname>"     # must be globally unique
+$REGION  = "europe-west3"
+$REPO    = "insureassist"
+$IMG     = "$REGION-docker.pkg.dev/$PROJECT/$REPO/api:latest"
 ```
 
-## 2. Build + push the image to Artifact Registry
+## 1. Account & project (one-time)
 ```powershell
-gcloud artifacts repositories create insureassist --repository-format=docker --location=europe-west3
+gcloud auth login
+gcloud projects create $PROJECT
+gcloud config set project $PROJECT
+# link billing (needed even for the free tier): easiest via the Cloud Console UI,
+# Billing -> link the project to your billing account.
+gcloud services enable container.googleapis.com artifactregistry.googleapis.com
+```
 
-$IMG = "europe-west3-docker.pkg.dev/$(gcloud config get-value project)/insureassist/api:latest"
+## 2. Build & push the image
+```powershell
+gcloud artifacts repositories create $REPO --repository-format=docker --location=$REGION
+gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
 docker build -t $IMG .
 docker push $IMG
 ```
 
-## 3. Create the GKE cluster
+## 3. Create the cluster
 ```powershell
-gcloud container clusters create-auto insureassist-cluster --location=europe-west3
-gcloud container clusters get-credentials insureassist-cluster --location=europe-west3
+gcloud container clusters create-auto insureassist --location=$REGION
+gcloud container clusters get-credentials insureassist --location=$REGION
 ```
-(`create-auto` = GKE Autopilot: Google manages the nodes; you only pay for what pods use.)
 
 ## 4. Deploy
 ```powershell
-# point the deployment image to your pushed image first (edit k8s/api-deployment.yaml
-# 'image:' line to $IMG), then:
 kubectl apply -f k8s/configmap.yaml
-kubectl apply -f k8s/secret.yaml          # your filled-in copy of secret.example.yaml
 kubectl apply -f k8s/qdrant.yaml
-kubectl apply -f k8s/api-deployment.yaml
+kubectl apply -f k8s/ollama.yaml
+
+# point the API + ingest Job at the pushed image, then deploy them:
+kubectl set image -f k8s/api-deployment.yaml api=$IMG --local -o yaml | kubectl apply -f -
 kubectl apply -f k8s/api-service.yaml
 kubectl apply -f k8s/hpa.yaml
+
+# wait for Ollama, pull the model, then load the documents:
+kubectl rollout status deploy/ollama
+kubectl exec deploy/ollama -- ollama pull llama3.2:3b
+
+kubectl set image -f k8s/ingest-job.yaml ingest=$IMG --local -o yaml | kubectl apply -f -
+kubectl wait --for=condition=complete job/ingest --timeout=300s
 ```
 
-## 5. Get the public URL + test
+## 5. Get the public URL & test
 ```powershell
-kubectl get service insureassist-api        # wait for EXTERNAL-IP
-# then: curl http://EXTERNAL-IP/health
+kubectl get service insureassist-api      # wait for EXTERNAL-IP
+curl http://EXTERNAL-IP/health
+curl -X POST http://EXTERNAL-IP/ask -H "Content-Type: application/json" -d "{\"question\":\"Does home insurance cover a burst pipe?\"}"
 ```
 
-## 6. IMPORTANT — clean up to stop billing
+## 6. Clean up (stops billing)
 ```powershell
-gcloud container clusters delete insureassist-cluster --location=europe-west3
-gcloud storage rm -r gs://insureassist-<yourname>
+gcloud container clusters delete insureassist --location=$REGION
+gcloud artifacts repositories delete $REPO --location=$REGION --quiet
 ```
-
-## What you can now claim (truthfully)
-Deployed a containerized RAG service to **GKE** with Cloud Storage artifacts, Artifact
-Registry images, autoscaling (HPA), and a public inference endpoint.

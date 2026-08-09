@@ -1,0 +1,22 @@
+# One-off Job that loads the documents into Qdrant (documents -> embeddings -> vectors).
+# Uses the same application image (it contains src/ and data/).
+# Set the image to your Artifact Registry image before applying.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ingest
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: ingest
+          image: insureassist:latest      # replace with your pushed image in Phase 5
+          command: ["python", "-m", "src.ingest"]
+          envFrom:
+            - configMapRef:
+                name: insureassist-config
+          resources:
+            requests: { cpu: "500m", memory: "1Gi" }
+            limits:   { cpu: "2",    memory: "3Gi" }
