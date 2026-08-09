@@ -9,7 +9,8 @@ eval/
 finetune/
 k8s/
 mlruns/
-*.md
+README.md
+ROADMAP.md
 .env
 .gitignore
 .dockerignore

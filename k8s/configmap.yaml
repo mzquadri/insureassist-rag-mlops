@@ -1,14 +1,14 @@
-# ConfigMap = non-secret configuration injected into pods as environment variables.
-# (Secrets, like API keys, go in secret.yaml instead.)
+# Non-secret configuration injected into the API pods as environment variables.
+# In-cluster service names (qdrant, ollama) resolve via Kubernetes DNS.
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: insureassist-config
 data:
-  QDRANT_URL: "http://qdrant:6333"        # 'qdrant' = the Service name below (in-cluster DNS)
+  QDRANT_URL: "http://qdrant:6333"
   QDRANT_COLLECTION: "insurance_docs"
   EMBEDDING_MODEL: "BAAI/bge-small-en-v1.5"
-  LLM_BACKEND: "hf"                        # in the cloud we use the fine-tuned model
-  HF_BASE_MODEL: "microsoft/Phi-3-mini-4k-instruct"
-  LORA_ADAPTER_PATH: "/models/adapter"     # mounted from Cloud Storage in Phase 5
+  LLM_BACKEND: "ollama"
+  OLLAMA_URL: "http://ollama:11434"
+  OLLAMA_MODEL: "llama3.2:3b"
   TOP_K: "4"
