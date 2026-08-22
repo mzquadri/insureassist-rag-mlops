@@ -1,5 +1,11 @@
-# Phase 4 — container image for the RAG API.
-# Multi-stage keeps the final image smaller (a production best practice).
+# Container image for the RAG API.
+#
+# Single stage. An earlier comment here described this as multi-stage; it never was.
+#
+# Known gaps, tracked rather than hidden: the image runs as root, declares no
+# HEALTHCHECK, and installs unpinned dependencies, so two builds can differ. The
+# embedding model is not baked in either - it downloads on first request, so a cold
+# container needs network access and is slow to answer.
 
 FROM python:3.11-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1

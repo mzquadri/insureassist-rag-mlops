@@ -1,4 +1,4 @@
-question,answer,faithfulness,answer_relevancy,context_precision,answer_correctness
+question,answer,judge_faithfulness,judge_answer_relevancy,judge_context_precision,judge_answer_correctness
 Does home insurance cover water damage from a burst pipe?,"Yes, according to the context, sudden and accidental water damage caused by a burst pipe is covered under the home insurance policy. The cost of tracing and accessing the source of the leak is also included in the coverage, and the policyholder pays an excess of EUR 250 (or EUR 500 for claims related to escape of water).",0.8,0.8,0.8,0.8
 What is the excess for an escape of water claim on the home policy?,EUR 500.,0.5,0.5,0.8,0.5
 "Is jewellery covered, and up to how much per item?","Yes, jewelry is covered under the household contents. The coverage is up to a single-item limit of EUR 2,000, unless specified separately on the schedule.",0.8,0.8,0.8,0.5

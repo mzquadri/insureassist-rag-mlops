@@ -1,8 +1,10 @@
-# These install on Google Colab (Phase 2). You do NOT need them on your laptop.
+# These install on Google Colab. You do NOT need them on your laptop.
+#
+# trl and bitsandbytes were removed: the notebook trains with the plain Hugging Face
+# Trainer in fp16, having dropped both during Phase 2 to get past Colab dependency
+# conflicts. Listing them here implied a 4-bit QLoRA setup the notebook does not use.
 transformers>=4.44
 peft>=0.12
-trl>=0.9
 datasets>=2.20
 accelerate>=0.33
-bitsandbytes>=0.43
 mlflow

@@ -1,15 +1,20 @@
 """
-Phase 3 - Evaluate the RAG pipeline with an LLM-as-judge (local, free, no API key).
+Evaluate the RAG pipeline with a local LLM-as-judge (no API key needed).
 
-These are the standard RAG-evaluation metrics (the same ones the RAGAS library
-implements). We score them with a local LLM via Ollama, so it runs fully offline:
+These are **custom judge metrics**, not RAGAS metrics. Each is a single holistic 0-1 score
+produced by one prompt to a local model. RAGAS decomposes answers into claims and weights
+context precision by rank; this does neither. The names are prefixed `judge_` so they
+cannot be mistaken for library implementations. See eval/README.md.
 
-  - faithfulness       : is the answer supported by the retrieved context? (no hallucination)
-  - answer_relevancy   : does the answer actually address the question?
-  - context_precision  : are the retrieved chunks relevant to the question?
-  - answer_correctness : does the answer match the reference (ground-truth) answer?
+  - judge_faithfulness       : is the answer supported by the retrieved context?
+  - judge_answer_relevancy   : does the answer address the question?
+  - judge_context_precision  : are the retrieved chunks relevant? (see caveat below)
+  - judge_answer_correctness : does the answer match the reference answer?
 
-Each metric is scored 0.0 - 1.0 by the judge LLM; we report the average over the test set.
+`judge_context_precision` is retained per-question but is NOT a retrieval metric: the judge
+receives every chunk concatenated, so ranking is invisible to it. It has scored a flat 0.80
+on every question recorded so far. Real retrieval metrics need relevance labels, which this
+test set does not have.
 
 Run:
     python -m eval.evaluate
@@ -27,9 +32,50 @@ from src.rag import build_prompt, generate, retrieve
 
 JUDGE_MODEL = cfg.OLLAMA_MODEL
 
+METRICS = [
+    "judge_faithfulness",
+    "judge_answer_relevancy",
+    "judge_context_precision",
+    "judge_answer_correctness",
+]
+
+_SCORE_PATTERN = re.compile(r"[01](?:\.\d+)?")
+
+
+def parse_judge_score(text: str) -> float:
+    """Pull a 0..1 score out of the judge's reply, or NaN if there isn't one.
+
+    Kept separate from the HTTP call so the parsing rules can be tested without a model:
+    small judges pad their answers, refuse, or return prose, and each of those has to
+    degrade to NaN rather than to a wrong number.
+    """
+    match = _SCORE_PATTERN.search(text or "")
+    if not match:
+        return float("nan")
+    return max(0.0, min(1.0, float(match.group(0))))
+
+
+def average_scores(rows: list[dict], metrics: list[str]) -> dict[str, dict]:
+    """Average each metric, reporting how many questions actually contributed.
+
+    A judge that fails to answer yields NaN. Those rows are excluded from the mean, so the
+    denominator can silently shrink - an average over four questions once looked identical
+    to an average over ten. `used` and `dropped` are returned alongside the mean so a
+    partially-failed run is visible instead of merely optimistic.
+    """
+    summary = {}
+    for metric in metrics:
+        values = [r[metric] for r in rows if not math.isnan(r[metric])]
+        summary[metric] = {
+            "mean": statistics.mean(values) if values else float("nan"),
+            "used": len(values),
+            "dropped": len(rows) - len(values),
+        }
+    return summary
+
 
 def _judge(prompt: str) -> float:
-    """Ask the judge LLM for a single 0..1 score and parse it robustly."""
+    """Ask the judge LLM for a single 0..1 score."""
     full = (
         prompt
         + "\n\nGive ONLY a single decimal number from 0.0 to 1.0 (nothing else).\nScore:"
@@ -46,14 +92,10 @@ def _judge(prompt: str) -> float:
         timeout=120,
     )
     resp.raise_for_status()
-    text = resp.json()["response"].strip()
-    m = re.search(r"[01](?:\.\d+)?", text)
-    if not m:
-        return float("nan")
-    return max(0.0, min(1.0, float(m.group(0))))
+    return parse_judge_score(resp.json()["response"].strip())
 
 
-def faithfulness(answer: str, contexts: list[str]) -> float:
+def judge_faithfulness(answer: str, contexts: list[str]) -> float:
     ctx = "\n---\n".join(contexts)
     return _judge(
         f"CONTEXT:\n{ctx}\n\nANSWER:\n{answer}\n\n"
@@ -62,7 +104,7 @@ def faithfulness(answer: str, contexts: list[str]) -> float:
     )
 
 
-def answer_relevancy(question: str, answer: str) -> float:
+def judge_answer_relevancy(question: str, answer: str) -> float:
     return _judge(
         f"QUESTION:\n{question}\n\nANSWER:\n{answer}\n\n"
         "Score how directly the ANSWER addresses the QUESTION "
@@ -70,7 +112,7 @@ def answer_relevancy(question: str, answer: str) -> float:
     )
 
 
-def context_precision(question: str, contexts: list[str]) -> float:
+def judge_context_precision(question: str, contexts: list[str]) -> float:
     ctx = "\n---\n".join(contexts)
     return _judge(
         f"QUESTION:\n{question}\n\nRETRIEVED CONTEXT:\n{ctx}\n\n"
@@ -79,7 +121,7 @@ def context_precision(question: str, contexts: list[str]) -> float:
     )
 
 
-def answer_correctness(answer: str, ground_truth: str) -> float:
+def judge_answer_correctness(answer: str, ground_truth: str) -> float:
     return _judge(
         f"REFERENCE ANSWER:\n{ground_truth}\n\nMODEL ANSWER:\n{answer}\n\n"
         "Score how factually consistent the MODEL ANSWER is with the REFERENCE ANSWER "
@@ -103,7 +145,7 @@ def main(limit: int | None = None):
         rows = rows[:limit]
 
     per_row = []
-    print(f"Evaluating {len(rows)} questions (judge = {JUDGE_MODEL})...\n")
+    print(f"Evaluating {len(rows)} questions (judge = {JUDGE_MODEL}, also the generator)...\n")
     for i, row in enumerate(rows, 1):
         q, gt = row["question"], row["ground_truth"]
         ctx = retrieve(q)
@@ -111,30 +153,29 @@ def main(limit: int | None = None):
         ans = generate(build_prompt(q, ctx))
 
         scores = {
-            "faithfulness": faithfulness(ans, ctx_texts),
-            "answer_relevancy": answer_relevancy(q, ans),
-            "context_precision": context_precision(q, ctx_texts),
-            "answer_correctness": answer_correctness(ans, gt),
+            "judge_faithfulness": judge_faithfulness(ans, ctx_texts),
+            "judge_answer_relevancy": judge_answer_relevancy(q, ans),
+            "judge_context_precision": judge_context_precision(q, ctx_texts),
+            "judge_answer_correctness": judge_answer_correctness(ans, gt),
         }
         per_row.append({"question": q, "answer": ans, **scores})
         print(f"[{i}/{len(rows)}] {q[:55]:<55}  "
-              + "  ".join(f"{k[:4]}={v:.2f}" for k, v in scores.items()))
+              + "  ".join(f"{k.replace('judge_', '')[:4]}={v:.2f}" for k, v in scores.items()))
 
-    metrics = ["faithfulness", "answer_relevancy", "context_precision", "answer_correctness"]
+    summary = average_scores(per_row, METRICS)
     print("\n=== Average scores ===")
-    averages = {}
-    for m in metrics:
-        vals = [r[m] for r in per_row if not math.isnan(r[m])]  # drop NaN
-        avg = statistics.mean(vals) if vals else float("nan")
-        averages[m] = avg
-        print(f"  {m:<20} {avg:.3f}")
+    for metric, stats in summary.items():
+        note = f"  ({stats['dropped']} unscored)" if stats["dropped"] else ""
+        print(f"  {metric:<26} {stats['mean']:.3f}  [n={stats['used']}]{note}")
+    print("\nNote: these describe answer quality only. Retrieval quality is not measured -")
+    print("the test set has no relevance labels. See eval/README.md.")
 
     with open("eval/eval_report.csv", "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=["question", "answer", *metrics])
+        w = csv.DictWriter(f, fieldnames=["question", "answer", *METRICS])
         w.writeheader()
         w.writerows(per_row)
     print("\nSaved per-question scores to eval/eval_report.csv")
-    return averages
+    return summary
 
 
 if __name__ == "__main__":

@@ -7,8 +7,11 @@ load_dotenv()  # reads the .env file if present
 
 
 class Config:
-    # Vector DB
-    QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
+    # Vector DB.
+    # The default matches this repository's docker-compose, which publishes Qdrant on
+    # host port 6533 (not the usual 6333) so it cannot collide with another local Qdrant.
+    # The previous default of 6333 pointed at a port nothing in this project listens on.
+    QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6533")
     QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "insurance_docs")
 
     # Embeddings
