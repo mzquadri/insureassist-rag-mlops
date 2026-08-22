@@ -1,0 +1,796 @@
+{
+  "run": {
+    "benchmark": "nfip-sfip-retrieval",
+    "split": "dev",
+    "retriever": "dense",
+    "note": "Dense BGE retrieval only. No lexical baseline, no reranking, no generation evaluation. Unanswerable questions are excluded from every aggregate below and reported separately."
+  },
+  "configuration": {
+    "embedding_model": "BAAI/bge-small-en-v1.5",
+    "embedding_dimension": 384,
+    "query_prefix": "Represent this sentence for searching relevant passages: ",
+    "distance": "cosine",
+    "chunk_size": 600,
+    "chunk_overlap": 100,
+    "top_k": 5,
+    "collection": "nfip_sfip",
+    "config_hash": "6890bd213d332319893be00a71fe38670a86b34577353d7d5a6f30b0391111c7"
+  },
+  "corpus": {
+    "documents": 3,
+    "chunks": 426,
+    "characters": 212608,
+    "words": 35639,
+    "corpus_hash": "81650e214d2a138fa2073ae311983514d31b28e08bcb5c0fcbf292af68800e16",
+    "per_document": {
+      "nfip-sfip-dwelling": {
+        "chunks": 150,
+        "characters": 74960,
+        "sha256": "c88e41a8bcdca3acf4c8c68902f53de84ba9234e5ce49b8a41430d0d2855a8bc"
+      },
+      "nfip-sfip-general-property": {
+        "chunks": 135,
+        "characters": 67255,
+        "sha256": "7b33a80ef173426d82f07c972e5a7f91e6908f4a4c444f1bd96b7ce5e78ad6f0"
+      },
+      "nfip-sfip-rcbap": {
+        "chunks": 141,
+        "characters": 70393,
+        "sha256": "229d7bcc62bd0dceb209ea7c2c8c382ada7b5ade5e03b2fc060c32f6b740854a"
+      }
+    }
+  },
+  "questions": {
+    "total": 18,
+    "answerable": 14,
+    "unanswerable": 4,
+    "unanswerable_share": 0.2222,
+    "by_category": {
+      "exclusion": 2,
+      "form_difference": 2,
+      "multi_chunk": 1,
+      "near_miss": 4,
+      "single_chunk": 4,
+      "time_period": 1,
+      "unanswerable": 4
+    },
+    "by_split": {
+      "dev": 18
+    },
+    "by_difficulty": {
+      "easy": 4,
+      "hard": 10,
+      "medium": 4
+    },
+    "question_set_hash": "2ee5d3c442f9dae5f2e9dbb66ac124e589794c03c48acb2d04df2ab5a52eeade",
+    "evaluated": 18
+  },
+  "retrieval_metrics_answerable_only": {
+    "hit_rate@1": 0.2857,
+    "recall@1": 0.25,
+    "precision@1": 0.2857,
+    "hit_rate@3": 0.5,
+    "recall@3": 0.5,
+    "precision@3": 0.1905,
+    "hit_rate@5": 0.6429,
+    "recall@5": 0.6071,
+    "precision@5": 0.1429,
+    "mrr": 0.4131,
+    "top_document_accuracy": 0.3571
+  },
+  "by_category": {
+    "exclusion": {
+      "n": 2,
+      "hit_rate@5": 1.0,
+      "mrr": 0.6
+    },
+    "form_difference": {
+      "n": 2,
+      "hit_rate@5": 0.5,
+      "mrr": 0.25
+    },
+    "multi_chunk": {
+      "n": 1,
+      "hit_rate@5": 1.0,
+      "mrr": 1.0
+    },
+    "near_miss": {
+      "n": 4,
+      "hit_rate@5": 0.5,
+      "mrr": 0.3333
+    },
+    "single_chunk": {
+      "n": 4,
+      "hit_rate@5": 0.5,
+      "mrr": 0.375
+    },
+    "time_period": {
+      "n": 1,
+      "hit_rate@5": 1.0,
+      "mrr": 0.25
+    }
+  },
+  "by_relevant_form": {
+    "nfip-sfip-dwelling": {
+      "n": 6,
+      "hit_rate@5": 0.8333,
+      "mrr": 0.4917
+    },
+    "nfip-sfip-general-property": {
+      "n": 1,
+      "hit_rate@5": 0.0,
+      "mrr": 0.0
+    },
+    "nfip-sfip-rcbap": {
+      "n": 7,
+      "hit_rate@5": 0.5714,
+      "mrr": 0.4048
+    }
+  },
+  "unanswerable": {
+    "count": 4,
+    "note": "No recall is computed: these questions have no relevant chunk. Top-1 similarity is descriptive only. No abstention threshold is proposed - that needs a threshold study on the dev split, which has not been run.",
+    "top_score_min": 0.7062,
+    "top_score_max": 0.7544,
+    "top_score_mean": 0.7284,
+    "answerable_top_score_mean": 0.7609
+  },
+  "latency_ms": {
+    "n": 18,
+    "mean": 65.68,
+    "p50": 45.96,
+    "p95": 349.96,
+    "max": 349.96,
+    "note": "End-to-end query embedding plus vector search, local Qdrant."
+  },
+  "per_question": [
+    {
+      "question_id": "nfip-001",
+      "question": "Under the Dwelling Form, how long do I have to send a proof of loss after a flood loss?",
+      "category": "time_period",
+      "difficulty": "easy",
+      "answerable": true,
+      "relevant_chunk_ids": [
+        "nfip-sfip-dwelling#a0e407de24cd"
+      ],
+      "relevant_document_ids": [
+        "nfip-sfip-dwelling"
+      ],
+      "retrieved_chunk_ids": [
+        "nfip-sfip-general-property#08cd3f613329",
+        "nfip-sfip-rcbap#7e1ff001d734",
+        "nfip-sfip-dwelling#26a5d31d6035",
+        "nfip-sfip-dwelling#a0e407de24cd",
+        "nfip-sfip-rcbap#677b7108d16c"
+      ],
+      "retrieved_document_ids": [
+        "nfip-sfip-general-property",
+        "nfip-sfip-rcbap",
+        "nfip-sfip-dwelling"
+      ],
+      "top_score": 0.8149332,
+      "latency_ms": 349.96,
+      "metrics": {
+        "hit_rate@1": 0.0,
+        "hit_rate@3": 0.0,
+        "hit_rate@5": 1.0,
+        "recall@1": 0.0,
+        "recall@3": 0.0,
+        "recall@5": 1.0,
+        "precision@1": 0.0,
+        "precision@3": 0.0,
+        "precision@5": 0.2,
+        "reciprocal_rank": 0.25
+      },
+      "top_document_correct": false
+    },
+    {
+      "question_id": "nfip-003",
+      "question": "Under the Dwelling Form, may I sue the insurer without first meeting the policy's requirements?",
+      "category": "single_chunk",
+      "difficulty": "easy",
+      "answerable": true,
+      "relevant_chunk_ids": [
+        "nfip-sfip-dwelling#f553a59815f1"
+      ],
+      "relevant_document_ids": [
+        "nfip-sfip-dwelling"
+      ],
+      "retrieved_chunk_ids": [
+        "nfip-sfip-general-property#bfc017c64e3d",
+        "nfip-sfip-rcbap#cca3d70b4b16",
+        "nfip-sfip-dwelling#b522824e8c0c",
+        "nfip-sfip-rcbap#ab6ef14bf94c",
+        "nfip-sfip-rcbap#89878bed7f3b"
+      ],
+      "retrieved_document_ids": [
+        "nfip-sfip-general-property",
+        "nfip-sfip-rcbap",
+        "nfip-sfip-dwelling"
+      ],
+      "top_score": 0.76321065,
+      "latency_ms": 56.92,
+      "metrics": {
+        "hit_rate@1": 0.0,
+        "hit_rate@3": 0.0,
+        "hit_rate@5": 0.0,
+        "recall@1": 0.0,
+        "recall@3": 0.0,
+        "recall@5": 0.0,
+        "precision@1": 0.0,
+        "precision@3": 0.0,
+        "precision@5": 0.0,
+        "reciprocal_rank": 0.0
+      },
+      "top_document_correct": false
+    },
+    {
+      "question_id": "nfip-006",
+      "question": "Under the RCBAP, what is the special limit for artwork and collectibles?",
+      "category": "near_miss",
+      "difficulty": "hard",
+      "answerable": true,
+      "relevant_chunk_ids": [
+        "nfip-sfip-rcbap#7488f3d14d72"
+      ],
+      "relevant_document_ids": [
+        "nfip-sfip-rcbap"
+      ],
+      "retrieved_chunk_ids": [
+        "nfip-sfip-dwelling#41b41acc1577",
+        "nfip-sfip-general-property#99d759e95123",
+        "nfip-sfip-rcbap#7488f3d14d72",
+        "nfip-sfip-dwelling#572a67e379fa",
+        "nfip-sfip-dwelling#b522824e8c0c"
+      ],
+      "retrieved_document_ids": [
+        "nfip-sfip-dwelling",
+        "nfip-sfip-general-property",
+        "nfip-sfip-rcbap"
+      ],
+      "top_score": 0.6803831,
+      "latency_ms": 57.53,
+      "metrics": {
+        "hit_rate@1": 0.0,
+        "hit_rate@3": 1.0,
+        "hit_rate@5": 1.0,
+        "recall@1": 0.0,
+        "recall@3": 1.0,
+        "recall@5": 1.0,
+        "precision@1": 0.0,
+        "precision@3": 0.3333333333333333,
+        "precision@5": 0.2,
+        "reciprocal_rank": 0.3333333333333333
+      },
+      "top_document_correct": false
+    },
+    {
+      "question_id": "nfip-007",
+      "question": "Under the Dwelling Form, what is the special limit for artwork, photographs and memorabilia?",
+      "category": "near_miss",
+      "difficulty": "hard",
+      "answerable": true,
+      "relevant_chunk_ids": [
+        "nfip-sfip-dwelling#41b41acc1577"
+      ],
+      "relevant_document_ids": [
+        "nfip-sfip-dwelling"
+      ],
+      "retrieved_chunk_ids": [
+        "nfip-sfip-dwelling#41b41acc1577",
+        "nfip-sfip-general-property#99d759e95123",
+        "nfip-sfip-rcbap#7488f3d14d72",
+        "nfip-sfip-dwelling#9de18d9198a7",
+        "nfip-sfip-dwelling#dee2c7af5eee"
+      ],
+      "retrieved_document_ids": [
+        "nfip-sfip-dwelling",
+        "nfip-sfip-general-property",
+        "nfip-sfip-rcbap"
+      ],
+      "top_score": 0.6636828,
+      "latency_ms": 62.18,
+      "metrics": {
+        "hit_rate@1": 1.0,
+        "hit_rate@3": 1.0,
+        "hit_rate@5": 1.0,
+        "recall@1": 1.0,
+        "recall@3": 1.0,
+        "recall@5": 1.0,
+        "precision@1": 1.0,
+        "precision@3": 0.3333333333333333,
+        "precision@5": 0.2,
+        "reciprocal_rank": 1.0
+      },
+      "top_document_correct": true
+    },
+    {
+      "question_id": "nfip-010",
+      "question": "Under the RCBAP, is loss caused directly by earth movement covered?",
+      "category": "exclusion",
+      "difficulty": "medium",
+      "answerable": true,
+      "relevant_chunk_ids": [
+        "nfip-sfip-rcbap#6d14098c38b3"
+      ],
+      "relevant_document_ids": [
+        "nfip-sfip-rcbap"
+      ],
+      "retrieved_chunk_ids": [
+        "nfip-sfip-rcbap#6d14098c38b3",
+        "nfip-sfip-dwelling#bd62ddf1c6b5",
+        "nfip-sfip-general-property#5b6cacbe6461",
+        "nfip-sfip-rcbap#7fd7454f8951",
+        "nfip-sfip-general-property#1402b295e1ea"
+      ],
+      "retrieved_document_ids": [
+        "nfip-sfip-rcbap",
+        "nfip-sfip-dwelling",
+        "nfip-sfip-general-property"
+      ],
+      "top_score": 0.8105091,
+      "latency_ms": 58.99,
+      "metrics": {
+        "hit_rate@1": 1.0,
+        "hit_rate@3": 1.0,
+        "hit_rate@5": 1.0,
+        "recall@1": 1.0,
+        "recall@3": 1.0,
+        "recall@5": 1.0,
+        "precision@1": 1.0,
+        "precision@3": 0.3333333333333333,
+        "precision@5": 0.2,
+        "reciprocal_rank": 1.0
+      },
+      "top_document_correct": true
+    },
+    {
+      "question_id": "nfip-011",
+      "question": "Under the Dwelling Form, are landslide and slope failure treated as mudflow?",
+      "category": "exclusion",
+      "difficulty": "hard",
+      "answerable": true,
+      "relevant_chunk_ids": [
+        "nfip-sfip-dwelling#99fda99e1f8e",
+        "nfip-sfip-dwelling#a2d4c737e875"
+      ],
+      "relevant_document_ids": [
+        "nfip-sfip-dwelling"
+      ],
+      "retrieved_chunk_ids": [
+        "nfip-sfip-rcbap#75db6af6daab",
+        "nfip-sfip-general-property#1402b295e1ea",
+        "nfip-sfip-rcbap#7fd7454f8951",
+        "nfip-sfip-dwelling#bd62ddf1c6b5",
+        "nfip-sfip-dwelling#99fda99e1f8e"
+      ],
+      "retrieved_document_ids": [
+        "nfip-sfip-rcbap",
+        "nfip-sfip-general-property",
+        "nfip-sfip-dwelling"
+      ],
+      "top_score": 0.68218696,
+      "latency_ms": 66.8,
+      "metrics": {
+        "hit_rate@1": 0.0,
+        "hit_rate@3": 0.0,
+        "hit_rate@5": 1.0,
+        "recall@1": 0.0,
+        "recall@3": 0.0,
+        "recall@5": 0.5,
+        "precision@1": 0.0,
+        "precision@3": 0.0,
+        "precision@5": 0.2,
+        "reciprocal_rank": 0.2
+      },
+      "top_document_correct": false
+    },
+    {
+      "question_id": "nfip-012",
+      "question": "Under the RCBAP, what percentage of replacement cost must the building be insured to in order to avoid a coinsurance penalty?",
+      "category": "form_difference",
+      "difficulty": "hard",
+      "answerable": true,
+      "relevant_chunk_ids": [
+        "nfip-sfip-rcbap#43fb8001932d"
+      ],
+      "relevant_document_ids": [
+        "nfip-sfip-rcbap"
+      ],
+      "retrieved_chunk_ids": [
+        "nfip-sfip-rcbap#567bf0c662fa",
+        "nfip-sfip-rcbap#43fb8001932d",
+        "nfip-sfip-rcbap#e6cc9da9a595",
+        "nfip-sfip-rcbap#237afaf71b9f",
+        "nfip-sfip-rcbap#cbac42591f32"
+      ],
+      "retrieved_document_ids": [
+        "nfip-sfip-rcbap"
+      ],
+      "top_score": 0.786462,
+      "latency_ms": 62.18,
+      "metrics": {
+        "hit_rate@1": 0.0,
+        "hit_rate@3": 1.0,
+        "hit_rate@5": 1.0,
+        "recall@1": 0.0,
+        "recall@3": 1.0,
+        "recall@5": 1.0,
+        "precision@1": 0.0,
+        "precision@3": 0.3333333333333333,
+        "precision@5": 0.2,
+        "reciprocal_rank": 0.5
+      },
+      "top_document_correct": true
+    },
+    {
+      "question_id": "nfip-013",
+      "question": "Which flood policy form imposes a coinsurance penalty on loss payment?",
+      "category": "form_difference",
+      "difficulty": "hard",
+      "answerable": true,
+      "relevant_chunk_ids": [
+        "nfip-sfip-rcbap#43fb8001932d"
+      ],
+      "relevant_document_ids": [
+        "nfip-sfip-rcbap"
+      ],
+      "retrieved_chunk_ids": [
+        "nfip-sfip-dwelling#c71c4dc27663",
+        "nfip-sfip-rcbap#508439466c42",
+        "nfip-sfip-general-property#025b41f77db0",
+        "nfip-sfip-general-property#7f02447ba5b6",
+        "nfip-sfip-rcbap#cbbe89d529a9"
+      ],
+      "retrieved_document_ids": [
+        "nfip-sfip-dwelling",
+        "nfip-sfip-rcbap",
+        "nfip-sfip-general-property"
+      ],
+      "top_score": 0.74056554,
+      "latency_ms": 42.59,
+      "metrics": {
+        "hit_rate@1": 0.0,
+        "hit_rate@3": 0.0,
+        "hit_rate@5": 0.0,
+        "recall@1": 0.0,
+        "recall@3": 0.0,
+        "recall@5": 0.0,
+        "precision@1": 0.0,
+        "precision@3": 0.0,
+        "precision@5": 0.0,
+        "reciprocal_rank": 0.0
+      },
+      "top_document_correct": false
+    },
+    {
+      "question_id": "nfip-018",
+      "question": "Under the RCBAP, how long after a loss must the proof of loss be submitted?",
+      "category": "near_miss",
+      "difficulty": "hard",
+      "answerable": true,
+      "relevant_chunk_ids": [
+        "nfip-sfip-rcbap#7e1ff001d734"
+      ],
+      "relevant_document_ids": [
+        "nfip-sfip-rcbap"
+      ],
+      "retrieved_chunk_ids": [
+        "nfip-sfip-general-property#08cd3f613329",
+        "nfip-sfip-dwelling#26a5d31d6035",
+        "nfip-sfip-rcbap#677b7108d16c",
+        "nfip-sfip-dwelling#a0e407de24cd",
+        "nfip-sfip-general-property#175d5ced3260"
+      ],
+      "retrieved_document_ids": [
+        "nfip-sfip-general-property",
+        "nfip-sfip-dwelling",
+        "nfip-sfip-rcbap"
+      ],
+      "top_score": 0.80562735,
+      "latency_ms": 43.65,
+      "metrics": {
+        "hit_rate@1": 0.0,
+        "hit_rate@3": 0.0,
+        "hit_rate@5": 0.0,
+        "recall@1": 0.0,
+        "recall@3": 0.0,
+        "recall@5": 0.0,
+        "precision@1": 0.0,
+        "precision@3": 0.0,
+        "precision@5": 0.0,
+        "reciprocal_rank": 0.0
+      },
+      "top_document_correct": false
+    },
+    {
+      "question_id": "nfip-019",
+      "question": "Under the General Property Form, when is the proof of loss due after a flood loss?",
+      "category": "near_miss",
+      "difficulty": "hard",
+      "answerable": true,
+      "relevant_chunk_ids": [
+        "nfip-sfip-general-property#175d5ced3260"
+      ],
+      "relevant_document_ids": [
+        "nfip-sfip-general-property"
+      ],
+      "retrieved_chunk_ids": [
+        "nfip-sfip-dwelling#00a7f390279c",
+        "nfip-sfip-rcbap#7e1ff001d734",
+        "nfip-sfip-rcbap#f23a94cb1f35",
+        "nfip-sfip-rcbap#6e4b615bab48",
+        "nfip-sfip-general-property#36420d408914"
+      ],
+      "retrieved_document_ids": [
+        "nfip-sfip-dwelling",
+        "nfip-sfip-rcbap",
+        "nfip-sfip-general-property"
+      ],
+      "top_score": 0.78373307,
+      "latency_ms": 45.96,
+      "metrics": {
+        "hit_rate@1": 0.0,
+        "hit_rate@3": 0.0,
+        "hit_rate@5": 0.0,
+        "recall@1": 0.0,
+        "recall@3": 0.0,
+        "recall@5": 0.0,
+        "precision@1": 0.0,
+        "precision@3": 0.0,
+        "precision@5": 0.0,
+        "reciprocal_rank": 0.0
+      },
+      "top_document_correct": false
+    },
+    {
+      "question_id": "nfip-026",
+      "question": "Under the RCBAP, if the building is insured for less than the required amount, how is the loss payment worked out?",
+      "category": "multi_chunk",
+      "difficulty": "hard",
+      "answerable": true,
+      "relevant_chunk_ids": [
+        "nfip-sfip-rcbap#43fb8001932d",
+        "nfip-sfip-rcbap#68961342bf3b"
+      ],
+      "relevant_document_ids": [
+        "nfip-sfip-rcbap"
+      ],
+      "retrieved_chunk_ids": [
+        "nfip-sfip-rcbap#43fb8001932d",
+        "nfip-sfip-dwelling#572a67e379fa",
+        "nfip-sfip-rcbap#68961342bf3b",
+        "nfip-sfip-rcbap#cbac42591f32",
+        "nfip-sfip-dwelling#559e7a5fff04"
+      ],
+      "retrieved_document_ids": [
+        "nfip-sfip-rcbap",
+        "nfip-sfip-dwelling"
+      ],
+      "top_score": 0.7746747,
+      "latency_ms": 47.78,
+      "metrics": {
+        "hit_rate@1": 1.0,
+        "hit_rate@3": 1.0,
+        "hit_rate@5": 1.0,
+        "recall@1": 0.5,
+        "recall@3": 1.0,
+        "recall@5": 1.0,
+        "precision@1": 1.0,
+        "precision@3": 0.6666666666666666,
+        "precision@5": 0.4,
+        "reciprocal_rank": 1.0
+      },
+      "top_document_correct": true
+    },
+    {
+      "question_id": "nfip-027",
+      "question": "Under the Dwelling Form, when does coverage begin for a building that is still under construction?",
+      "category": "single_chunk",
+      "difficulty": "medium",
+      "answerable": true,
+      "relevant_chunk_ids": [
+        "nfip-sfip-dwelling#fddcd878d925"
+      ],
+      "relevant_document_ids": [
+        "nfip-sfip-dwelling"
+      ],
+      "retrieved_chunk_ids": [
+        "nfip-sfip-dwelling#fddcd878d925",
+        "nfip-sfip-rcbap#23add98791a6",
+        "nfip-sfip-general-property#e77228720340",
+        "nfip-sfip-dwelling#148c93784664",
+        "nfip-sfip-dwelling#6592d43f3e43"
+      ],
+      "retrieved_document_ids": [
+        "nfip-sfip-dwelling",
+        "nfip-sfip-rcbap",
+        "nfip-sfip-general-property"
+      ],
+      "top_score": 0.8182994,
+      "latency_ms": 42.08,
+      "metrics": {
+        "hit_rate@1": 1.0,
+        "hit_rate@3": 1.0,
+        "hit_rate@5": 1.0,
+        "recall@1": 1.0,
+        "recall@3": 1.0,
+        "recall@5": 1.0,
+        "precision@1": 1.0,
+        "precision@3": 0.3333333333333333,
+        "precision@5": 0.2,
+        "reciprocal_rank": 1.0
+      },
+      "top_document_correct": true
+    },
+    {
+      "question_id": "nfip-029",
+      "question": "Under the RCBAP, can the amount of coverage be increased while a premium is still owed?",
+      "category": "single_chunk",
+      "difficulty": "medium",
+      "answerable": true,
+      "relevant_chunk_ids": [
+        "nfip-sfip-rcbap#3bde22c3c5a5"
+      ],
+      "relevant_document_ids": [
+        "nfip-sfip-rcbap"
+      ],
+      "retrieved_chunk_ids": [
+        "nfip-sfip-dwelling#572a67e379fa",
+        "nfip-sfip-dwelling#97066a67413c",
+        "nfip-sfip-dwelling#72c2f65f5348",
+        "nfip-sfip-rcbap#97260b4141be",
+        "nfip-sfip-rcbap#dbbdd253dcbe"
+      ],
+      "retrieved_document_ids": [
+        "nfip-sfip-dwelling",
+        "nfip-sfip-rcbap"
+      ],
+      "top_score": 0.74663574,
+      "latency_ms": 41.05,
+      "metrics": {
+        "hit_rate@1": 0.0,
+        "hit_rate@3": 0.0,
+        "hit_rate@5": 0.0,
+        "recall@1": 0.0,
+        "recall@3": 0.0,
+        "recall@5": 0.0,
+        "precision@1": 0.0,
+        "precision@3": 0.0,
+        "precision@5": 0.0,
+        "reciprocal_rank": 0.0
+      },
+      "top_document_correct": false
+    },
+    {
+      "question_id": "nfip-030",
+      "question": "Under the Dwelling Form, what types of property does the policy insure?",
+      "category": "single_chunk",
+      "difficulty": "easy",
+      "answerable": true,
+      "relevant_chunk_ids": [
+        "nfip-sfip-dwelling#a4e30200499d"
+      ],
+      "relevant_document_ids": [
+        "nfip-sfip-dwelling"
+      ],
+      "retrieved_chunk_ids": [
+        "nfip-sfip-rcbap#7cf71a8416f7",
+        "nfip-sfip-dwelling#a4e30200499d",
+        "nfip-sfip-general-property#df981dc84b13",
+        "nfip-sfip-general-property#c98ac7e00db5",
+        "nfip-sfip-dwelling#6ad55bfa006f"
+      ],
+      "retrieved_document_ids": [
+        "nfip-sfip-rcbap",
+        "nfip-sfip-dwelling",
+        "nfip-sfip-general-property"
+      ],
+      "top_score": 0.7820021,
+      "latency_ms": 44.36,
+      "metrics": {
+        "hit_rate@1": 0.0,
+        "hit_rate@3": 1.0,
+        "hit_rate@5": 1.0,
+        "recall@1": 0.0,
+        "recall@3": 1.0,
+        "recall@5": 1.0,
+        "precision@1": 0.0,
+        "precision@3": 0.3333333333333333,
+        "precision@5": 0.2,
+        "reciprocal_rank": 0.5
+      },
+      "top_document_correct": false
+    },
+    {
+      "question_id": "nfip-034",
+      "question": "What is the coinsurance penalty threshold under the General Property Form?",
+      "category": "unanswerable",
+      "difficulty": "hard",
+      "answerable": false,
+      "relevant_chunk_ids": [],
+      "relevant_document_ids": [],
+      "retrieved_chunk_ids": [
+        "nfip-sfip-rcbap#567bf0c662fa",
+        "nfip-sfip-dwelling#6030fc47898e",
+        "nfip-sfip-rcbap#e6cc9da9a595",
+        "nfip-sfip-rcbap#fbef759baf78",
+        "nfip-sfip-dwelling#ac1308674105"
+      ],
+      "retrieved_document_ids": [
+        "nfip-sfip-rcbap",
+        "nfip-sfip-dwelling"
+      ],
+      "top_score": 0.7544409,
+      "latency_ms": 36.42
+    },
+    {
+      "question_id": "nfip-036",
+      "question": "How do I appeal a denied flood claim to the Federal Insurance Administrator?",
+      "category": "unanswerable",
+      "difficulty": "medium",
+      "answerable": false,
+      "relevant_chunk_ids": [],
+      "relevant_document_ids": [],
+      "retrieved_chunk_ids": [
+        "nfip-sfip-general-property#8d7fb642ee84",
+        "nfip-sfip-dwelling#5706bc3c7ad4",
+        "nfip-sfip-general-property#e3c7cfcd3bfb",
+        "nfip-sfip-dwelling#6263739ba633",
+        "nfip-sfip-rcbap#1acca53e8597"
+      ],
+      "retrieved_document_ids": [
+        "nfip-sfip-general-property",
+        "nfip-sfip-dwelling",
+        "nfip-sfip-rcbap"
+      ],
+      "top_score": 0.706152,
+      "latency_ms": 44.04
+    },
+    {
+      "question_id": "nfip-037",
+      "question": "How many NFIP flood policies are currently in force nationwide?",
+      "category": "unanswerable",
+      "difficulty": "easy",
+      "answerable": false,
+      "relevant_chunk_ids": [],
+      "relevant_document_ids": [],
+      "retrieved_chunk_ids": [
+        "nfip-sfip-general-property#025b41f77db0",
+        "nfip-sfip-dwelling#5706bc3c7ad4",
+        "nfip-sfip-rcbap#488b429c0bb0",
+        "nfip-sfip-dwelling#99fda99e1f8e",
+        "nfip-sfip-rcbap#1acca53e8597"
+      ],
+      "retrieved_document_ids": [
+        "nfip-sfip-general-property",
+        "nfip-sfip-dwelling",
+        "nfip-sfip-rcbap"
+      ],
+      "top_score": 0.7410368,
+      "latency_ms": 40.01
+    },
+    {
+      "question_id": "nfip-040",
+      "question": "What is the coinsurance requirement?",
+      "category": "unanswerable",
+      "difficulty": "hard",
+      "answerable": false,
+      "relevant_chunk_ids": [],
+      "relevant_document_ids": [],
+      "retrieved_chunk_ids": [
+        "nfip-sfip-rcbap#567bf0c662fa",
+        "nfip-sfip-rcbap#fbef759baf78",
+        "nfip-sfip-general-property#bfc017c64e3d",
+        "nfip-sfip-rcbap#e6cc9da9a595",
+        "nfip-sfip-rcbap#508439466c42"
+      ],
+      "retrieved_document_ids": [
+        "nfip-sfip-rcbap",
+        "nfip-sfip-general-property"
+      ],
+      "top_score": 0.71181065,
+      "latency_ms": 39.68
+    }
+  ]
+}
