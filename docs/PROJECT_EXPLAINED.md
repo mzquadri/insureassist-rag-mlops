@@ -9,8 +9,11 @@ tools is assumed.
 ## 1. The one-sentence idea
 
 > Ask an insurance question in plain English → the system finds the relevant policy text
-> and an LLM writes a grounded, cited answer → all packaged, evaluated, and deployed to the
-> cloud like a real product.
+> → an LLM answers from it and reports which documents it used.
+
+> **Scope note.** This is a working prototype, not a deployed product. It has not been
+> deployed to any cloud, retrieval quality is not measured, and the fine-tuned model
+> described later is authored but unevidenced. See the status table in the README.
 
 This pattern is called **RAG (Retrieval-Augmented Generation)**. It is the single most
 common GenAI system in industry today.
@@ -25,7 +28,8 @@ A plain LLM (like ChatGPT) has two problems for a company:
 
 **RAG fixes both:** instead of trusting the LLM's memory, we *retrieve* the exact
 paragraphs from your documents and tell the LLM: "answer using ONLY this text." The answer
-is grounded in real sources and can be cited.
+is drawn from the retrieved text. Note that the service reports *which documents* it
+used, not which passages, so answers are attributed rather than truly cited.
 
 ---
 
@@ -51,8 +55,9 @@ Key terms:
   meaning. Similar meanings → nearby vectors. We use **BGE** (a small, strong embedder).
 - **Vector database (Qdrant)**: stores those vectors and finds the closest ones fast. This
   is *semantic* search (by meaning), not keyword matching.
-- **LLM**: the model that writes the final answer. Locally we use **Ollama**; in the cloud
-  we use our **fine-tuned** model.
+- **LLM**: the model that writes the final answer. This project uses **Ollama** with a
+  stock `llama3.2:3b`. A fine-tuning notebook exists but produced no adapter, so no
+  fine-tuned model is served anywhere.
 
 ---
 
@@ -65,7 +70,7 @@ Key terms:
 | `ingest.py` | Loads docs from `data/`, splits into overlapping chunks, embeds them, stores in Qdrant. Run once to fill the database. |
 | `rag.py` | The core: `retrieve()` (search Qdrant) + `build_prompt()` + `generate()` (call the LLM) = `answer()`. |
 | `api.py` | Wraps `answer()` in a FastAPI web service with `/ask` and `/health` endpoints. |
-| `hf_generator.py` | Phase 3: generation using the fine-tuned Hugging Face model (base + LoRA adapter). |
+| `hf_generator.py` | Optional Hugging Face backend. Loads the base model, plus a LoRA adapter *if one exists locally* — none ships here. Needs torch/transformers/peft, which `requirements.txt` does not install. |
 
 ### `data/` — sample content
 - `home_insurance_policy.md`, `auto_insurance_policy.md`: fake but realistic policies.
