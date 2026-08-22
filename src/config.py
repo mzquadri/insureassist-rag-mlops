@@ -12,7 +12,7 @@ class Config:
     # host port 6533 (not the usual 6333) so it cannot collide with another local Qdrant.
     # The previous default of 6333 pointed at a port nothing in this project listens on.
     QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6533")
-    QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "insurance_docs")
+    QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "nfip_sfip")
 
     # Embeddings
     EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5")
@@ -29,9 +29,9 @@ class Config:
     CORPUS = os.getenv("CORPUS", "nfip")
 
     # Retrieval
-    TOP_K = int(os.getenv("TOP_K", "4"))
-    CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "600"))     # characters
-    CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "100"))
+    TOP_K = int(os.getenv("TOP_K", "5"))
+    CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "800"))     # characters (frozen; see eval/retrieval_config.json)
+    CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "120"))
 
     # BGE models are trained with an asymmetric retrieval instruction: the QUERY carries a
     # prefix and the passages do not. BAAI documents this for bge-*-en-v1.5 and reports it

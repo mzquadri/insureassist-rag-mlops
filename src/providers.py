@@ -44,6 +44,7 @@ Generator = Callable[[str], str]
 
 
 _embedder: Embedder | None = None
+_bm25 = None
 _vector_store: VectorStore | None = None
 _generator: Generator | None = None
 
@@ -136,6 +137,33 @@ def get_generator() -> Generator:
     return _generator
 
 
+def get_bm25_index():
+    """The lexical index, built on first use from the committed corpus.
+
+    Built in-process rather than stored in Qdrant: the corpus is 3 documents and a few
+    hundred chunks, so the index costs milliseconds to construct and needs no extra
+    service. It is cached like the other dependencies and replaceable by a test.
+    """
+    global _bm25
+    if _bm25 is None:
+        try:
+            from src.corpus import chunk_corpus, load_corpus
+            from src.retrieval import BM25Index
+
+            documents = load_corpus()
+            chunks = chunk_corpus(documents, cfg.CHUNK_SIZE, cfg.CHUNK_OVERLAP)
+            _bm25 = BM25Index(chunks)
+        except Exception as exc:  # boundary: corpus missing or unreadable
+            raise RetrievalUnavailable("could not build the lexical index") from exc
+    return _bm25
+
+
+def set_bm25_index(index) -> None:
+    """Install a lexical index (tests, or a prebuilt one)."""
+    global _bm25
+    _bm25 = index
+
+
 def set_embedder(embedder: Embedder | None) -> None:
     """Install an embedder (tests, or a preloaded model)."""
     global _embedder
@@ -159,3 +187,4 @@ def reset() -> None:
     set_embedder(None)
     set_vector_store(None)
     set_generator(None)
+    set_bm25_index(None)
