@@ -113,7 +113,9 @@ jobs:
           test "$uid" = "10001" || { echo "container runs as uid $uid"; exit 1; }
 
       - name: Install test dependencies
-        run: pip install -r requirements-dev.txt
+        # Both files: conftest imports src.config, which needs python-dotenv. Installing
+        # only the dev requirements made the job fail at collection with ModuleNotFoundError.
+        run: pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Container integration tests
         env:
