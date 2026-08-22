@@ -12,11 +12,13 @@ Ask a question in plain English (*"Does my home policy cover a burst pipe?"*) an
 service retrieves the most similar policy passages and answers from them, returning the
 documents it drew on.
 
-> **Read this before the feature list.** The sample corpus is two short synthetic policy
-> documents that produce **7 chunks in total**. That is enough to demonstrate the pipeline
-> and to test it. It is far too small to measure retrieval quality, so this repository
-> publishes **no retrieval metrics**. What is and is not evidenced is set out in
-> [Honest status](#honest-status) below.
+> **Read this before the feature list.** Retrieval is now measured against a real corpus:
+> the three NFIP Standard Flood Insurance Policy forms published as federal regulation
+> (35,639 words, 426 chunks), with 40 hand-labelled questions. The headline result is not
+> flattering — the retriever picks the **correct policy form only 17% of the time**, because
+> the three forms are near-duplicates. See [`docs/BENCHMARK.md`](docs/BENCHMARK.md).
+>
+> Generation quality, citation correctness and abstention are still **not** measured.
 
 ---
 
@@ -57,7 +59,10 @@ but unproven, it says so.
 | RAG pipeline (FastAPI + Qdrant + BGE + Ollama) | **Working** | `src/`, runs locally |
 | Offline unit + API failure-path tests | **Working** | `tests/`, run in CI |
 | Answer-quality judge harness | **Working, weak** | `eval/eval_report.csv`; self-judging 3B model, 10 questions, single run |
-| Retrieval quality | **Not measured** | No relevance labels exist; corpus too small to be meaningful |
+| Retrieval quality (NFIP) | **Measured** | 40 labelled questions, 426-chunk real corpus; hit rate@5 0.611, MRR 0.366, top-document accuracy 0.167 |
+| Lexical / hybrid baseline | **Not built** | Dense retrieval has nothing to be compared against yet |
+| Citation correctness | **Not measured** | `sources` is document-level; no chunk-level citation yet |
+| Abstention | **Not measured** | Similarity distributions overlap; no threshold study run |
 | LoRA fine-tuning + MLflow | **Authored, not evidenced** | Notebook has no outputs; no adapter; no run data |
 | Docker image | **Builds and runs locally** | Manual verification only — not built or tested in CI |
 | Kubernetes manifests | **Authored, not deployed** | YAML parses in CI; never applied to a cluster |
@@ -67,11 +72,15 @@ but unproven, it says so.
 
 ### Known limitations
 
-- **Retrieval is not evaluated.** `data/qa_testset.jsonl` holds reference answers but no
-  relevant-document or chunk labels, so Recall@k, MRR and nDCG cannot be computed. There is
-  no lexical baseline to compare against.
-- **The corpus is 7 chunks and `TOP_K=4`**, so more than half the index is returned for
-  every query. Retrieval is close to trivial at this scale.
+- **Retrieval is measured, and it is weak.** On the held-out test split the retriever
+  returns the right passage in the top 5 for 61% of answerable questions, and its single
+  best hit comes from the wrong policy form 83% of the time.
+- **There is no baseline.** Dense retrieval has not been compared with lexical or hybrid
+  retrieval, so "dense is the right choice here" is unproven.
+- **nDCG is not reported.** The labels are binary, so it would add a column rather than
+  information.
+- **The synthetic sample corpus (7 chunks) is retained only as an offline fixture.** No
+  metric is published from it.
 - **The evaluation judge is the model being judged**, which biases the scores.
 - **The fine-tuning data is the evaluation set.** The ten training pairs in the notebook
   are the ten test questions. No fine-tuned model can be honestly scored against them —
@@ -144,7 +153,10 @@ insureassist-rag-mlops/
 ├── finetune/               # LoRA notebook (authored, not evidenced)
 ├── eval/                   # LLM-as-judge harness + recorded report
 ├── k8s/                    # Kubernetes manifests (authored, not deployed)
-├── data/                   # synthetic policies + Q&A set + provenance
+├── data/
+│   ├── corpus/             #   real NFIP policy forms (CFR) + manifest
+│   └── *.md                #   synthetic sample docs (fixtures only)
+├── scripts/                # corpus fetch + ground-truth builder
 ├── docs/                   # diagrams, walkthrough, GCP guide
 ├── .github/workflows/      # CI and deploy pipelines
 ├── Dockerfile
@@ -160,7 +172,8 @@ insureassist-rag-mlops/
 |---|---|
 | RAG | Qdrant (vector DB), sentence-transformers (BGE), FastAPI |
 | Generation | Ollama (`llama3.2:3b`) |
-| Evaluation | Custom LLM-as-judge metrics |
+| Retrieval evaluation | Labelled ground truth, Recall/Hit-rate/MRR/Precision@k |
+| Answer evaluation | Custom LLM-as-judge metrics |
 | Fine-tuning (notebook only) | Hugging Face Transformers, PEFT (LoRA), MLflow |
 | Packaging & ops | Docker, Kubernetes manifests, GitHub Actions |
 | Cloud (guide only) | Google Cloud — GKE, Artifact Registry |
@@ -170,7 +183,21 @@ notebook. They are not installed by `requirements.txt`.
 
 ---
 
+## Benchmark
+
+```bash
+docker compose up -d qdrant
+QDRANT_COLLECTION=nfip_sfip python -m src.ingest
+python -m eval.validate_ground_truth
+QDRANT_COLLECTION=nfip_sfip python -m eval.reference_run --split test
+python -m eval.failure_analysis
+```
+
+Results, method and limitations: [`docs/BENCHMARK.md`](docs/BENCHMARK.md).
+
 ## License
 
-Released under the [MIT License](LICENSE). The sample data is synthetic and self-authored —
-see [`data/README.md`](data/README.md).
+The [MIT License](LICENSE) covers **the code only**. The NFIP policy forms under
+`data/corpus/` are US Government works carrying no copyright (17 U.S.C. 105) and are not
+relicensed by this repository — see [`NOTICE`](NOTICE) and [`docs/DATA.md`](docs/DATA.md).
+The synthetic sample data is self-authored; see [`data/README.md`](data/README.md).
