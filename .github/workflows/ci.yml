@@ -1,6 +1,9 @@
-# CI = Continuous Integration. Runs on every push/PR and checks the code is healthy.
-# It's intentionally lightweight (no heavy ML installs) so it's fast and reliable — it
-# gives your repo a green checkmark and demonstrates CI without needing any cloud secrets.
+# CI: static validation plus the offline test suite.
+#
+# What this does NOT do, so a green tick is not over-read: it does not build the Docker
+# image, start Qdrant, run Ollama, or make an HTTP request against a running service.
+# Container and integration coverage is a later phase. Until then, green means "parses,
+# lints, and passes the offline tests".
 
 name: CI
 
@@ -22,17 +25,27 @@ jobs:
 
       - name: Syntax-check all Python files
         # compileall verifies every .py parses correctly (no execution, no dependencies).
-        run: python -m compileall -q src eval
+        run: python -m compileall -q src eval tests
 
       - name: Lint with ruff (style + obvious bugs)
         run: |
           pip install ruff
-          ruff check src eval --output-format=github
+          ruff check src eval tests --output-format=github
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Run the offline test suite
+        # No services are started for this step on purpose: the suite must pass without a
+        # vector database, a generator, or any network access. If it ever needs one, the
+        # provider seam has regressed and this step is where that shows up.
+        run: pytest
 
       - name: Validate the Colab notebook is well-formed JSON
         run: python -c "import json, glob; [json.load(open(f)) for f in glob.glob('finetune/*.ipynb')]; print('notebook OK')"
 
       - name: Validate Kubernetes YAML parses
+        # Parsing only. This says nothing about whether the manifests deploy or work.
         run: |
           pip install pyyaml
           python -c "import yaml, glob; [list(yaml.safe_load_all(open(f))) for f in glob.glob('k8s/*.yaml')]; print('k8s YAML OK')"
