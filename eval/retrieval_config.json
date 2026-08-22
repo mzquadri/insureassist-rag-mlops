@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "frozen": true,
+  "frozen_on": "dev split only, before any TEST run at this configuration",
+  "architecture": "hybrid_rrf",
+  "rationale": "Dense and BM25 are genuinely complementary on dev: of 14 answerable questions each retriever finds 3 that the other misses (union ceiling 0.857 vs 0.643 for either alone). Reciprocal rank fusion recovers most of that union at 0.786 while also lifting top-document accuracy from 0.357 (dense) to 0.571. Neither retriever alone is defensible when the other holds a fifth of the answers.",
+  "dense": {
+    "model": "BAAI/bge-small-en-v1.5",
+    "dimension": 384,
+    "distance": "cosine",
+    "normalize": true,
+    "query_prefix": "Represent this sentence for searching relevant passages: ",
+    "passage_prefix": ""
+  },
+  "bm25": {
+    "implementation": "src.retrieval.BM25Index (Okapi BM25, in-repo)",
+    "k1": 1.5,
+    "b": 0.75,
+    "tokenizer": "lowercase; thousands separators removed inside digit runs; split on runs of non-alphanumeric characters",
+    "stopwords": "none",
+    "stemming": "none",
+    "query_expansion": "none",
+    "parameters_tuned": false,
+    "parameter_sweep_note": "k1 in {0.9,1.2,1.5,2.0} x b in {0.5,0.75,1.0} was measured on dev. All twelve combinations produced identical hit@5 and MRR, so the standard defaults are kept and no tuning is claimed."
+  },
+  "fusion": {
+    "method": "reciprocal_rank_fusion",
+    "k": 60,
+    "k_source": "Cormack et al. default, not tuned",
+    "candidate_depth_per_retriever": 20,
+    "note": "RRF reads rank positions only. Dense cosine and BM25 scores are on different unnormalised scales, so any score-level combination would require inventing a weighting."
+  },
+  "chunking": {
+    "size": 800,
+    "overlap": 120,
+    "unit": "characters",
+    "note": "Selected on dev from {400/80, 600/100, 600/150, 800/120, 1000/150}. Larger chunks keep a provision and its form-identifying context in the same window, which is what the dominant failure mode required."
+  },
+  "retrieval_depth": 10,
+  "serving_top_k": 5,
+  "dev_selection": {
+    "split": "dev",
+    "answerable_questions": 14,
+    "hit_rate@1": 0.4286,
+    "hit_rate@3": 0.6429,
+    "hit_rate@5": 1.0,
+    "recall@5": 0.9643,
+    "mrr": 0.6214,
+    "top_document_accuracy": 0.5714,
+    "caveat": "14 answerable dev questions. hit@5 of 1.000 is a small-sample result and should not be expected to hold on the held-out split."
+  },
+  "not_implemented": {
+    "reranker": "No cross-encoder or LLM reranker. Dev evidence shows the failure is candidate selection (the right chunk is often absent from the candidate list), not ordering within a good list. A reranker cannot promote what was never retrieved.",
+    "query_expansion": "None. It would blur the form distinction the benchmark turns on.",
+    "metadata_form_filter": "Not implemented. Inferring the target form from query wording is feasible, but hybrid fusion already lifts top-document accuracy to parity with BM25, and a filter that guesses wrong removes the correct document entirely."
+  }
+}
