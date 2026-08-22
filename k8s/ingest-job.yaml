@@ -10,9 +10,13 @@ spec:
   template:
     spec:
       restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
       containers:
         - name: ingest
-          image: insureassist:latest      # replace with your pushed image in Phase 5
+          image: insureassist:v0.2.0      # replace with your pushed image
           command: ["python", "-m", "src.ingest"]
           envFrom:
             - configMapRef:

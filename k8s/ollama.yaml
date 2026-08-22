@@ -1,6 +1,13 @@
-# Ollama runs the LLM inside the cluster (CPU inference — fine for a demo).
-# After it starts, pull the model once:
+# Ollama runs the LLM inside the cluster (CPU inference).
+#
+# Known limitation, stated rather than automated away: the model is NOT provisioned by
+# these manifests. After the pod starts it must be pulled by hand:
+#
 #   kubectl exec deploy/ollama -- ollama pull llama3.2:3b
+#
+# The model directory is a PVC so that pull survives restarts and rescheduling. Fully
+# automated model provisioning (an init container pulling ~2 GB, or a pre-baked image) is
+# outside the scope of this reference project and is not pretended to exist.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,20 +22,34 @@ spec:
       labels:
         app: ollama
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
       containers:
         - name: ollama
-          image: ollama/ollama:latest
+          image: ollama/ollama:0.12.3
+          env:
+            - name: OLLAMA_MODELS
+              value: /home/ollama/.ollama/models
           ports:
             - containerPort: 11434
           resources:
             requests: { cpu: "1", memory: "3Gi" }
             limits:   { cpu: "2", memory: "6Gi" }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           volumeMounts:
             - name: models
-              mountPath: /root/.ollama
+              mountPath: /home/ollama/.ollama
       volumes:
+        # A claim, not an emptyDir: an emptyDir meant the ~2 GB model was lost on every
+        # restart and had to be pulled again by hand.
         - name: models
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: ollama-models
 ---
 apiVersion: v1
 kind: Service
@@ -40,3 +61,13 @@ spec:
   ports:
     - port: 11434
       targetPort: 11434
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-models
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 10Gi

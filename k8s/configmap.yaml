@@ -6,9 +6,12 @@ metadata:
   name: insureassist-config
 data:
   QDRANT_URL: "http://qdrant:6333"
-  QDRANT_COLLECTION: "insurance_docs"
+  QDRANT_COLLECTION: "nfip_sfip"
   EMBEDDING_MODEL: "BAAI/bge-small-en-v1.5"
   LLM_BACKEND: "ollama"
   OLLAMA_URL: "http://ollama:11434"
   OLLAMA_MODEL: "llama3.2:3b"
-  TOP_K: "4"
+  TOP_K: "5"
+  CHUNK_SIZE: "800"
+  CHUNK_OVERLAP: "120"
+  CORPUS: "nfip"
