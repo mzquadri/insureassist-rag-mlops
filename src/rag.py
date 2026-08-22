@@ -20,7 +20,11 @@ def retrieve(question: str, top_k: int | None = None) -> list[dict]:
     embedder = get_embedder()
     store = get_vector_store()
 
-    qvec = embedder.encode(question, normalize_embeddings=True).tolist()
+    # BGE is asymmetric: the query gets an instruction prefix, passages do not. Ingestion
+    # embeds chunk text bare, so the prefix belongs here and only here.
+    qvec = embedder.encode(
+        cfg.BGE_QUERY_PREFIX + question, normalize_embeddings=True
+    ).tolist()
     try:
         result = store.query_points(
             collection_name=cfg.QDRANT_COLLECTION,
