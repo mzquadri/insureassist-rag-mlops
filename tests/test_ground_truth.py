@@ -20,7 +20,7 @@ from eval.ground_truth import (
 from scripts.build_ground_truth import assign_split
 from src.corpus import chunk_corpus, load_corpus
 
-SIZE, OVERLAP = 600, 100
+SIZE, OVERLAP = 800, 120
 
 
 @pytest.fixture(scope="module")
@@ -246,7 +246,7 @@ class TestGroundTruthFile:
 
     def test_no_benchmark_question_appears_in_the_finetuning_data(self, questions):
         """The synthetic fine-tuning set must never overlap this benchmark."""
-        with open("finetune/lora_finetune.ipynb", encoding="utf-8") as f:
+        with open("archive/finetune/lora_finetune.ipynb", encoding="utf-8") as f:
             notebook = json.load(f)
         training_text = " ".join(
             "".join(cell["source"]) for cell in notebook["cells"]

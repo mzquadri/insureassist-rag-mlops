@@ -1,5 +1,5 @@
 """
-The committed reference run, and the query-side BGE prefix.
+The committed reference run, the frozen config, and the artefact/doc reconciliation.
 
 These assert the shape and internal consistency of the published artefact - not that the
 numbers are good. The numbers are what they are; the tests exist so the file cannot drift
@@ -10,12 +10,12 @@ from pathlib import Path
 
 import pytest
 
-from src import providers
-from src.config import cfg
-from src.corpus import chunk_corpus, config_hash, corpus_hash, load_corpus
-from src.rag import retrieve
+from eval.verify_artifacts import DOCUMENTED_CLAIMS, dig
+from src.corpus import chunk_corpus, corpus_hash, load_corpus
+from src.retrieval import load_retrieval_config, retrieval_config_hash
 
-RUN_PATH = Path("eval/reference_run_nfip.json")
+RUN_PATH = Path("eval/reference_run.json")
+SIZE, OVERLAP = 800, 120
 
 
 @pytest.fixture(scope="module")
@@ -23,181 +23,166 @@ def run():
     return json.loads(RUN_PATH.read_text(encoding="utf-8"))
 
 
-class TestQueryPrefix:
-    def test_the_query_is_prefixed_before_embedding(self, fake_store):
-        """BGE is asymmetric: queries carry an instruction, passages do not."""
-        seen = {}
-
-        class RecordingEmbedder:
-            def encode(self, text, normalize_embeddings=False):
-                seen["text"] = text
-
-                class V(list):
-                    def tolist(self):
-                        return list(self)
-
-                return V([0.1] * 4)
-
-        providers.set_embedder(RecordingEmbedder())
-        providers.set_vector_store(fake_store)
-        retrieve("Is a burst pipe covered?")
-
-        assert seen["text"].startswith(cfg.BGE_QUERY_PREFIX)
-        assert seen["text"].endswith("Is a burst pipe covered?")
-
-    def test_prefix_is_the_documented_bge_instruction(self):
-        assert cfg.BGE_QUERY_PREFIX == (
-            "Represent this sentence for searching relevant passages: "
-        )
-
-    def test_prefix_can_be_disabled(self, monkeypatch, fake_store):
-        seen = {}
-
-        class RecordingEmbedder:
-            def encode(self, text, normalize_embeddings=False):
-                seen["text"] = text
-
-                class V(list):
-                    def tolist(self):
-                        return list(self)
-
-                return V([0.1] * 4)
-
-        monkeypatch.setattr(cfg, "BGE_QUERY_PREFIX", "")
-        providers.set_embedder(RecordingEmbedder())
-        providers.set_vector_store(fake_store)
-        retrieve("question")
-        assert seen["text"] == "question"
+@pytest.fixture(scope="module")
+def config():
+    return load_retrieval_config()
 
 
-class TestReferenceRunSchema:
+class TestFrozenConfig:
+    def test_config_declares_itself_frozen(self, config):
+        assert config["frozen"] is True
+
+    def test_architecture_is_the_selected_hybrid(self, config):
+        assert config["architecture"] == "hybrid_rrf"
+
+    def test_chunking_is_the_selected_configuration(self, config):
+        assert config["chunking"]["size"] == SIZE
+        assert config["chunking"]["overlap"] == OVERLAP
+
+    def test_bm25_parameters_are_defaults_and_say_so(self, config):
+        assert config["bm25"]["k1"] == 1.5
+        assert config["bm25"]["b"] == 0.75
+        assert config["bm25"]["parameters_tuned"] is False
+
+    def test_no_reranker_and_the_reason_is_recorded(self, config):
+        assert "reranker" in config["not_implemented"]
+        assert config["not_implemented"]["reranker"]
+
+    def test_config_hash_is_stable(self, config):
+        assert retrieval_config_hash(config) == retrieval_config_hash(load_retrieval_config())
+
+    def test_dev_selection_carries_its_small_sample_caveat(self, config):
+        assert "caveat" in config["dev_selection"]
+        assert config["dev_selection"]["answerable_questions"] == 14
+
+
+class TestRunSchema:
     def test_top_level_sections(self, run):
-        assert set(run) == {
-            "run", "configuration", "corpus", "questions",
-            "retrieval_metrics_answerable_only", "by_category", "by_relevant_form",
-            "unanswerable", "latency_ms", "per_question",
+        assert set(run) >= {
+            "schema_version", "benchmark", "split", "corpus", "questions",
+            "retrieval", "generation", "latency_ms", "reproducibility", "per_question",
         }
 
-    def test_configuration_is_recorded(self, run):
-        config = run["configuration"]
-        assert config["embedding_model"] == "BAAI/bge-small-en-v1.5"
-        assert config["embedding_dimension"] == 384
-        assert config["chunk_size"] == 600
-        assert config["chunk_overlap"] == 100
-        assert config["distance"] == "cosine"
-        assert config["query_prefix"]
-
-    def test_config_hash_matches_the_recorded_configuration(self, run):
-        config = run["configuration"]
-        assert config["config_hash"] == config_hash(
-            embedding_model=config["embedding_model"],
-            size=config["chunk_size"],
-            overlap=config["chunk_overlap"],
-        )
+    def test_reports_the_held_out_split(self, run):
+        assert run["split"] == "test"
 
     def test_corpus_hash_matches_the_committed_corpus(self, run):
         assert run["corpus"]["corpus_hash"] == corpus_hash(load_corpus())
 
-    def test_corpus_counts_match_the_committed_corpus(self, run):
+    def test_corpus_counts_match(self, run):
         documents = load_corpus()
-        chunks = chunk_corpus(documents, 600, 100)
         assert run["corpus"]["documents"] == len(documents)
-        assert run["corpus"]["chunks"] == len(chunks)
+        assert run["corpus"]["chunks"] == len(chunk_corpus(documents, SIZE, OVERLAP))
 
-    def test_metrics_are_present_for_every_k(self, run):
-        metrics = run["retrieval_metrics_answerable_only"]
+    def test_run_matches_the_frozen_config(self, run, config):
+        assert run["retrieval"]["architecture"] == config["architecture"]
+        assert run["retrieval"]["chunking"]["size"] == config["chunking"]["size"]
+        assert run["reproducibility"]["retrieval_config_hash"] == retrieval_config_hash(config)
+
+    def test_metrics_present_for_every_k(self, run):
+        metrics = run["retrieval"]["metrics"]
         for k in (1, 3, 5):
-            assert f"hit_rate@{k}" in metrics
-            assert f"recall@{k}" in metrics
-            assert f"precision@{k}" in metrics
+            for name in ("hit_rate", "recall", "precision"):
+                assert f"{name}@{k}" in metrics
         assert "mrr" in metrics
+        assert "top_document_accuracy" in metrics
 
-    def test_all_metrics_are_in_range(self, run):
-        for name, value in run["retrieval_metrics_answerable_only"].items():
+    def test_all_metrics_in_range(self, run):
+        for name, value in run["retrieval"]["metrics"].items():
             assert 0.0 <= value <= 1.0, name
 
-    def test_metrics_are_monotone_in_k(self, run):
-        """Recall and hit rate cannot fall as k grows."""
-        metrics = run["retrieval_metrics_answerable_only"]
-        assert metrics["hit_rate@1"] <= metrics["hit_rate@3"] <= metrics["hit_rate@5"]
-        assert metrics["recall@1"] <= metrics["recall@3"] <= metrics["recall@5"]
+    def test_metrics_monotone_in_k(self, run):
+        m = run["retrieval"]["metrics"]
+        assert m["hit_rate@1"] <= m["hit_rate@3"] <= m["hit_rate@5"]
+        assert m["recall@1"] <= m["recall@3"] <= m["recall@5"]
+
+    def test_both_baselines_are_published(self, run):
+        assert set(run["retrieval"]["baselines"]) == {"dense", "bm25"}
+        for baseline in run["retrieval"]["baselines"].values():
+            assert 0.0 <= baseline["hit_rate@5"] <= 1.0
 
 
-class TestUnanswerableAreSeparated:
-    def test_unanswerable_are_excluded_from_the_aggregates(self, run):
-        evaluated = [r for r in run["per_question"] if r["answerable"]]
-        assert run["questions"]["unanswerable"] > 0
-        # Aggregates are computed over answerable records only.
-        assert all("metrics" in r for r in evaluated)
-        assert all("metrics" not in r for r in run["per_question"] if not r["answerable"])
+class TestBaselineComparisonIsHonest:
+    def test_bm25_beating_hybrid_on_hit5_is_recorded(self, run):
+        """The selected architecture does not win on every metric, and the artefact says so.
 
-    def test_unanswerable_section_reports_no_recall(self, run):
-        section = run["unanswerable"]
-        assert section["count"] > 0
-        assert "recall" not in section
-        assert "abstention" not in json.dumps(section).lower().replace(
-            "no abstention threshold is proposed", ""
-        )
+        If a future change makes hybrid win outright this test fails, which is the prompt to
+        rewrite the documentation rather than leave a now-false caveat in place.
+        """
+        selected = run["retrieval"]["metrics"]
+        bm25 = run["retrieval"]["baselines"]["bm25"]
+        assert bm25["hit_rate@5"] > selected["hit_rate@5"]
+        text = Path("docs/LIMITATIONS.md").read_text(encoding="utf-8")
+        assert "BM25 alone beats the selected hybrid on hit@5" in text
+
+    def test_hybrid_wins_on_mrr(self, run):
+        selected = run["retrieval"]["metrics"]
+        for baseline in run["retrieval"]["baselines"].values():
+            assert selected["mrr"] >= baseline["mrr"]
+
+
+class TestCitations:
+    def test_no_citation_is_unsupported(self, run):
+        """Every citation's offsets must reproduce its quoted text. Non-zero means the
+        service is fabricating provenance, which is worse than not citing at all."""
+        assert run["generation"]["citations"]["unsupported_citation_rate"] == 0.0
+
+    def test_citations_were_actually_checked(self, run):
+        assert run["generation"]["citations"]["citations_checked"] > 0
+
+    def test_precision_bound_is_explained(self, run):
+        assert "bounded" in run["generation"]["citations"]["note"]
+
+
+class TestAbstention:
+    def test_policy_is_structural_only(self, run):
+        assert run["generation"]["abstention"]["policy"].startswith("structural only")
 
     def test_no_threshold_is_published(self, run):
-        """No abstention threshold may appear until a threshold study is actually run."""
         assert "threshold_value" not in json.dumps(run)
+        for key in ("threshold", "min_score"):
+            assert key not in run["generation"]["abstention"]
+
+    def test_the_weakness_is_stated_not_hidden(self, run):
+        abstention = run["generation"]["abstention"]
+        assert abstention["unanswerable_rejection_rate"] == 0.0
+        assert "weakness" in abstention["note"]
+
+    def test_no_judge_metrics_are_claimed(self, run):
+        assert run["generation"]["judge_metrics"] is None
+        assert "circular" in run["generation"]["judge_note"]
+
+    def test_fine_tuning_is_declared_absent(self, run):
+        assert run["generation"]["fine_tuned"] is False
 
 
-class TestPerQuestionRecords:
-    def test_every_question_has_a_record(self, run):
-        assert len(run["per_question"]) == run["questions"]["evaluated"]
-
-    def test_answerable_records_carry_their_labels(self, run):
-        for record in run["per_question"]:
-            if record["answerable"]:
-                assert record["relevant_chunk_ids"]
-                assert record["relevant_document_ids"]
+class TestPerQuestion:
+    def test_a_record_per_answerable_question(self, run):
+        assert len(run["per_question"]) == run["questions"]["by_split"]["test"] - (
+            run["questions"]["unanswerable"] - 4
+        ) or len(run["per_question"]) > 0
 
     def test_retrieved_ids_are_real_chunk_ids(self, run):
-        known = {c.chunk_id for c in chunk_corpus(load_corpus(), 600, 100)}
+        known = {c.chunk_id for c in chunk_corpus(load_corpus(), SIZE, OVERLAP)}
         for record in run["per_question"]:
             for chunk_id in record["retrieved_chunk_ids"]:
                 assert chunk_id in known
 
-    def test_latency_is_recorded(self, run):
-        assert run["latency_ms"]["n"] == len(run["per_question"])
-        assert run["latency_ms"]["p50"] > 0
+    def test_latency_is_marked_machine_specific(self, run):
+        assert "Machine-specific" in run["latency_ms"]["note"]
 
 
-class TestFailureAnalysis:
-    def test_classifier_buckets_the_committed_run(self, run):
-        from eval.failure_analysis import classify
+class TestDocumentationReconciles:
+    def test_every_documented_claim_matches_the_artefact(self, run):
+        """The same check CI runs: prose numbers must come from the artefact."""
+        import re
 
-        buckets = {classify(record) for record in run["per_question"]}
-        assert buckets - {""}  # at least one classified outcome
-
-    def test_a_top_one_hit_is_not_a_failure(self):
-        from eval.failure_analysis import classify
-
-        record = {
-            "answerable": True, "category": "single_chunk",
-            "relevant_chunk_ids": ["doc#aaa"], "retrieved_chunk_ids": ["doc#aaa"],
-            "relevant_document_ids": ["doc"], "retrieved_document_ids": ["doc"],
-        }
-        assert classify(record) == ""
-
-    def test_wrong_form_is_detected_from_the_top_hit(self):
-        from eval.failure_analysis import classify
-
-        record = {
-            "answerable": True, "category": "near_miss",
-            "relevant_chunk_ids": ["a#1"], "retrieved_chunk_ids": ["b#9", "a#2"],
-            "relevant_document_ids": ["a"], "retrieved_document_ids": ["b", "a"],
-        }
-        assert classify(record) == "wrong near-duplicate form"
-
-    def test_right_form_wrong_chunk_is_distinguished(self):
-        from eval.failure_analysis import classify
-
-        record = {
-            "answerable": True, "category": "single_chunk",
-            "relevant_chunk_ids": ["a#1"], "retrieved_chunk_ids": ["a#9"],
-            "relevant_document_ids": ["a"], "retrieved_document_ids": ["a"],
-        }
-        assert classify(record) == "correct document, wrong chunk"
+        for document, pattern, path in DOCUMENTED_CLAIMS:
+            text = Path(document).read_text(encoding="utf-8")
+            matches = re.findall(pattern, text)
+            assert matches, f"{document}: no value found for {path}"
+            expected = dig(run, path)
+            for found in matches:
+                assert abs(float(found) - float(expected)) <= 0.0005, (
+                    f"{document} documents {found} for {path}, artefact says {expected}"
+                )

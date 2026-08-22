@@ -23,7 +23,7 @@ from src.corpus import (
     verify_document_hashes,
 )
 
-SIZE, OVERLAP = 600, 100
+SIZE, OVERLAP = 800, 120
 
 
 @pytest.fixture(scope="module")
@@ -76,9 +76,9 @@ class TestCorpusIntegrity:
 
 
 class TestChunkIdentity:
-    def test_chunk_count_is_the_documented_426(self, chunks):
-        # docs/DATA.md and the reference run both state this figure.
-        assert len(chunks) == 426
+    def test_chunk_count_is_the_documented_314(self, chunks):
+        # docs/BENCHMARK.md and the reference run both state this figure.
+        assert len(chunks) == 314
 
     def test_chunk_ids_are_stable_across_runs(self, documents):
         first = [c.chunk_id for c in chunk_corpus(documents, SIZE, OVERLAP)]
