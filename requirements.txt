@@ -1,5 +1,14 @@
-# Core RAG app (Phase 1). Fine-tuning deps live in finetune/ (run on Colab);
-# evaluation deps live in eval/requirements.txt (install when you reach Phase 3).
+# Core RAG app. This is everything the service and the evaluation harness need.
+#
+# Fine-tuning dependencies are separate (finetune/requirements.txt) because that
+# notebook runs on Colab, not here.
+#
+# The "hf" generation backend additionally needs torch, transformers and peft. They
+# are deliberately not listed: they are large, and the served system does not use
+# them. Install them yourself if you set LLM_BACKEND=hf.
+#
+# Versions are open ranges, so two installs on different days can differ. Pinning is
+# a tracked follow-up; until then the Docker image is not byte-reproducible.
 fastapi>=0.111
 uvicorn[standard]>=0.30
 qdrant-client>=1.9
