@@ -1,0 +1,49 @@
+InsureAssist - notices for third-party and government content
+=============================================================
+
+The MIT licence in LICENSE covers the SOURCE CODE of this repository ONLY.
+
+It does not, and cannot, apply to the government documents under data/corpus/. Those are
+works of the United States Government. This project does not own them, does not relicense
+them, and makes no claim over them. They are included because their legal status permits it.
+
+
+data/corpus/ - NFIP Standard Flood Insurance Policy forms
+---------------------------------------------------------
+
+  nfip-sfip-dwelling.txt          44 CFR Part 61, Appendix A(1) - Dwelling Form
+  nfip-sfip-general-property.txt  44 CFR Part 61, Appendix A(2) - General Property Form
+  nfip-sfip-rcbap.txt             44 CFR Part 61, Appendix A(3) - Residential Condominium
+                                  Building Association Policy
+
+  Publisher   Federal Emergency Management Agency (FEMA), published in the Code of
+              Federal Regulations.
+  Source      https://www.ecfr.gov/current/title-44/chapter-I/subchapter-B/part-61
+  Status      17 U.S.C. 105 - "Copyright protection under this title is not available for
+              any work of the United States Government." These forms were authored by
+              FEMA and promulgated as federal regulation, so they are not subject to
+              copyright in the United States and may be freely redistributed, modified,
+              and used commercially.
+
+  Attribution is not legally required. It is provided anyway, per document, in
+  data/corpus/manifest.json, together with the CFR citation, the eCFR issue date, the
+  retrieval date, and a SHA-256 of every extracted file.
+
+  These texts are reproduced verbatim. The extraction from eCFR XML to plain text is
+  described in docs/DATA.md and implemented in scripts/fetch_nfip_corpus.py; it changes
+  formatting only. No wording, punctuation, or numeric value has been altered, and nothing
+  has been paraphrased or summarised.
+
+  No third-party copyrighted material is embedded in the selected text. This was checked:
+  unlike some federal publications - CMS claims-processing manuals carrying American
+  Medical Association CPT codes are the usual example - these appendices incorporate no
+  external standard, and the committed files contain no copyright, trademark, or
+  "reprinted with permission" notices.
+
+
+data/ - synthetic sample documents
+----------------------------------
+
+  auto_insurance_policy.md, home_insurance_policy.md and qa_testset.jsonl are synthetic
+  and were written by hand for this project. They carry no third-party rights and fall
+  under the repository's MIT licence. See data/README.md.
