@@ -42,8 +42,18 @@ class FakeEmbedder:
         return [FakeVector([0.1] * self.dim) for _ in sentences]
 
 
-def _hit(text: str, source: str, score: float):
-    return types.SimpleNamespace(payload={"text": text, "source": source}, score=score)
+def _hit(text: str, source: str, score: float, chunk_id: str | None = None, start: int = 0):
+    """A Qdrant point stand-in carrying the full citation payload."""
+    chunk_id = chunk_id or f"nfip-sfip-dwelling#{abs(hash(text)) % 10**12:012x}"
+    return types.SimpleNamespace(
+        payload={
+            "text": text, "source": source, "chunk_id": chunk_id,
+            "document_id": chunk_id.split("#")[0], "chunk_index": 0,
+            "start": start, "end": start + len(text),
+            "form": "Dwelling Form", "cfr_citation": "44 CFR Part 61, Appendix A(1)",
+        },
+        score=score,
+    )
 
 
 class FakeVectorStore:
@@ -51,8 +61,10 @@ class FakeVectorStore:
 
     def __init__(self, hits=None, error: Exception | None = None):
         self._hits = hits if hits is not None else [
-            _hit("Burst pipe damage is covered.", "home_insurance_policy.md", 0.8712),
-            _hit("A higher excess of EUR 500 applies.", "home_insurance_policy.md", 0.7031),
+            _hit("Burst pipe damage is covered.", "home_insurance_policy.md", 0.8712,
+                 "nfip-sfip-dwelling#aaaaaaaaaaaa", 100),
+            _hit("A higher excess of EUR 500 applies.", "home_insurance_policy.md", 0.7031,
+                 "nfip-sfip-dwelling#bbbbbbbbbbbb", 900),
         ]
         self._error = error
         self.queries: list = []
@@ -83,13 +95,36 @@ def make_store():
     return _make
 
 
+class FakeBM25:
+    """Lexical index stand-in. Returns nothing unless told otherwise.
+
+    Empty by default so a test that only configures dense retrieval still exercises the
+    fusion path: RRF over [dense, []] is just dense.
+    """
+
+    def __init__(self, hits=None):
+        self._hits = hits or []
+        self.queries = []
+
+    def search(self, query, limit):
+        self.queries.append(query)
+        return self._hits[:limit]
+
+
+@pytest.fixture
+def fake_bm25():
+    return FakeBM25()
+
+
 @pytest.fixture
 def wired(fake_embedder, fake_store):
     """A fully stubbed pipeline: embedder, store, and a generator that echoes."""
+    bm25 = FakeBM25()
     providers.set_embedder(fake_embedder)
     providers.set_vector_store(fake_store)
+    providers.set_bm25_index(bm25)
     providers.set_generator(lambda prompt: "Yes, a burst pipe is covered.")
-    return types.SimpleNamespace(embedder=fake_embedder, store=fake_store)
+    return types.SimpleNamespace(embedder=fake_embedder, store=fake_store, bm25=bm25)
 
 
 @pytest.fixture

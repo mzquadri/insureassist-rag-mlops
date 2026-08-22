@@ -11,8 +11,6 @@ moment content-derived IDs land and this file has to be finished.
 """
 import uuid
 
-import pytest
-
 from src.ingest import chunk_text, load_documents
 
 
@@ -32,18 +30,29 @@ class TestChunkingIsDeterministic:
 
 
 class TestChunkIdentity:
-    """What ingestion must eventually guarantee, and does not yet."""
+    """The guarantee that makes labelled evaluation possible.
 
-    def test_uuid4_ids_are_not_reproducible(self):
-        """Documents today's behaviour: identical content, different identifiers."""
+    This file previously carried a strict xfail here, marking content-derived IDs as an open
+    gap. They are implemented, so the expectation is now asserted directly.
+    """
+
+    def test_uuid4_would_not_be_reproducible(self):
+        """Why uuid4 was unusable: identical content, different identifiers every call."""
         assert str(uuid.uuid4()) != str(uuid.uuid4())
 
-    @pytest.mark.xfail(
-        reason="Chunk IDs are random UUIDs. Content-derived IDs are a later phase; "
-               "until then chunks cannot be referenced by stable relevance labels.",
-        strict=True,
-    )
     def test_chunk_ids_are_derived_from_content(self):
-        from src.ingest import chunk_id  # noqa: F401  - does not exist yet
+        from src.corpus import make_chunk_id
 
-        raise AssertionError("unreachable until chunk_id() is implemented")
+        assert make_chunk_id("doc", 0, "text") == make_chunk_id("doc", 0, "text")
+        assert make_chunk_id("doc", 0, "text") != make_chunk_id("doc", 1, "text")
+
+    def test_point_ids_survive_reingestion(self):
+        """A relevance label names a chunk; the chunk must still exist under that name."""
+        from src.config import cfg
+        from src.corpus import chunk_corpus, load_corpus
+
+        first = {c.chunk_id: c.point_id for c in
+                 chunk_corpus(load_corpus(), cfg.CHUNK_SIZE, cfg.CHUNK_OVERLAP)}
+        second = {c.chunk_id: c.point_id for c in
+                  chunk_corpus(load_corpus(), cfg.CHUNK_SIZE, cfg.CHUNK_OVERLAP)}
+        assert first == second and len(first) > 300
