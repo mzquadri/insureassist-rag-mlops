@@ -1,33 +1,38 @@
 """
-Phase 1 — Retrieval + Generation (the "RAG" core).
+Retrieval + generation (the RAG core).
 
 1. Embed the user's question.
 2. Search Qdrant for the most similar document chunks (retrieval).
 3. Put those chunks into a prompt and ask an LLM to answer using ONLY that context.
 
-The generator is pluggable: Ollama now (Phase 1), the fine-tuned HF model later (Phase 3).
+The embedder, the vector store, and the generator all come from `src.providers`, which
+builds them on first use. Importing this module therefore costs nothing and contacts
+nothing; see that module for why that matters.
 """
-import requests
-from qdrant_client import QdrantClient
-from sentence_transformers import SentenceTransformer
-
 from src.config import cfg
-
-# Load once at import time (heavy objects)
-_embedder = SentenceTransformer(cfg.EMBEDDING_MODEL)
-_client = QdrantClient(url=cfg.QDRANT_URL, check_compatibility=False)
+from src.errors import RetrievalUnavailable
+from src.providers import get_embedder, get_generator, get_vector_store
 
 
 def retrieve(question: str, top_k: int | None = None) -> list[dict]:
     """Return the top-k most relevant chunks for a question."""
     top_k = top_k or cfg.TOP_K
-    qvec = _embedder.encode(question, normalize_embeddings=True).tolist()
-    result = _client.query_points(
-        collection_name=cfg.QDRANT_COLLECTION,
-        query=qvec,
-        limit=top_k,
-        with_payload=True,
-    )
+    embedder = get_embedder()
+    store = get_vector_store()
+
+    qvec = embedder.encode(question, normalize_embeddings=True).tolist()
+    try:
+        result = store.query_points(
+            collection_name=cfg.QDRANT_COLLECTION,
+            query=qvec,
+            limit=top_k,
+            with_payload=True,
+        )
+    except Exception as exc:  # boundary: the store is external
+        raise RetrievalUnavailable(
+            f"query against collection {cfg.QDRANT_COLLECTION!r} failed"
+        ) from exc
+
     return [
         {"text": h.payload["text"], "source": h.payload["source"], "score": h.score}
         for h in result.points
@@ -47,29 +52,18 @@ def build_prompt(question: str, contexts: list[dict]) -> str:
     )
 
 
-def generate_ollama(prompt: str) -> str:
-    """Call a local Ollama model (Phase 1)."""
-    resp = requests.post(
-        f"{cfg.OLLAMA_URL}/api/generate",
-        json={"model": cfg.OLLAMA_MODEL, "prompt": prompt, "stream": False},
-        timeout=120,
-    )
-    resp.raise_for_status()
-    return resp.json()["response"].strip()
-
-
 def generate(prompt: str) -> str:
-    if cfg.LLM_BACKEND == "ollama":
-        return generate_ollama(prompt)
-    elif cfg.LLM_BACKEND == "hf":
-        # Implemented in Phase 3 (loads base model + LoRA adapter)
-        from src.hf_generator import generate_hf
-        return generate_hf(prompt)
-    raise ValueError(f"Unknown LLM_BACKEND: {cfg.LLM_BACKEND}")
+    """Generate an answer with whichever backend `LLM_BACKEND` selects."""
+    return get_generator()(prompt)
 
 
 def answer(question: str) -> dict:
-    """Full RAG: retrieve -> prompt -> generate. Returns answer + sources."""
+    """Full RAG: retrieve -> prompt -> generate. Returns answer + sources.
+
+    `sources` identifies the *documents* the answer drew on, not the exact passages. That
+    is document-level attribution rather than a citation, and it is not yet verifiable;
+    chunk-level citation is a later phase.
+    """
     contexts = retrieve(question)
     prompt = build_prompt(question, contexts)
     text = generate(prompt)
@@ -81,5 +75,6 @@ def answer(question: str) -> dict:
 
 if __name__ == "__main__":
     import json
+
     q = "Does home insurance cover water damage from a burst pipe?"
     print(json.dumps(answer(q), indent=2))
