@@ -1,10 +1,15 @@
-# Qdrant vector database running inside the cluster.
-# A Deployment manages the pod; a Service gives it a stable in-cluster address ("qdrant").
+# Qdrant, the vector database.
+#
+# A StatefulSet with a PersistentVolumeClaim, not a Deployment. As a Deployment writing to
+# the container filesystem, any restart destroyed the entire index and the ingest Job had
+# to be re-run before the API could answer anything. That is a data-loss bug, not a tuning
+# preference.
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: qdrant
 spec:
+  serviceName: qdrant
   replicas: 1
   selector:
     matchLabels:
@@ -14,19 +19,47 @@ spec:
       labels:
         app: qdrant
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
       containers:
         - name: qdrant
-          image: qdrant/qdrant:latest
+          image: qdrant/qdrant:v1.19.0
           ports:
             - containerPort: 6333
+              name: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          readinessProbe:
+            httpGet: { path: /readyz, port: 6333 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /livez, port: 6333 }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          volumeMounts:
+            - name: storage
+              mountPath: /qdrant/storage
           resources:
             requests: { cpu: "250m", memory: "512Mi" }
             limits:   { cpu: "1",    memory: "1Gi" }
+  volumeClaimTemplates:
+    - metadata:
+        name: storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: qdrant          # other pods reach it at http://qdrant:6333
+  name: qdrant
 spec:
   selector:
     app: qdrant

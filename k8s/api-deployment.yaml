@@ -1,10 +1,15 @@
-# The RAG API. Kubernetes keeps 'replicas' copies running and restarts crashed pods.
+# The RAG API.
+#
+# Probes are split deliberately. /health is liveness only and never touches a dependency,
+# so a Qdrant outage does not get pods killed and restarted. /ready checks the embedder,
+# the lexical index and the vector store, so a pod that cannot serve is taken out of the
+# Service instead of receiving traffic it can only fail.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: insureassist-api
 spec:
-  replicas: 2                       # 2 copies for availability; HPA can scale this up
+  replicas: 2
   selector:
     matchLabels:
       app: insureassist-api
@@ -13,25 +18,56 @@ spec:
       labels:
         app: insureassist-api
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: api
-          # In Phase 5 this becomes your Artifact Registry image, e.g.
-          # europe-west3-docker.pkg.dev/PROJECT/insureassist/api:latest
-          image: insureassist:latest
+          # Replaced at deploy time with the digest-or-commit-tagged image from Artifact
+          # Registry. ":latest" is not used: it is not reproducible and does not match what
+          # the deploy workflow pushes.
+          image: insureassist:v0.2.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
           envFrom:
             - configMapRef: { name: insureassist-config }
-          # Probes tell Kubernetes if the pod is alive/ready (uses our /health endpoint).
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
           livenessProbe:
             httpGet: { path: /health, port: 8000 }
             initialDelaySeconds: 20
             periodSeconds: 15
           readinessProbe:
-            httpGet: { path: /health, port: 8000 }
+            httpGet: { path: /ready, port: 8000 }
             initialDelaySeconds: 10
             periodSeconds: 10
+            failureThreshold: 3
+          startupProbe:
+            # The embedding model downloads on first use; without this the liveness probe
+            # can kill the pod mid-download and never let it finish.
+            httpGet: { path: /health, port: 8000 }
+            failureThreshold: 30
+            periodSeconds: 10
+          volumeMounts:
+            - name: model-cache
+              mountPath: /home/app/.cache/huggingface
+            - name: tmp
+              mountPath: /tmp
           resources:
             requests: { cpu: "500m", memory: "1Gi" }
             limits:   { cpu: "2",    memory: "4Gi" }
+      volumes:
+        # Survives container restarts within the pod, so the model is not re-downloaded on
+        # every crash. It does NOT survive rescheduling; see k8s/README.md.
+        - name: model-cache
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

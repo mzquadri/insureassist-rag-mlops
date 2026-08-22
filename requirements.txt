@@ -1,18 +1,18 @@
-# Core RAG app. This is everything the service and the evaluation harness need.
+# Core RAG app. Everything the service and the evaluation harness need.
 #
-# Fine-tuning dependencies are separate (finetune/requirements.txt) because that
-# notebook runs on Colab, not here.
+# Versions are pinned so an image built today and one built next month contain the same
+# code. Unpinned ranges made the container non-reproducible, which undermined every
+# published number that depended on it.
 #
-# The "hf" generation backend additionally needs torch, transformers and peft. They
-# are deliberately not listed: they are large, and the served system does not use
-# them. Install them yourself if you set LLM_BACKEND=hf.
+# Fine-tuning dependencies are separate (finetune/requirements.txt): that notebook runs on
+# Colab, not here.
 #
-# Versions are open ranges, so two installs on different days can differ. Pinning is
-# a tracked follow-up; until then the Docker image is not byte-reproducible.
-fastapi>=0.111
-uvicorn[standard]>=0.30
-qdrant-client>=1.9
-sentence-transformers>=3.0
-python-dotenv>=1.0
-requests>=2.31
-pydantic>=2.7
+# The "hf" generation backend additionally needs torch, transformers and peft. They are
+# deliberately not listed - they are large and the served system does not use them.
+fastapi==0.141.1
+uvicorn[standard]==0.52.1
+qdrant-client==1.19.0
+sentence-transformers==5.7.0
+python-dotenv==1.2.2
+requests==2.34.2
+pydantic==2.13.4
