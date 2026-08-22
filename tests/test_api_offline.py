@@ -102,8 +102,15 @@ class TestAskHappyPath:
         assert scores == [0.871, 0.703]  # from 0.8712 / 0.7031
 
     def test_the_question_reaches_the_embedder(self, client, wired):
+        """The question is embedded, carrying the BGE query instruction prefix.
+
+        BGE is asymmetric - queries take an instruction and passages do not - so what
+        reaches the embedder is the prefixed question, not the raw one.
+        """
+        from src.config import cfg
+
         client.post("/ask", json={"question": "Does it cover hail?"})
-        assert "Does it cover hail?" in wired.embedder.calls
+        assert wired.embedder.calls == [cfg.BGE_QUERY_PREFIX + "Does it cover hail?"]
 
     def test_the_prompt_carries_the_retrieved_context(self, client, fake_embedder, fake_store):
         seen = {}
