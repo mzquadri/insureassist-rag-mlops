@@ -1,6 +1,6 @@
 # Phase 4 — Containerization & Kubernetes
 
-## Part A — Docker (verified working locally)
+## Part A — Docker (verified by hand, not in CI)
 
 Build the API image and run it as a container. It talks to Qdrant + Ollama running on the
 host (via `host.docker.internal`).
@@ -21,15 +21,17 @@ curl http://localhost:8010/health
 curl -X POST http://localhost:8010/ask -H "Content-Type: application/json" ^
   -d "{\"question\": \"Does home insurance cover a burst pipe?\"}"
 ```
-Verified: `/health` returns `{"status":"ok"}` and `/ask` returns a grounded answer with
-sources — the whole RAG service runs inside a container.
+Checked by hand: `/health` returns `{"status":"ok"}` and `/ask` returns an answer with
+its source documents. This was a manual run, not a reproducible or CI-verified result.
+
+Note that `/health` reports only that the process is up. It says nothing about Qdrant
+or the generator, so it is a liveness check and nothing more.
 
 ## Part B — Kubernetes
 
 The manifests in this folder deploy the system to a cluster:
 - `qdrant.yaml`         — the vector DB (Deployment + Service)
 - `configmap.yaml`      — non-secret config (URLs, model names)
-- `secret.example.yaml` — template for API keys (copy to `secret.yaml`)
 - `api-deployment.yaml` — the RAG API (2 replicas, health probes, resource limits)
 - `api-service.yaml`    — exposes the API (LoadBalancer)
 - `hpa.yaml`            — autoscaling (2–6 pods on CPU load)
@@ -49,11 +51,24 @@ The manifests in this folder deploy the system to a cluster:
    (For a purely local run, point the ConfigMap's `LLM_BACKEND` to `ollama` and
    `OLLAMA_URL` to `http://host.docker.internal:11434`.)
 
-### Option 2 — Real managed Kubernetes (GKE) — Phase 5
-The same manifests deploy to Google Kubernetes Engine. See `docs/gcp_deploy.md`.
-This is the more impressive, production-grade path and is covered in Phase 5.
+### Option 2 — Managed Kubernetes (GKE)
+The same manifests are intended to deploy to Google Kubernetes Engine; see
+`docs/gcp_deploy.md`. **This has not been done.** The guide is untested and the deploy
+workflow has never completed successfully.
 
-## What you learn / can claim
-- Containerized a Python service with a multi-stage Dockerfile (verified).
-- Authored Kubernetes manifests: Deployment, Service, ConfigMap, Secret, health probes,
-  resource limits, and HorizontalPodAutoscaler.
+## What this demonstrates
+- Containerised a Python service with a single-stage Dockerfile and ran it by hand.
+- Authored Kubernetes manifests: Deployment, Service, ConfigMap, probes, resource
+  limits, and a HorizontalPodAutoscaler.
+
+## Known gaps in these manifests
+- **Readiness uses `/health`**, which always returns ok. A pod is marked ready even if
+  Qdrant or the generator is unreachable, so traffic can be routed to a pod that
+  cannot answer.
+- **Qdrant has no persistent volume.** It is a Deployment writing to the container
+  filesystem, so a restart loses the whole index and the ingest Job must be re-run.
+- **Ollama's model directory is an `emptyDir`**, so the model must be pulled again by
+  hand after any restart.
+- **No `securityContext`.** Combined with the root container image, pods run as root.
+- The manifests pin `insureassist:latest` while the deploy workflow pushes a
+  commit-tagged image; the two disagree.

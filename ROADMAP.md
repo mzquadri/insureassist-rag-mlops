@@ -50,7 +50,12 @@ to run on a free Colab GPU.
   to **MLflow**.
 - Download the resulting `adapter/` folder.
 
-✔ A fine-tuned adapter that adapts the base model to the insurance domain.
+✔ *Intended outcome:* a LoRA adapter for the insurance domain.
+
+> Not achieved in this repository. The notebook is committed with no outputs, no
+> adapter was produced, and the served system uses a stock model. The training pairs
+> are also the evaluation questions, so a model trained this way could not be scored
+> honestly. See `finetune/README.md`.
 
 ---
 
@@ -78,17 +83,20 @@ docker run -d -p 8010:8000 --env-file .env insureassist:latest   # (see k8s/READ
 Then deploy to a cluster with the manifests in `k8s/` (Deployment, Service, ConfigMap,
 HorizontalPodAutoscaler). See [`k8s/README.md`](k8s/README.md).
 
-✔ The service running as a container, and Kubernetes manifests ready to deploy.
+✔ The service running as a container (verified by hand), and Kubernetes manifests
+written. The manifests have not been applied to a cluster.
 
 ---
 
 ## Phase 5 — Google Cloud (GKE) (~1 day)  🎯 managed Kubernetes in the cloud
 
-Store artifacts in Cloud Storage, push the image to Artifact Registry, and deploy to a
-managed **GKE** cluster with a public endpoint. Full steps in
-[`docs/gcp_deploy.md`](docs/gcp_deploy.md).
+Push the image to Artifact Registry and deploy to a managed **GKE** cluster. Full
+steps in [`docs/gcp_deploy.md`](docs/gcp_deploy.md).
 
-✔ A publicly reachable inference endpoint on GKE.
+✔ *Intended outcome:* a publicly reachable endpoint on GKE.
+
+> Not achieved. The guide has not been executed and the deploy workflow has never
+> succeeded. Cloud Storage is not used by any code in this repository.
 
 ---
 
@@ -98,4 +106,8 @@ managed **GKE** cluster with a public endpoint. Full steps in
 builds and deploys to GKE (add your GCP secrets to enable it). Add an autoscaler
 (`k8s/hpa.yaml`) so pods scale with load.
 
-✔ Push code → it's tested and (once secrets are set) deployed automatically.
+✔ Push code → lint, static validation and the offline test suite run automatically.
+
+> CI does not build the image, start Qdrant, or make an HTTP request, so a green tick
+> means "parses, lints, and passes offline tests" - not "the RAG pipeline works".
+> The deploy workflow is manual-only and unproven.
