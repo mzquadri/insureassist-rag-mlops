@@ -1,38 +1,47 @@
 """
 Ingestion pipeline.
 
-Reads documents from data/, splits them into overlapping chunks, converts each chunk
-into a vector (embedding) with a BGE model, and stores them in Qdrant so we can search
-by meaning later.
+Reads the corpus, splits it into overlapping chunks that remember their offsets, embeds
+each chunk, and stores them in Qdrant.
 
 Run:
-    python -m src.ingest
+    python -m src.ingest                 # the real NFIP corpus (CORPUS=nfip)
+    CORPUS=sample python -m src.ingest   # the synthetic sample documents
 
 (Run it as a module, not as `python src/ingest.py` - the latter puts `src/` itself on the
 path, so `from src.config import ...` cannot resolve.)
 
-Known limitation, tracked for a later phase: chunk IDs are random UUIDs, so re-ingesting
-the same corpus produces different IDs every time. Ingestion is repeatable (the collection
-is rebuilt from scratch) but not yet reproducible in the stronger sense that a given chunk
-always carries the same identifier. Content-derived IDs are required before retrieval
-results can be labelled and compared across runs.
+Ingestion is deterministic and idempotent. Chunk IDs are derived from the document, the
+offset and the text, and the Qdrant point ID is a uuid5 of that chunk ID, so re-ingesting
+an unchanged corpus overwrites exactly the same points instead of inserting duplicates
+under fresh random IDs. The collection is only recreated when its vector size no longer
+matches the embedder - it is no longer dropped on every run.
 """
 import glob
 import os
-import uuid
 
 from src.config import cfg
+from src.corpus import (
+    Document,
+    chunk_document,
+    load_corpus,
+    validate_chunk_config,
+    verify_document_hashes,
+)
 
 #: Files that live in data/ but are documentation about the corpus, not part of it.
 #: Without this, adding a provenance README to data/ silently indexes it as a policy
 #: document and it starts turning up as a retrieval result.
 NON_CORPUS_FILENAMES = {"README.md"}
 
+BATCH_SIZE = 128
+
 
 def load_documents(data_dir: str = "data") -> list[dict]:
-    """Load every corpus .md / .txt file in data/ as {source, text}.
+    """Load the synthetic sample .md / .txt files as {source, text}.
 
-    Sorted so ingestion visits documents in the same order every run.
+    Kept for the sample corpus and for tests. The real corpus is loaded through
+    `src.corpus.load_corpus`, which reads a manifest rather than globbing a directory.
     """
     docs = []
     for path in sorted(
@@ -47,22 +56,11 @@ def load_documents(data_dir: str = "data") -> list[dict]:
 
 
 def chunk_text(text: str, size: int, overlap: int) -> list[str]:
-    """Fixed-size character chunking with overlap.
+    """Fixed-size character chunking with overlap, returning text only.
 
-    Each step advances by `size - overlap`. If that step is not positive the loop cannot
-    make progress, so the arguments are rejected rather than allowed to hang: both values
-    are configurable through the environment, and an overlap set to or above the chunk
-    size would otherwise spin forever while appending the same text.
+    The offset-aware version used for the real corpus is `src.corpus.chunk_document`.
     """
-    if size <= 0:
-        raise ValueError(f"chunk size must be positive, got {size}")
-    if overlap < 0:
-        raise ValueError(f"chunk overlap cannot be negative, got {overlap}")
-    if overlap >= size:
-        raise ValueError(
-            f"chunk overlap ({overlap}) must be smaller than chunk size ({size}); "
-            "otherwise chunking cannot advance"
-        )
+    validate_chunk_config(size, overlap)
 
     chunks, start = [], 0
     while start < len(text):
@@ -70,20 +68,56 @@ def chunk_text(text: str, size: int, overlap: int) -> list[str]:
         chunk = text[start:end].strip()
         if chunk:
             chunks.append(chunk)
-        start = end - overlap  # step back by 'overlap' so context isn't cut mid-idea
+        start = end - overlap
     return chunks
 
 
+def sample_documents_as_corpus() -> list[Document]:
+    """Wrap the synthetic sample files in the same Document type as the real corpus."""
+    import hashlib
+
+    documents = []
+    for doc in load_documents():
+        text = doc["text"]
+        documents.append(
+            Document(
+                document_id=os.path.splitext(doc["source"])[0],
+                title=doc["source"],
+                form="sample",
+                cfr_citation="",
+                text=text,
+                sha256=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+            )
+        )
+    return documents
+
+
+def resolve_documents() -> list[Document]:
+    """The corpus selected by configuration."""
+    if cfg.CORPUS == "nfip":
+        documents = load_corpus()
+        mismatched = verify_document_hashes(documents)
+        if mismatched:
+            # A corpus file edited by hand silently invalidates every chunk ID, and with
+            # them every ground-truth label. Refuse rather than index quietly-changed text.
+            raise SystemExit(
+                "Corpus files do not match data/corpus/manifest.json: "
+                + ", ".join(mismatched)
+                + "\nRun `python -m scripts.fetch_nfip_corpus` to rebuild."
+            )
+        return documents
+    if cfg.CORPUS == "sample":
+        return sample_documents_as_corpus()
+    raise SystemExit(f"Unknown CORPUS {cfg.CORPUS!r}; expected 'nfip' or 'sample'")
+
+
 def main():
-    # Imported here, not at module scope: sentence_transformers pulls in torch, and the
-    # pure helpers above are used by tests that must stay fast and offline.
     from qdrant_client.models import Distance, PointStruct, VectorParams
 
     from src.providers import get_embedder, get_vector_store
 
     print(f"Loading embedding model: {cfg.EMBEDDING_MODEL} ...")
     embedder = get_embedder()
-    # Vector size of this embedding model (handles both old/new method names).
     try:
         dim = embedder.get_embedding_dimension()
     except AttributeError:
@@ -91,33 +125,48 @@ def main():
 
     client = get_vector_store()
 
-    # Start the collection fresh: delete if it exists, then create it with the
-    # right vector size + cosine similarity.
     if client.collection_exists(cfg.QDRANT_COLLECTION):
-        client.delete_collection(cfg.QDRANT_COLLECTION)
-    client.create_collection(
-        collection_name=cfg.QDRANT_COLLECTION,
-        vectors_config=VectorParams(size=dim, distance=Distance.COSINE),
-    )
+        existing = client.get_collection(cfg.QDRANT_COLLECTION)
+        current_dim = existing.config.params.vectors.size
+        if current_dim != dim:
+            print(f"Collection vector size {current_dim} != {dim}; recreating.")
+            client.delete_collection(cfg.QDRANT_COLLECTION)
+            client.create_collection(
+                collection_name=cfg.QDRANT_COLLECTION,
+                vectors_config=VectorParams(size=dim, distance=Distance.COSINE),
+            )
+    else:
+        client.create_collection(
+            collection_name=cfg.QDRANT_COLLECTION,
+            vectors_config=VectorParams(size=dim, distance=Distance.COSINE),
+        )
     print(f"Collection '{cfg.QDRANT_COLLECTION}' ready (dim={dim}).")
 
-    docs = load_documents()
+    documents = resolve_documents()
     points = []
-    for doc in docs:
-        chunks = chunk_text(doc["text"], cfg.CHUNK_SIZE, cfg.CHUNK_OVERLAP)
-        vectors = embedder.encode(chunks, normalize_embeddings=True)
-        for chunk, vec in zip(chunks, vectors):
+    for document in documents:
+        chunks = chunk_document(document, cfg.CHUNK_SIZE, cfg.CHUNK_OVERLAP)
+        # Passages are embedded WITHOUT the BGE query prefix; only queries carry it.
+        vectors = embedder.encode([c.text for c in chunks], normalize_embeddings=True)
+        for chunk, vector in zip(chunks, vectors):
             points.append(
                 PointStruct(
-                    id=str(uuid.uuid4()),
-                    vector=vec.tolist(),
-                    payload={"text": chunk, "source": doc["source"]},
+                    id=chunk.point_id,
+                    vector=vector.tolist(),
+                    payload=chunk.payload(document),
                 )
             )
-        print(f"  {doc['source']}: {len(chunks)} chunks")
+        print(f"  {document.document_id}: {len(chunks)} chunks")
 
-    client.upsert(collection_name=cfg.QDRANT_COLLECTION, points=points)
-    print(f"Ingested {len(points)} chunks from {len(docs)} documents. Done.")
+    for offset in range(0, len(points), BATCH_SIZE):
+        client.upsert(
+            collection_name=cfg.QDRANT_COLLECTION,
+            points=points[offset:offset + BATCH_SIZE],
+        )
+
+    count = client.count(cfg.QDRANT_COLLECTION, exact=True).count
+    print(f"Ingested {len(points)} chunks from {len(documents)} documents.")
+    print(f"Collection now holds {count} points (equal to chunk count if idempotent).")
 
 
 if __name__ == "__main__":
