@@ -44,4 +44,4 @@ lands, no retrieval metric is published anywhere in this repository.
 ## Overlap with the fine-tuning data
 
 The ten questions in `qa_testset.jsonl` are the same ten questions used as **training
-data** in `finetune/lora_finetune.ipynb`. See `finetune/README.md` for what that rules out.
+data** in `archive/finetune/lora_finetune.ipynb`. See `archive/finetune/README.md` for what that rules out.

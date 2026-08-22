@@ -45,7 +45,7 @@ uvicorn src.api:app --reload
 Instead of training a whole model, **LoRA** trains a tiny adapter (a few MB) — cheap enough
 to run on a free Colab GPU.
 
-- Open `finetune/lora_finetune.ipynb` in Google Colab, set the runtime to a **T4 GPU**,
+- Open `archive/finetune/lora_finetune.ipynb` in Google Colab, set the runtime to a **T4 GPU**,
   and run all cells. It fine-tunes Phi-3-mini with Hugging Face **PEFT** and logs the run
   to **MLflow**.
 - Download the resulting `adapter/` folder.
@@ -55,7 +55,7 @@ to run on a free Colab GPU.
 > Not achieved in this repository. The notebook is committed with no outputs, no
 > adapter was produced, and the served system uses a stock model. The training pairs
 > are also the evaluation questions, so a model trained this way could not be scored
-> honestly. See `finetune/README.md`.
+> honestly. See `archive/finetune/README.md`.
 
 ---
 
