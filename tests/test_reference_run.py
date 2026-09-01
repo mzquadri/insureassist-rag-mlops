@@ -56,6 +56,52 @@ class TestFrozenConfig:
         assert config["dev_selection"]["answerable_questions"] == 14
 
 
+class TestRuntimeMatchesFrozenConfig:
+    """The frozen config only means something if the code actually runs it.
+
+    `retrieval_config_hash` hashes the JSON file, not the values in effect. Nothing
+    else reconciles the two, and the values are duplicated: CHUNK_SIZE, CHUNK_OVERLAP,
+    TOP_K and EMBEDDING_MODEL are environment-overridable in `src.config`, while
+    CANDIDATE_DEPTH is a separate literal in `src.rag`.
+
+    Without these checks the failure is silent and runs both ways. Exporting
+    CHUNK_SIZE=400 makes the service chunk at 400 while the recorded hash still
+    certifies 800; editing `candidate_depth_per_retriever` in the JSON changes the
+    hash while retrieval keeps drawing 20 candidates. Either way a reference run can
+    carry a hash for a configuration that never executed.
+    """
+
+    def test_chunking_matches_the_frozen_config(self, config):
+        from src.config import cfg
+
+        assert cfg.CHUNK_SIZE == config["chunking"]["size"]
+        assert cfg.CHUNK_OVERLAP == config["chunking"]["overlap"]
+
+    def test_serving_top_k_matches_the_frozen_config(self, config):
+        from src.config import cfg
+
+        assert cfg.TOP_K == config["serving_top_k"]
+
+    def test_candidate_depth_matches_the_frozen_config(self, config):
+        from src.rag import CANDIDATE_DEPTH
+
+        assert CANDIDATE_DEPTH == config["fusion"]["candidate_depth_per_retriever"]
+
+    def test_embedding_model_matches_the_frozen_config(self, config):
+        from src.config import cfg
+
+        assert cfg.EMBEDDING_MODEL == config["dense"]["model"]
+
+    def test_query_prefix_matches_the_frozen_config(self, config):
+        from src.config import cfg
+
+        assert cfg.BGE_QUERY_PREFIX == config["dense"]["query_prefix"]
+
+    def test_module_constants_agree_with_this_file(self, config):
+        """SIZE/OVERLAP above are a fifth copy; keep them tied to the JSON too."""
+        assert (SIZE, OVERLAP) == (config["chunking"]["size"], config["chunking"]["overlap"])
+
+
 class TestRunSchema:
     def test_top_level_sections(self, run):
         assert set(run) >= {
