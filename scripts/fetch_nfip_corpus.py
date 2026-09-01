@@ -36,7 +36,8 @@ ECFR_API = (
     f"https://www.ecfr.gov/api/versioner/v1/full/{ECFR_ISSUE_DATE}/title-44.xml?part=61"
 )
 
-CORPUS_DIR = Path("data/corpus")
+from src.paths import CORPUS_DIR
+
 MANIFEST_PATH = CORPUS_DIR / "manifest.json"
 
 #: Appendix name in the XML -> (document id, human title, the form's short name).

@@ -18,8 +18,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from src.corpus import Chunk, Document
-
-GROUND_TRUTH_PATH = Path("eval/ground_truth/nfip_questions.jsonl")
+from src.paths import GROUND_TRUTH_PATH
 
 #: Controlled vocabularies. Closed on purpose - a typo in a category silently creates a new
 #: bucket and quietly distorts any per-category breakdown.

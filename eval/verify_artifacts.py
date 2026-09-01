@@ -20,12 +20,11 @@ from __future__ import annotations
 import json
 import re
 import sys
-from pathlib import Path
 
 from src.corpus import corpus_hash, load_corpus, verify_document_hashes
-
-RUN_PATH = Path("eval/reference_run.json")
-CONFIG_PATH = Path("eval/retrieval_config.json")
+from src.paths import REFERENCE_RUN_PATH as RUN_PATH
+from src.paths import REPO_ROOT
+from src.paths import RETRIEVAL_CONFIG_PATH as CONFIG_PATH
 
 #: Numbers quoted in prose, and where they must come from in the artefact.
 #: Each entry is (document, regex capturing the number, dotted path into the run).
@@ -80,7 +79,7 @@ def main() -> int:
 
     # --- documented numbers -------------------------------------------------------------
     for document, pattern, path in DOCUMENTED_CLAIMS:
-        source = Path(document)
+        source = REPO_ROOT / document
         if not source.exists():
             problems.append(f"{document} is missing")
             continue

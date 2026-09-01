@@ -17,7 +17,8 @@ import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
-CORPUS_DIR = Path("data/corpus")
+from src.paths import CORPUS_DIR
+
 MANIFEST_PATH = CORPUS_DIR / "manifest.json"
 
 #: Fixed namespace so chunk UUIDs are reproducible across machines and runs. Qdrant point
