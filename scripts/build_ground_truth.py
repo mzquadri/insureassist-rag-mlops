@@ -24,12 +24,10 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from pathlib import Path
 
 from src.config import cfg
 from src.corpus import chunk_corpus, load_corpus
-
-OUT_PATH = Path("eval/ground_truth/nfip_questions.jsonl")
+from src.paths import GROUND_TRUTH_PATH as OUT_PATH
 
 DWELL = "nfip-sfip-dwelling"
 GENPROP = "nfip-sfip-general-property"

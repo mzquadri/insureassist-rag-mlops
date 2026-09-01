@@ -139,7 +139,7 @@ def reciprocal_rank_fusion(
 import json
 from pathlib import Path
 
-RETRIEVAL_CONFIG_PATH = Path("eval/retrieval_config.json")
+from src.paths import RETRIEVAL_CONFIG_PATH
 
 
 def load_retrieval_config(path: Path = RETRIEVAL_CONFIG_PATH) -> dict:
