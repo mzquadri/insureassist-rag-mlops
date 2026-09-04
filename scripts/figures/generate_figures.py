@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """The figure set for the retrieval benchmark.
 
 Every number is read from eval/reference_run.json, which a tracked evaluation run
