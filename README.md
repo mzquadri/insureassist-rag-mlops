@@ -33,8 +33,12 @@ That is exactly what the original system did: it returned the correct policy for
 | **Hybrid RRF — selected** | 0.556 | **0.420** | **0.556** |
 | *Starting point (dense, 600/100)* | *0.611* | *0.366* | *0.167* |
 
+![Retrieval scorecard](docs/figures/01_retrieval_scorecard.png)
+
 **Top-document accuracy 0.556**, up 3.3× from 0.167. hit rate@5 0.556 — *not* an improvement
 on the original dense baseline's 0.611; BM25 alone still retrieves more relevant chunks.
+Scored on the **18 answerable** test questions, so that gap is 11 questions against 10 —
+one question, well inside the noise of a benchmark this size.
 Full numbers, category breakdown and failure analysis: **[`docs/BENCHMARK.md`](docs/BENCHMARK.md)**.
 
 Everything published is derived from [`eval/reference_run.json`](eval/reference_run.json).
