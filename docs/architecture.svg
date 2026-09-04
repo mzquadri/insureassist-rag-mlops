@@ -1,68 +1,80 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 460" font-family="Segoe UI, Helvetica, Arial, sans-serif">
-  <defs>
-    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L8,3 L0,6 Z" fill="#5D6D7E"/>
-    </marker>
-    <style>
-      .box   { fill:#EAF2F8; stroke:#1F3A5F; stroke-width:1.5; rx:10; }
-      .store { fill:#D5F5E3; stroke:#196F3D; stroke-width:1.5; rx:10; }
-      .t     { fill:#1F3A5F; font-size:15px; font-weight:600; }
-      .ts    { fill:#1F3A5F; font-size:12.5px; }
-      .lbl   { fill:#7F8C8D; font-size:12px; font-style:italic; }
-      .arw   { stroke:#5D6D7E; stroke-width:1.6; fill:none; marker-end:url(#arrow); }
-      .title { fill:#1F3A5F; font-size:20px; font-weight:700; }
-    </style>
-  </defs>
-
-  <text x="500" y="34" text-anchor="middle" class="title">InsureAssist — System Architecture</text>
-
-  <!-- Ingestion lane -->
-  <text x="40" y="74" class="lbl">Ingestion (offline, run once)</text>
-  <rect class="box" x="40" y="86" width="160" height="58" rx="10"/>
-  <text x="120" y="112" text-anchor="middle" class="t">Policy</text>
-  <text x="120" y="130" text-anchor="middle" class="ts">documents</text>
-
-  <path class="arw" d="M200,115 L232,115"/>
-  <rect class="box" x="232" y="86" width="188" height="58" rx="10"/>
-  <text x="326" y="112" text-anchor="middle" class="t">Chunk &amp; embed</text>
-  <text x="326" y="130" text-anchor="middle" class="ts">BGE (sentence-transformers)</text>
-
-  <path class="arw" d="M420,120 C500,140 520,150 560,158"/>
-
-  <!-- Vector store (shared between lanes) -->
-  <rect class="store" x="560" y="120" width="180" height="72" rx="10"/>
-  <text x="650" y="150" text-anchor="middle" class="t">Qdrant</text>
-  <text x="650" y="170" text-anchor="middle" class="ts">vector database</text>
-
-  <!-- Query lane -->
-  <text x="40" y="266" class="lbl">Query (online, per question)</text>
-  <rect class="box" x="40" y="280" width="110" height="58" rx="10"/>
-  <text x="95" y="315" text-anchor="middle" class="t">User</text>
-
-  <path class="arw" d="M150,309 L188,309"/>
-  <rect class="box" x="188" y="280" width="150" height="58" rx="10"/>
-  <text x="263" y="306" text-anchor="middle" class="t">FastAPI</text>
-  <text x="263" y="324" text-anchor="middle" class="ts">/ask endpoint</text>
-
-  <!-- retrieve arrow up to Qdrant -->
-  <path class="arw" d="M300,280 C360,235 470,205 560,188"/>
-  <text x="360" y="232" class="lbl">retrieve top-k</text>
-
-  <!-- FastAPI -> LLM -->
-  <path class="arw" d="M338,309 L636,309"/>
-  <text x="420" y="300" class="lbl">prompt + context</text>
-
-  <rect class="store" x="636" y="280" width="196" height="58" rx="10"/>
-  <text x="734" y="306" text-anchor="middle" class="t">LLM</text>
-  <text x="734" y="324" text-anchor="middle" class="ts">Phi-3 + LoRA / Ollama</text>
-
-  <path class="arw" d="M832,309 L866,309"/>
-  <rect class="box" x="866" y="280" width="118" height="58" rx="10"/>
-  <text x="925" y="306" text-anchor="middle" class="t">Answer</text>
-  <text x="925" y="324" text-anchor="middle" class="ts">+ citations</text>
-
-  <!-- footer note -->
-  <line x1="40" y1="392" x2="960" y2="392" stroke="#D5DBDB" stroke-width="1"/>
-  <text x="500" y="418" text-anchor="middle" class="lbl">Fine-tuned with LoRA (PEFT) · tracked in MLflow · evaluated with an LLM-as-judge</text>
-  <text x="500" y="438" text-anchor="middle" class="lbl">containerized with Docker · deployed on Kubernetes (GKE) · CI/CD via GitHub Actions</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 560" width="1060" height="560" font-family="Segoe UI, -apple-system, Helvetica, Arial, sans-serif">
+  <rect width="1060" height="560" fill="#FFFFFF"/>
+  <defs><style>
+    .h { fill:#111827; font-size:19px; font-weight:600; }
+    .s { fill:#6B7280; font-size:12.5px; }
+    .lbl { fill:#111827; font-size:13.5px; font-weight:600; }
+    .sub { fill:#6B7280; font-size:11px; }
+    .mono { font-family:ui-monospace,Consolas,monospace; font-size:11px; fill:#374151; }
+    .cap { fill:#9CA3AF; font-size:11.5px; }
+    .lane { fill:#9CA3AF; font-size:11.5px; font-style:italic; }
+  </style></defs>
+  <text class="h" x="30" y="36">InsureAssist — system architecture</text>
+  <text class="s" x="30" y="58">Hybrid retrieval over three NFIP policy forms. Every label below is read from eval/reference_run.json.</text>
+  <text class="lane" x="30" y="96">Ingestion — offline, run once</text>
+  <rect x="30" y="108" width="190" height="76" rx="9" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="1.4"/>
+  <text class="lbl" x="125.0" y="132" text-anchor="middle">Policy forms</text>
+  <text class="sub" x="125.0" y="151" text-anchor="middle">3 NFIP SFIP documents</text>
+  <text class="mono" x="125.0" y="173" text-anchor="middle">35,639 words</text>
+  <line x1="224" y1="146" x2="251.0" y2="146.0" stroke="#6B7280" stroke-width="1.6"/>
+  <polygon points="258,146 251.0,150.4 251.0,141.6" fill="#6B7280"/>
+  <rect x="262" y="108" width="190" height="76" rx="9" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.4"/>
+  <text class="lbl" x="357.0" y="132" text-anchor="middle">Chunk</text>
+  <text class="sub" x="357.0" y="151" text-anchor="middle">fixed window, selected on dev</text>
+  <text class="mono" x="357.0" y="173" text-anchor="middle">800/120 chars</text>
+  <line x1="456" y1="146" x2="483.0" y2="146.0" stroke="#6B7280" stroke-width="1.6"/>
+  <polygon points="490,146 483.0,150.4 483.0,141.6" fill="#6B7280"/>
+  <rect x="494" y="108" width="200" height="76" rx="9" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.4"/>
+  <text class="lbl" x="594.0" y="132" text-anchor="middle">Embed</text>
+  <text class="sub" x="594.0" y="151" text-anchor="middle">sentence-transformers</text>
+  <text class="mono" x="594.0" y="173" text-anchor="middle">bge-small-en-v1.5</text>
+  <line x1="698" y1="146" x2="725.0" y2="146.0" stroke="#6B7280" stroke-width="1.6"/>
+  <polygon points="732,146 725.0,150.4 725.0,141.6" fill="#6B7280"/>
+  <rect x="736" y="108" width="190" height="76" rx="9" fill="#ECFDF5" stroke="#059669" stroke-width="1.4"/>
+  <text class="lbl" x="831.0" y="132" text-anchor="middle">Qdrant</text>
+  <text class="sub" x="831.0" y="151" text-anchor="middle">vector database</text>
+  <text class="mono" x="831.0" y="173" text-anchor="middle">314 chunks</text>
+  <text class="lane" x="30" y="246">Query — online, per question</text>
+  <rect x="30" y="258" width="150" height="74" rx="9" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="1.4"/>
+  <text class="lbl" x="105.0" y="282" text-anchor="middle">User</text>
+  <text class="sub" x="105.0" y="301" text-anchor="middle">a policy question</text>
+  <line x1="184" y1="295" x2="209.0" y2="295.0" stroke="#6B7280" stroke-width="1.6"/>
+  <polygon points="216,295 209.0,299.4 209.0,290.6" fill="#6B7280"/>
+  <rect x="220" y="258" width="160" height="74" rx="9" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.4"/>
+  <text class="lbl" x="300.0" y="282" text-anchor="middle">FastAPI</text>
+  <text class="sub" x="300.0" y="301" text-anchor="middle">/ask endpoint</text>
+  <line x1="384" y1="278" x2="411.1" y2="250.9" stroke="#6B7280" stroke-width="1.6"/>
+  <polygon points="416,246 414.2,254.1 407.9,247.8" fill="#6B7280"/>
+  <line x1="384" y1="312" x2="411.1" y2="339.1" stroke="#6B7280" stroke-width="1.6"/>
+  <polygon points="416,344 407.9,342.2 414.2,335.9" fill="#6B7280"/>
+  <rect x="420" y="210" width="190" height="68" rx="9" fill="#ECFDF5" stroke="#059669" stroke-width="1.4"/>
+  <text class="lbl" x="515.0" y="234" text-anchor="middle">Dense retrieval</text>
+  <text class="sub" x="515.0" y="253" text-anchor="middle">cosine over Qdrant</text>
+  <text class="mono" x="515.0" y="267" text-anchor="middle">top 20</text>
+  <rect x="420" y="312" width="190" height="68" rx="9" fill="#FFFBEB" stroke="#D97706" stroke-width="1.4"/>
+  <text class="lbl" x="515.0" y="336" text-anchor="middle">BM25</text>
+  <text class="sub" x="515.0" y="355" text-anchor="middle">k1=1.5, b=0.75</text>
+  <text class="mono" x="515.0" y="369" text-anchor="middle">top 20</text>
+  <line x1="614" y1="244" x2="643.1" y2="273.1" stroke="#6B7280" stroke-width="1.6"/>
+  <polygon points="648,278 639.9,276.2 646.2,269.9" fill="#6B7280"/>
+  <line x1="614" y1="346" x2="643.1" y2="316.9" stroke="#6B7280" stroke-width="1.6"/>
+  <polygon points="648,312 646.2,320.1 639.9,313.8" fill="#6B7280"/>
+  <rect x="652" y="258" width="170" height="74" rx="9" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.4"/>
+  <text class="lbl" x="737.0" y="282" text-anchor="middle">RRF fusion</text>
+  <text class="sub" x="737.0" y="301" text-anchor="middle">k = 60, ranks only</text>
+  <text class="mono" x="737.0" y="321" text-anchor="middle">top 5 served</text>
+  <line x1="826" y1="295" x2="851.0" y2="295.0" stroke="#6B7280" stroke-width="1.6"/>
+  <polygon points="858,295 851.0,299.4 851.0,290.6" fill="#6B7280"/>
+  <rect x="862" y="258" width="168" height="74" rx="9" fill="#F9FAFB" stroke="#E5E7EB" stroke-width="1.4"/>
+  <text class="lbl" x="946.0" y="282" text-anchor="middle">Generator</text>
+  <text class="sub" x="946.0" y="301" text-anchor="middle">answer with citations</text>
+  <text class="mono" x="946.0" y="321" text-anchor="middle">llama3.2:3b</text>
+  <line x1="766" y1="188" x2="626.7" y2="228.1" stroke="#6B7280" stroke-width="1.6"/>
+  <polygon points="620,230 625.5,223.8 627.9,232.3" fill="#6B7280"/>
+  <text class="cap" x="706" y="196" text-anchor="middle">queried by</text>
+  <line x1="30" y1="410" x2="1030" y2="410" stroke="#E5E7EB" stroke-width="1"/>
+  <text class="lbl" x="30" y="436">What this diagram does not claim</text>
+  <text class="cap" x="30" y="458">The generator is llama3.2:3b served through ollama and is not fine-tuned. A LoRA notebook exists under archive/ and ships with nothing.</text>
+  <text class="cap" x="30" y="477">No LLM-as-judge metrics are published: only one local model is available, and using it to grade its own output would be circular.</text>
+  <text class="cap" x="30" y="496">There is no abstention rule. Retrieval always returns chunks, so unanswerable questions reach the generator — see docs/LIMITATIONS.md.</text>
 </svg>
