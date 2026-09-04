@@ -11,6 +11,11 @@ Every number here is derived from [`eval/reference_run.json`](../eval/reference_
 - **Corpus:** 3 NFIP policy forms, 35,639 words, **314 chunks** at 800/120 ([`DATA.md`](DATA.md)).
 - **Questions:** 40 hand-authored labels — 32 answerable, 8 unanswerable (20%).
 - **Split:** deterministic hash of the question ID, stratified by category. Dev 18, test 22.
+- **Retrieval denominator:** the 22 test questions include 4 unanswerable ones, which have
+  no relevant chunk to retrieve. Every retrieval number on this page is therefore over the
+  **18 answerable test questions**. At that size one question is 5.6 percentage points, so
+  the gaps between the three retrievers are one or two questions wide — see
+  [`figures/02_confidence_intervals.png`](figures/02_confidence_intervals.png).
 - Dev drove every architecture and configuration decision. **Test was run once, after the
   configuration was frozen in [`eval/retrieval_config.json`](../eval/retrieval_config.json).**
 
@@ -38,8 +43,16 @@ MRR **0.420** · top-document accuracy **0.556**
 | **Hybrid RRF (selected)** | 0.556 | **0.420** | **0.556** |
 | *Dense at the original 600/100 config* | *0.611* | *0.366* | *0.167* |
 
+![Retrieval scorecard](figures/01_retrieval_scorecard.png)
+
 **Read this honestly.** The selected architecture wins on MRR and ties the best
-top-document accuracy, but **BM25 alone retrieves more relevant chunks in the top 5**. The
+top-document accuracy, but **BM25 alone retrieves more relevant chunks in the top 5**. In
+counts that is 11 of 18 questions against 10 — a one-question gap, and the 95% Wilson
+intervals for all three retrievers overlap at every depth:
+
+![Confidence intervals](figures/02_confidence_intervals.png)
+
+The
 headline improvement over the starting point is top-document accuracy: **0.167 → 0.556**,
 a 3.3× reduction in returning the wrong policy form. Overall hit@5 did not improve on the
 original dense baseline.
@@ -124,3 +137,40 @@ python -m eval.verify_artifacts
 Dev-selection evidence is in [`eval/dev_comparison.json`](../eval/dev_comparison.json) and
 [`eval/dev_chunking_sweep.json`](../eval/dev_chunking_sweep.json). The pre-selection dense
 baseline is preserved under [`eval/baselines/`](../eval/baselines/).
+
+
+---
+
+## The figures
+
+Every figure is generated from [`eval/reference_run.json`](../eval/reference_run.json) by
+one tracked script, so none of them can disagree with the published result:
+
+```bash
+python scripts/figures/generate_figures.py
+```
+
+| Figure | What it shows |
+|---|---|
+| [Retrieval scorecard](figures/01_retrieval_scorecard.png) | hybrid against both baselines, with the question count behind every rate |
+| [Confidence intervals](figures/02_confidence_intervals.png) | the same numbers with 95% Wilson intervals — they all overlap |
+| [By category](figures/03_by_category.png) | where retrieval fails, and how few questions each category holds |
+| [Benchmark composition](figures/04_benchmark_composition.png) | the corpus and the 40 questions, by category and difficulty |
+| [Abstention and citations](figures/05_abstention_and_citations.png) | the part that does not work |
+| [Chunking sweep](figures/06_chunking_sweep.png) | why the chunks are 800 characters |
+
+### Where retrieval fails
+
+![By category](figures/03_by_category.png)
+
+`numeric_limit` and `single_chunk` retrieve nothing relevant in the top 5, but hold two
+questions each — "0 of 2" is the entire result. The category worth acting on is
+`near_miss`: 2 of 5, on the largest answerable category in the test split.
+
+### The part that does not work
+
+![Abstention and citations](figures/05_abstention_and_citations.png)
+
+There is no abstention rule, so all four unanswerable test questions were answered. That
+is recorded rather than hidden, and the reason no threshold is fitted is in
+[`LIMITATIONS.md`](LIMITATIONS.md).
