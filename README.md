@@ -46,17 +46,17 @@ Everything published is derived from [`eval/reference_run.json`](eval/reference_
 
 ## Architecture
 
-```
-NFIP corpus (CFR, hash-verified)
-  └─ deterministic chunking ──> content-derived chunk IDs + offsets
-       ├─ BGE dense vectors ──> Qdrant ─┐
-       └─ Okapi BM25 (in-process) ──────┴─> reciprocal rank fusion ─> top-5
-                                                                       │
-                                              traceable citations <────┤
-                                                    local LLM  <───────┘
-```
+![System architecture](docs/architecture.svg)
+
+Every label in that diagram is read from
+[`eval/reference_run.json`](eval/reference_run.json), so it describes the system that
+produced the published numbers rather than an intended one.
 
 Details in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+### How a change reaches production
+
+![Pipeline](docs/mlops-pipeline.svg)
 
 ## Reproduce locally
 
@@ -108,7 +108,34 @@ untested guidance. See [`docs/PRODUCTION.md`](docs/PRODUCTION.md).
 - **Fine-tuning is archived, not used** — its training data was the old evaluation set. See
   [`archive/README.md`](archive/README.md).
 
+![Abstention and citations](docs/figures/05_abstention_and_citations.png)
+
 Full list: [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
+
+## Figures
+
+All six are generated from [`eval/reference_run.json`](eval/reference_run.json) by one
+script, so none of them can disagree with the published result:
+
+```bash
+python scripts/figures/generate_figures.py    # the six charts
+python scripts/figures/generate_diagrams.py   # architecture and pipeline SVGs
+```
+
+| Figure | What it shows |
+|---|---|
+| [Retrieval scorecard](docs/figures/01_retrieval_scorecard.png) | hybrid against both baselines, with the question count behind every rate |
+| [Confidence intervals](docs/figures/02_confidence_intervals.png) | the same numbers with 95% Wilson intervals — they all overlap |
+| [By category](docs/figures/03_by_category.png) | where retrieval fails, and how few questions each category holds |
+| [Benchmark composition](docs/figures/04_benchmark_composition.png) | the corpus and the 40 questions |
+| [Abstention and citations](docs/figures/05_abstention_and_citations.png) | the part that does not work |
+| [Chunking sweep](docs/figures/06_chunking_sweep.png) | why the chunks are 800 characters |
+
+![Where retrieval fails](docs/figures/03_by_category.png)
+
+`numeric_limit` and `single_chunk` retrieve nothing relevant in the top 5 — but they hold
+two questions each, so "0 of 2" is the whole story. The category worth acting on is
+`near_miss`, at 2 of 5.
 
 ## Evidence
 

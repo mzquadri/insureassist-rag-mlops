@@ -1,41 +1,50 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 170" font-family="Segoe UI, Helvetica, Arial, sans-serif">
-  <defs>
-    <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L8,3 L0,6 Z" fill="#5D6D7E"/>
-    </marker>
-    <style>
-      .step  { fill:#EAF2F8; stroke:#1F3A5F; stroke-width:1.5; }
-      .h     { fill:#1F3A5F; font-size:13.5px; font-weight:600; }
-      .s     { fill:#5D6D7E; font-size:11px; }
-      .a     { stroke:#5D6D7E; stroke-width:1.6; fill:none; marker-end:url(#arrow2); }
-      .ttl   { fill:#1F3A5F; font-size:18px; font-weight:700; }
-    </style>
-  </defs>
-
-  <text x="500" y="30" text-anchor="middle" class="ttl">MLOps Lifecycle</text>
-
-  <!-- 5 steps -->
-  <rect class="step" x="20"  y="60" width="168" height="66" rx="10"/>
-  <text x="104" y="90"  text-anchor="middle" class="h">1 · Fine-tune</text>
-  <text x="104" y="108" text-anchor="middle" class="s">LoRA (PEFT) + MLflow</text>
-
-  <path class="a" d="M188,93 L212,93"/>
-  <rect class="step" x="212" y="60" width="168" height="66" rx="10"/>
-  <text x="296" y="90"  text-anchor="middle" class="h">2 · Evaluate</text>
-  <text x="296" y="108" text-anchor="middle" class="s">LLM-as-judge metrics</text>
-
-  <path class="a" d="M380,93 L404,93"/>
-  <rect class="step" x="404" y="60" width="168" height="66" rx="10"/>
-  <text x="488" y="90"  text-anchor="middle" class="h">3 · Containerize</text>
-  <text x="488" y="108" text-anchor="middle" class="s">Docker image</text>
-
-  <path class="a" d="M572,93 L596,93"/>
-  <rect class="step" x="596" y="60" width="168" height="66" rx="10"/>
-  <text x="680" y="90"  text-anchor="middle" class="h">4 · Deploy</text>
-  <text x="680" y="108" text-anchor="middle" class="s">Kubernetes / GKE</text>
-
-  <path class="a" d="M764,93 L788,93"/>
-  <rect class="step" x="788" y="60" width="192" height="66" rx="10"/>
-  <text x="884" y="90"  text-anchor="middle" class="h">5 · Automate</text>
-  <text x="884" y="108" text-anchor="middle" class="s">GitHub Actions CI/CD</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 300" width="1060" height="300" font-family="Segoe UI, -apple-system, Helvetica, Arial, sans-serif">
+  <rect width="1060" height="300" fill="#FFFFFF"/>
+  <defs><style>
+    .h { fill:#111827; font-size:19px; font-weight:600; }
+    .s { fill:#6B7280; font-size:12.5px; }
+    .lbl { fill:#111827; font-size:13.5px; font-weight:600; }
+    .sub { fill:#6B7280; font-size:11px; }
+    .mono { font-family:ui-monospace,Consolas,monospace; font-size:11px; fill:#374151; }
+    .cap { fill:#9CA3AF; font-size:11.5px; }
+    .lane { fill:#9CA3AF; font-size:11.5px; font-style:italic; }
+  </style></defs>
+  <text class="h" x="30" y="36">How a change reaches production</text>
+  <text class="s" x="30" y="58">The stages CI actually runs, in order. Fine-tuning is not one of them; it is archived.</text>
+  <rect x="30" y="108" width="190" height="92" rx="9" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.4"/>
+  <text class="lbl" x="125.0" y="132" text-anchor="middle">1 · Ingest</text>
+  <text class="sub" x="125.0" y="151" text-anchor="middle">corpus hashed and</text>
+  <text class="sub" x="125.0" y="167" text-anchor="middle">chunked into Qdrant</text>
+  <text class="mono" x="125.0" y="189" text-anchor="middle">idempotent</text>
+  <line x1="224" y1="154" x2="235.0" y2="154.0" stroke="#6B7280" stroke-width="1.6"/>
+  <polygon points="242,154 235.0,158.4 235.0,149.6" fill="#6B7280"/>
+  <rect x="246" y="108" width="190" height="92" rx="9" fill="#ECFDF5" stroke="#059669" stroke-width="1.4"/>
+  <text class="lbl" x="341.0" y="132" text-anchor="middle">2 · Evaluate</text>
+  <text class="sub" x="341.0" y="151" text-anchor="middle">retrieval scored on the</text>
+  <text class="sub" x="341.0" y="167" text-anchor="middle">frozen dev/test split</text>
+  <text class="mono" x="341.0" y="189" text-anchor="middle">hybrid_rrf</text>
+  <line x1="440" y1="154" x2="451.0" y2="154.0" stroke="#6B7280" stroke-width="1.6"/>
+  <polygon points="458,154 451.0,158.4 451.0,149.6" fill="#6B7280"/>
+  <rect x="462" y="108" width="190" height="92" rx="9" fill="#ECFDF5" stroke="#059669" stroke-width="1.4"/>
+  <text class="lbl" x="557.0" y="132" text-anchor="middle">3 · Verify</text>
+  <text class="sub" x="557.0" y="151" text-anchor="middle">committed metrics must</text>
+  <text class="sub" x="557.0" y="167" text-anchor="middle">reproduce exactly</text>
+  <text class="mono" x="557.0" y="189" text-anchor="middle">compare_runs</text>
+  <line x1="656" y1="154" x2="667.0" y2="154.0" stroke="#6B7280" stroke-width="1.6"/>
+  <polygon points="674,154 667.0,158.4 667.0,149.6" fill="#6B7280"/>
+  <rect x="678" y="108" width="190" height="92" rx="9" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.4"/>
+  <text class="lbl" x="773.0" y="132" text-anchor="middle">4 · Containerize</text>
+  <text class="sub" x="773.0" y="151" text-anchor="middle">image built and a live</text>
+  <text class="sub" x="773.0" y="167" text-anchor="middle">HTTP request served</text>
+  <text class="mono" x="773.0" y="189" text-anchor="middle">Docker</text>
+  <line x1="872" y1="154" x2="883.0" y2="154.0" stroke="#6B7280" stroke-width="1.6"/>
+  <polygon points="890,154 883.0,158.4 883.0,149.6" fill="#6B7280"/>
+  <rect x="894" y="108" width="190" height="92" rx="9" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.4"/>
+  <text class="lbl" x="989.0" y="132" text-anchor="middle">5 · Deploy</text>
+  <text class="sub" x="989.0" y="151" text-anchor="middle">manifests validated</text>
+  <text class="sub" x="989.0" y="167" text-anchor="middle">against the cluster</text>
+  <text class="mono" x="989.0" y="189" text-anchor="middle">Kubernetes</text>
+  <line x1="30" y1="228" x2="1030" y2="228" stroke="#E5E7EB" stroke-width="1"/>
+  <text class="cap" x="30" y="252">Every stage runs on each push through GitHub Actions. Step 3 is the one that matters: retrieval is deterministic, so a drift means the corpus, the labels, the chunking or the</text>
+  <text class="cap" x="30" y="271">retriever changed without the committed artefact being regenerated. Fine-tuning with LoRA and MLflow lives in archive/ and is not part of this pipeline.</text>
 </svg>
