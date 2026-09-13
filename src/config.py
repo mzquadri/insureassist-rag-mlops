@@ -22,7 +22,10 @@ class Config:
     OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
     HF_BASE_MODEL = os.getenv("HF_BASE_MODEL", "microsoft/Phi-3-mini-4k-instruct")
-    LORA_ADAPTER_PATH = os.getenv("LORA_ADAPTER_PATH", "./finetune/adapter")
+    # The notebook that would produce an adapter lives in archive/finetune/, and no
+    # adapter ships with the repository. The old default named ./finetune/, a
+    # directory that has not existed since the notebook was archived.
+    LORA_ADAPTER_PATH = os.getenv("LORA_ADAPTER_PATH", "./archive/finetune/adapter")
 
     # Corpus. "nfip" is the real, licensed corpus under data/corpus/; "sample" is the
     # two synthetic policy files in data/, kept for offline demos and fixtures.
