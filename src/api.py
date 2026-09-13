@@ -19,6 +19,7 @@ ready while Qdrant was unreachable and routed traffic to something that could on
 from __future__ import annotations
 
 import logging
+import sys
 import uuid
 
 from fastapi import FastAPI, Request
@@ -30,6 +31,29 @@ from src.errors import DependencyUnavailable
 from src.rag import answer
 
 logger = logging.getLogger("insureassist")
+
+
+def _configure_logging() -> None:
+    """Make the application's own log lines survive under uvicorn.
+
+    uvicorn configures the uvicorn.* loggers and leaves the root logger at WARNING, so
+    `logger.info` from this package was discarded and a deployed container produced no
+    request trace at all. Verified against a running container before this existed: the
+    per-request timing line was absent from `docker logs`.
+
+    A handler is attached only when nothing else has configured one, so running under a
+    host that already set up logging does not produce every line twice.
+    """
+    logger.setLevel(getattr(logging, cfg.LOG_LEVEL.upper(), logging.INFO))
+    if not logger.handlers and not logging.getLogger().handlers:
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
+        )
+        logger.addHandler(handler)
+
+
+_configure_logging()
 
 app = FastAPI(title="InsureAssist RAG API", version="0.2.0")
 

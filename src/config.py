@@ -27,6 +27,12 @@ class Config:
     # directory that has not existed since the notebook was archived.
     LORA_ADAPTER_PATH = os.getenv("LORA_ADAPTER_PATH", "./archive/finetune/adapter")
 
+    # Logging. The service logs one line per request with the retrieval and generation
+    # durations. uvicorn configures its own loggers and leaves the root logger at WARNING,
+    # so without this the application's INFO lines were dropped and the container produced
+    # no request trace at all.
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
     # Corpus. "nfip" is the real, licensed corpus under data/corpus/; "sample" is the
     # two synthetic policy files in data/, kept for offline demos and fixtures.
     CORPUS = os.getenv("CORPUS", "nfip")
