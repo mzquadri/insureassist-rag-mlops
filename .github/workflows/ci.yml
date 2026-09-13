@@ -84,6 +84,22 @@ jobs:
           python -m src.ingest | tee second-run.txt
           grep -q "Collection now holds 314 points" second-run.txt
 
+      # Re-ingesting the same configuration was always idempotent; changing the
+      # configuration was not. At 600/100 over a collection built at 800/120, the old 314
+      # points stayed and 426 new ones were added, and the collection served 740 drawn
+      # from two chunkings at once. Ingestion now refuses to report success when the
+      # collection and the chunk count disagree, so this step fails on its own if the
+      # stale records ever come back; the greps additionally pin the two expected sizes.
+      - name: A reconfigured ingest must not leave the previous chunking behind
+        env:
+          QDRANT_URL: http://localhost:6333
+          QDRANT_COLLECTION: nfip_sfip
+        run: |
+          CHUNK_SIZE=600 CHUNK_OVERLAP=100 python -m src.ingest | tee reconfigured.txt
+          grep -q "Collection now holds 426 points" reconfigured.txt
+          python -m src.ingest | tee restored.txt
+          grep -q "Collection now holds 314 points" restored.txt
+
       - name: Reproduce the held-out reference run
         env:
           QDRANT_URL: http://localhost:6333

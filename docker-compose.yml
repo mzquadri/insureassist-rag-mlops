@@ -13,7 +13,10 @@ name: insureassist
 
 services:
   qdrant:
-    image: qdrant/qdrant:latest
+    # Pinned, and pinned to the same tag CI uses. Everything else in this project is
+    # version-locked so a run today and a run next month agree; an unpinned vector
+    # database undoes that, because the retrieval numbers depend on its behaviour.
+    image: qdrant/qdrant:v1.19.0
     container_name: insureassist-qdrant
     ports:
       - "6533:6333"   # host 6533 -> container 6333 (REST). Avoids clashing with :6333
@@ -21,15 +24,14 @@ services:
     volumes:
       - qdrant_storage:/qdrant/storage
 
-  # Uncomment once you build the app image in Phase 4:
-  # api:
-  #   build: .
-  #   container_name: insureassist-api
-  #   ports:
-  #     - "8000:8000"
-  #   env_file: .env
-  #   depends_on:
-  #     - qdrant
+  # The API is deliberately not a service here. It is built and exercised by CI
+  # (container-integration builds the image, asserts it runs non-root and drives live
+  # HTTP against it), and running it locally needs an embedding model download plus
+  # Ollama, neither of which belongs in "bring up the vector database". To run the API
+  # against this Qdrant:
+  #
+  #   docker build -t insureassist:local .
+  #   docker run --rm -p 8000:8000 --network insureassist_default   #     -e QDRANT_URL=http://insureassist-qdrant:6333 insureassist:local
 
 volumes:
   qdrant_storage:      # becomes "insureassist_qdrant_storage" — isolated from other stacks
