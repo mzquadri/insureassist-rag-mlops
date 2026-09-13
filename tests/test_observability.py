@@ -92,3 +92,37 @@ def test_durations_are_non_negative_numbers(wired, logged):
         found = re.search(rf"{field}=([0-9.]+)", line)
         assert found, f"{field} missing from {line!r}"
         assert float(found.group(1)) >= 0
+
+
+# -- the logger has to be enabled, or none of the above reaches a deployment --------------
+
+
+def test_the_application_logger_is_configured_for_info():
+    """uvicorn leaves the root logger at WARNING.
+
+    Without src.api configuring its own logger, every line the tests above assert on is
+    discarded in a deployed container. Verified that way round first: the timing line was
+    absent from `docker logs` of a running container while the code that writes it was
+    present and correct.
+    """
+    import src.api  # noqa: F401  - importing configures logging
+
+    assert logging.getLogger("insureassist").isEnabledFor(logging.INFO)
+
+
+def test_the_log_level_is_configurable():
+    from src.config import Config
+
+    assert hasattr(Config, "LOG_LEVEL")
+    assert Config.LOG_LEVEL.upper() in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+
+
+def test_configuring_twice_does_not_duplicate_handlers():
+    """The API module can be imported more than once in a test session."""
+    from src.api import _configure_logging
+
+    lg = logging.getLogger("insureassist")
+    before = len(lg.handlers)
+    _configure_logging()
+    _configure_logging()
+    assert len(lg.handlers) == before
