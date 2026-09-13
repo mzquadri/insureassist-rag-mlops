@@ -17,13 +17,13 @@ only in the general way any plain-language policy summary would.
 
 ## What this corpus can and cannot support
 
-At the configured chunk size of 600 characters with 100 characters of overlap, the two
-documents produce **7 chunks in total**. Retrieval runs with `TOP_K=4`.
+At the configured chunk size of 800 characters with 120 characters of overlap, the two
+documents produce **6 chunks in total**. Retrieval runs with `TOP_K=5`.
 
-Four of seven chunks is **more than half the entire index on every single query**. Recall
-at that setting is close to meaningless: almost any question will have its evidence inside
-the returned window regardless of how good or bad the retriever is. This is the direct
-cause of the flat `context_precision` scores discussed in `eval/README.md`.
+Five of six chunks is **more than three quarters of the entire index on every single
+query**. Recall at that setting is close to meaningless: almost any question will have its
+evidence inside the returned window regardless of how good or bad the retriever is. This
+is the direct cause of the flat `context_precision` scores discussed in `eval/README.md`.
 
 So this corpus is adequate for:
 
@@ -37,9 +37,12 @@ It is **not** adequate for:
 - comparing retrievers or chunking strategies,
 - any published claim about how well the system finds evidence.
 
-A larger corpus of genuinely public, verifiably redistributable documents is required
-before retrieval numbers mean anything. That work is scoped but not yet done; until it
-lands, no retrieval metric is published anywhere in this repository.
+A larger corpus of genuinely public, verifiably redistributable documents was required
+before retrieval numbers could mean anything, and it has since landed: `data/corpus/`
+holds the NFIP Standard Flood Insurance Policy forms from 44 CFR Part 61. Every retrieval
+metric published in this repository is measured on that corpus, never on the two files
+above. This paragraph previously said the opposite, having been written before the NFIP
+work shipped and not revisited afterwards.
 
 ## Overlap with the fine-tuning data
 
