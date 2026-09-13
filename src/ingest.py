@@ -36,6 +36,9 @@ NON_CORPUS_FILENAMES = {"README.md"}
 
 BATCH_SIZE = 128
 
+#: Points per scroll page when looking for records an earlier run left behind.
+SCROLL_BATCH = 1000
+
 
 def load_documents(data_dir: str = "data") -> list[dict]:
     """Load the synthetic sample .md / .txt files as {source, text}.
@@ -111,6 +114,47 @@ def resolve_documents() -> list[Document]:
     raise SystemExit(f"Unknown CORPUS {cfg.CORPUS!r}; expected 'nfip' or 'sample'")
 
 
+def remove_stale_points(client, collection: str, current_ids: set) -> int:
+    """Delete points the current corpus and chunking did not produce.
+
+    Upserting is idempotent for an unchanged corpus, because a point ID is a uuid5 of a
+    content-derived chunk ID, so re-running rewrites the same points. It is not sufficient
+    on its own. Anything the previous run wrote and this one did not remains, and the
+    collection was only ever recreated when the embedding dimension changed.
+
+    Chunking is the case that matters. Ingesting the same three documents at 600/100 after
+    a run at 800/120 left 314 points in place and added 426 more, and the collection then
+    served 740 points drawn from two different chunkings at once. Nothing detected it: the
+    closing line reported the total and asserted nothing.
+
+    Scrolling IDs is affordable here because the corpus is a few hundred chunks. A corpus
+    large enough for that to hurt would want a generation tag in the payload and a delete
+    by filter instead.
+    """
+    from qdrant_client.models import PointIdsList
+
+    stale: list = []
+    offset = None
+    while True:
+        batch, offset = client.scroll(
+            collection_name=collection,
+            limit=SCROLL_BATCH,
+            offset=offset,
+            with_payload=False,
+            with_vectors=False,
+        )
+        stale.extend(point.id for point in batch if point.id not in current_ids)
+        if offset is None:
+            break
+
+    for start in range(0, len(stale), BATCH_SIZE):
+        client.delete(
+            collection_name=collection,
+            points_selector=PointIdsList(points=stale[start:start + BATCH_SIZE]),
+        )
+    return len(stale)
+
+
 def main():
     from qdrant_client.models import Distance, PointStruct, VectorParams
 
@@ -164,9 +208,19 @@ def main():
             points=points[offset:offset + BATCH_SIZE],
         )
 
+    removed = remove_stale_points(client, cfg.QDRANT_COLLECTION, {p.id for p in points})
+    if removed:
+        print(f"  removed {removed} point(s) left by an earlier corpus or chunking")
+
     count = client.count(cfg.QDRANT_COLLECTION, exact=True).count
     print(f"Ingested {len(points)} chunks from {len(documents)} documents.")
-    print(f"Collection now holds {count} points (equal to chunk count if idempotent).")
+    if count != len(points):
+        # This line used to read "equal to chunk count if idempotent" and never checked.
+        raise SystemExit(
+            f"Collection holds {count} points but this run wrote {len(points)}. "
+            "The collection does not mirror the corpus; refusing to report success."
+        )
+    print(f"Collection now holds {count} points, one per chunk.")
 
 
 if __name__ == "__main__":
