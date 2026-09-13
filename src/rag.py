@@ -15,6 +15,9 @@ contacts nothing.
 """
 from __future__ import annotations
 
+import logging
+import time
+
 from src.config import cfg
 from src.errors import RetrievalUnavailable
 from src.providers import (
@@ -24,6 +27,8 @@ from src.providers import (
     get_vector_store,
 )
 from src.retrieval import Hit, reciprocal_rank_fusion
+
+logger = logging.getLogger("insureassist")
 
 #: Candidates drawn from each retriever before fusion. From the frozen configuration.
 CANDIDATE_DEPTH = 20
@@ -171,10 +176,24 @@ def answer(question: str) -> dict:
     is no evidence to answer from, so the service says so instead of asking a generator to
     improvise - that is the one abstention case the dev evidence actually supports. See
     docs/EVALUATION.md for why no similarity threshold is applied on top of this.
+
+    Each call logs one line carrying the two durations separately, because retrieval and
+    generation fail differently and a single total cannot tell them apart: a slow Qdrant
+    and a slow Ollama look the same until they are timed apart.
+
+    The question is not logged. Its length and the number of contexts are enough to read a
+    trace, and a question put to an insurance assistant is exactly the kind of text that
+    should not accumulate in a log file.
     """
+    started = time.perf_counter()
     contexts = retrieve(question)
+    retrieval_ms = (time.perf_counter() - started) * 1000
 
     if not contexts:
+        logger.info(
+            "ask status=%s retrieval_ms=%.1f contexts=0 question_chars=%d",
+            STATUS_INSUFFICIENT_EVIDENCE, retrieval_ms, len(question),
+        )
         return {
             "status": STATUS_INSUFFICIENT_EVIDENCE,
             "answer": (
@@ -184,7 +203,16 @@ def answer(question: str) -> dict:
             "citations": [],
         }
 
+    generation_started = time.perf_counter()
     text = generate(build_prompt(question, contexts))
+    generation_ms = (time.perf_counter() - generation_started) * 1000
+
+    logger.info(
+        "ask status=%s retrieval_ms=%.1f generation_ms=%.1f contexts=%d "
+        "question_chars=%d answer_chars=%d",
+        STATUS_ANSWERED, retrieval_ms, generation_ms, len(contexts),
+        len(question), len(text),
+    )
     return {
         "status": STATUS_ANSWERED,
         "answer": text,
