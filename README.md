@@ -11,6 +11,16 @@ Ask *"What is the Increased Cost of Compliance limit?"* and the service retrieve
 governing passages and answers from them, returning citations that resolve to exact
 character offsets in the source regulation.
 
+## What this is not
+
+It answers questions *about* the text of published federal regulation. It is not insurance
+advice, it does not price or underwrite anything, and it makes no recommendation: there is
+no rules engine and no product suggestion anywhere in the codebase. An answer is a language
+model's reading of retrieved passages, and the measured limits below are real - the service
+does not reliably detect a question its corpus cannot answer, so it can answer confidently
+from passages that do not contain the answer. Read the citations, which resolve to exact
+character offsets, rather than the prose.
+
 ## Why this benchmark is hard
 
 The corpus is the three **NFIP Standard Flood Insurance Policy** forms — real policy wording,
@@ -93,6 +103,33 @@ response carries a request ID; internal exceptions never reach the caller.
 The container is non-root with pinned dependencies and a healthcheck. **Kubernetes manifests
 are authored and CI-validated but have never been applied to a cluster**, and the GKE guide is
 untested guidance. See [`docs/PRODUCTION.md`](docs/PRODUCTION.md).
+
+## Hardware acceleration
+
+The embedder is the only component a GPU changes. BM25 is pure Python over a few hundred
+chunks, and generation is a separate Ollama process. So the question is narrow: does moving
+`BAAI/bge-small-en-v1.5` off the CPU help?
+
+For ingestion yes, for serving no. Measured by
+[`scripts/benchmark_embedding.py`](scripts/benchmark_embedding.py), median of 10 corpus
+passes and 50 query passes after warm-up:
+
+| Workload | CPU (Core Ultra 9 285H) | Intel Arc Pro 140T | |
+|---|---|---|---|
+| Whole corpus, 314 chunks — ingestion | 11,408 ms | **2,635 ms** | 4.3x faster |
+| One short query — serving | **17.2 ms** | 30.4 ms | 0.57x, slower |
+
+A single 40-character query does not fill the device, so dispatch and transfer cost more
+than the work saved. Batching 314 chunks does fill it. The useful conclusion is to ingest
+on the accelerator and serve from the CPU, which is what the numbers say rather than what a
+GPU is generally assumed to do.
+
+The two sets of vectors agree to a minimum cosine similarity of **0.99999988**, so the
+choice does not move retrieval. That is checked rather than assumed, because these
+embeddings are normalised and searched by cosine distance: a device that shifted them would
+change which chunk comes back, and a speed-up bought that way would not be one.
+
+Timings describe this machine. Nothing in CI depends on a GPU.
 
 ## Limitations
 

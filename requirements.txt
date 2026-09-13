@@ -7,8 +7,13 @@
 # Fine-tuning dependencies are separate (finetune/requirements.txt): that notebook runs on
 # Colab, not here.
 #
-# The "hf" generation backend additionally needs torch, transformers and peft. They are
-# deliberately not listed - they are large and the served system does not use them.
+# The "hf" generation backend additionally needs peft, which is deliberately not listed:
+# the served system calls Ollama and never loads it.
+#
+# torch and transformers are not optional and never were. sentence-transformers requires
+# both, so installing this file installs them transitively. The note here used to group
+# all three as "deliberately not listed", which read as though a plain install stayed
+# small; it does not, and a reader sizing the image should know that.
 fastapi==0.141.1
 uvicorn[standard]==0.52.1
 qdrant-client==1.19.0
