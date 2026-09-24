@@ -15,10 +15,10 @@
     }
   },
   "questions": {
-    "total": 40,
+    "total": 50,
     "answerable": 32,
-    "unanswerable": 8,
-    "unanswerable_share": 0.2,
+    "unanswerable": 18,
+    "unanswerable_share": 0.36,
     "by_category": {
       "exclusion": 5,
       "form_difference": 2,
@@ -27,19 +27,19 @@
       "numeric_limit": 2,
       "single_chunk": 6,
       "time_period": 5,
-      "unanswerable": 8
+      "unanswerable": 18
     },
     "by_split": {
-      "dev": 18,
-      "test": 22
+      "dev": 23,
+      "test": 27
     },
     "by_difficulty": {
-      "easy": 7,
-      "hard": 21,
-      "medium": 12
+      "easy": 9,
+      "hard": 25,
+      "medium": 16
     },
-    "evaluated_in_this_run": 22,
-    "question_set_hash": "ce7065370a7a67507802659261971f160da27cec6ccda9a29a573d464ba68b3f"
+    "evaluated_in_this_run": 27,
+    "question_set_hash": "f754483ce633a08eca686900a42cea8225de225b8f51ee3c745d73617a20b548"
   },
   "retrieval": {
     "architecture": "hybrid_rrf",
@@ -222,17 +222,17 @@
       "answerable_acceptance_rate": 1.0,
       "unanswerable_rejection_rate": 0.0,
       "false_abstentions": 0,
-      "false_answers": 4,
-      "note": "No similarity threshold is applied. On the dev split no single-threshold rule on top-1 dense score beat the always-answer baseline (0.778 vs 0.778), and the hardest unanswerable question scored above the answerable mean. With 8 unanswerable questions in total the benchmark is too small to support a threshold claim, so none is made. Every unanswerable question therefore retrieves something and is passed to the generator, which is a real weakness and is recorded as one."
+      "false_answers": 9,
+      "note": "No similarity threshold is applied, and this is now a tested decision rather than an untested one. The unanswerable set was enlarged from 8 to 18 questions, each verified silent against the corpus, and a top-1 dense threshold was chosen on dev by Youden's J and applied unchanged to test. Balanced accuracy 0.802 on dev falls to 0.556 on test, 17 of the 18 unanswerable questions score above the weakest answerable one, and the apparent gain over always-answer comes entirely from refusing 8 of 18 answerable questions. Every unanswerable question therefore still retrieves something and is passed to the generator, which remains a real weakness and is recorded as one. See eval/abstention_threshold.py."
     },
     "judge_metrics": null,
     "judge_note": "No judge metrics are published. Only one local model is available, and using it to grade its own output is circular. A judge would have to be a different model; none is installed, and downloading one purely to fill this field would not make the number more trustworthy."
   },
   "latency_ms": {
-    "n": 22,
-    "mean": 49.82,
-    "p50": 49.57,
-    "p95": 60.26,
+    "n": 27,
+    "mean": 82.82,
+    "p50": 81.82,
+    "p95": 93.82,
     "note": "Machine-specific. Not a property of the system."
   },
   "reproducibility": {
@@ -240,7 +240,7 @@
     "retrieval_config_hash": "14f9afcd6da74daf0f860bd621097b71417b7cf8e8548281535c1bc44216fa3d",
     "python": "3.13.5",
     "seed": "not applicable: retrieval is deterministic; generation is not scored here",
-    "hybrid_eval_seconds": 15.13
+    "hybrid_eval_seconds": 25.68
   },
   "per_question": [
     {

@@ -198,13 +198,15 @@ def abstention_metrics(questions) -> dict:
         "false_abstentions": answerable_total - answerable_answered,
         "false_answers": unanswerable_answered,
         "note": (
-            "No similarity threshold is applied. On the dev split no single-threshold rule "
-            "on top-1 dense score beat the always-answer baseline (0.778 vs 0.778), and the "
-            "hardest unanswerable question scored above the answerable mean. With 8 "
-            "unanswerable questions in total the benchmark is too small to support a "
-            "threshold claim, so none is made. Every unanswerable question therefore "
-            "retrieves something and is passed to the generator, which is a real weakness "
-            "and is recorded as one."
+            "No similarity threshold is applied, and this is now a tested decision rather "
+            "than an untested one. The unanswerable set was enlarged from 8 to 18 questions, "
+            "each verified silent against the corpus, and a top-1 dense threshold was chosen "
+            "on dev by Youden's J and applied unchanged to test. Balanced accuracy 0.802 on "
+            "dev falls to 0.556 on test, 17 of the 18 unanswerable questions score above the "
+            "weakest answerable one, and the apparent gain over always-answer comes entirely "
+            "from refusing 8 of 18 answerable questions. Every unanswerable question therefore "
+            "still retrieves something and is passed to the generator, which remains a real "
+            "weakness and is recorded as one. See eval/abstention_threshold.py."
         ),
     }
 

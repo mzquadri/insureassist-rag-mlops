@@ -133,8 +133,10 @@ Timings describe this machine. Nothing in CI depends on a GPU.
 
 ## Limitations
 
-- **Unanswerable questions are not detected.** Unanswerable rejection rate is 0.000. No
-  similarity threshold is defensible on this data — the hardest trap scores *above* the mean
+- **Unanswerable questions are not detected.** Unanswerable rejection rate is 0.000. A
+  similarity threshold was tested on an enlarged set of 18 unanswerable questions and
+  rejected: balanced accuracy 0.802 on dev collapses to 0.556 on test, and 17 of the 18 score
+  above the weakest answerable question. No similarity threshold is defensible on this data — the hardest trap scores *above* the mean
   for answerable questions. Nothing is claimed.
 - **BM25 alone beats the selected hybrid on hit@5.** Hybrid was chosen for MRR and
   top-document accuracy; that trade-off is stated, not hidden.

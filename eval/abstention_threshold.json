@@ -1,0 +1,48 @@
+{
+  "protocol": "threshold chosen on dev by Youden's J, reported on test",
+  "signal": "top-1 dense cosine over the retrieved contexts",
+  "questions": {
+    "total": 50,
+    "dev": 23,
+    "test": 27
+  },
+  "separation": {
+    "answerable_mean": 0.7539,
+    "answerable_min": 0.6368,
+    "unanswerable_mean": 0.7185,
+    "unanswerable_max": 0.8001,
+    "unanswerable_scoring_above_the_weakest_answerable": 17,
+    "unanswerable_total": 18
+  },
+  "selected_threshold": 0.7395,
+  "dev": {
+    "threshold": 0.739515735,
+    "sensitivity": 0.7143,
+    "specificity": 0.8889,
+    "balanced_accuracy": 0.8016,
+    "youden_j": 0.6032,
+    "false_abstentions": 4,
+    "false_answers": 1
+  },
+  "test": {
+    "threshold": 0.739515735,
+    "sensitivity": 0.5556,
+    "specificity": 0.5556,
+    "balanced_accuracy": 0.5556,
+    "youden_j": 0.1111,
+    "false_abstentions": 8,
+    "false_answers": 4
+  },
+  "test_baseline_always_answer": {
+    "threshold": null,
+    "sensitivity": 1.0,
+    "specificity": 0.0,
+    "balanced_accuracy": 0.5,
+    "youden_j": 0.0,
+    "false_abstentions": 0,
+    "false_answers": 9
+  },
+  "sensitivity_floor": 0.9,
+  "adopted": false,
+  "verdict": "Not adopted. Balanced accuracy improves (0.556 against 0.500) only by refusing 8 of 18 answerable questions, taking sensitivity to 0.556 against a 0.90 floor. The gain is an artefact of weighting both errors equally, and they are not equal here."
+}

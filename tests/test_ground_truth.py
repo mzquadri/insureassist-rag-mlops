@@ -65,10 +65,16 @@ class TestCommittedLabels:
 
     def test_expected_size_and_split(self, questions):
         stats = summarise(questions)
-        assert stats["total"] == 40
+        assert stats["total"] == 50
         assert stats["answerable"] == 32
-        assert stats["unanswerable"] == 8
-        assert 0.15 <= stats["unanswerable_share"] <= 0.30
+        assert stats["unanswerable"] == 18
+        # The share was bounded at 0.30 when there were eight unanswerable questions and
+        # the worry was that they would swamp the set. The opposite turned out to be the
+        # problem: eight was too few to say anything about abstention, and the limitation
+        # said so. Ten more were added deliberately, which takes the share to 0.36. The
+        # bound is widened rather than deleted, because a set that drifts towards mostly
+        # unanswerable would flatter an abstaining system for the wrong reason.
+        assert 0.15 <= stats["unanswerable_share"] <= 0.45
 
     def test_every_category_is_represented(self, questions):
         used = {q.category for q in questions}
@@ -241,7 +247,7 @@ class TestGroundTruthFile:
         path = "eval/ground_truth/nfip_questions.jsonl"
         with open(path, encoding="utf-8") as f:
             rows = [json.loads(line) for line in f if line.strip()]
-        assert len(rows) == 40
+        assert len(rows) == 50
         assert all("question_id" in row for row in rows)
 
     def test_no_benchmark_question_appears_in_the_finetuning_data(self, questions):

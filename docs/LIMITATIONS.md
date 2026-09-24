@@ -25,8 +25,24 @@ The complete list. Nothing here is softened.
 ## Abstention
 
 - **Unanswerable rejection rate is 0.000.** The service answers every unanswerable question.
-- No threshold is defensible on this data, and none is claimed.
-- 8 unanswerable questions in total is too few to support any threshold claim.
+- **A threshold was tested properly and rejected.** The previous entry said eight unanswerable
+  questions were too few to support any claim, which was true and was the wrong place to
+  stop. The set now holds 18, each one verified silent against the corpus by
+  `eval/check_unanswerable.py` rather than assumed silent. A top-1 dense threshold was chosen
+  on dev by Youden's J and applied unchanged to test.
+- **It does not survive the move to held-out data**: balanced accuracy 0.802 on dev, 0.556 on
+  test. The dev number was memorisation.
+- **The two populations overlap almost entirely.** 17 of the 18 unanswerable questions score
+  above the weakest answerable one. There is no cut that separates them, which is the finding,
+  not a missing tuning step.
+- It does technically beat always-answer on balanced accuracy, 0.556 against 0.500, and that
+  is not a reason to ship it. The gain comes from refusing 8 of 18 answerable questions.
+  Balanced accuracy weights both errors equally and they are not equal here: a false answer
+  arrives with citations that resolve to exact character offsets and can be checked, a false
+  abstention leaves nothing to check. Sensitivity floor of 0.90 declared in the script, not
+  chosen after seeing the result.
+- Reproduce with `python eval/abstention_threshold.py`; the result is pinned in
+  `eval/abstention_threshold.json`.
 
 ## Generation
 
