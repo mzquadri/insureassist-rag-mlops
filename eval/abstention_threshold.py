@@ -20,6 +20,7 @@ does not beat it is not worth the complexity or the false abstentions it buys.
 from __future__ import annotations
 
 import argparse
+import itertools
 import json
 import sys
 from dataclasses import dataclass
@@ -27,8 +28,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from eval.ground_truth import load_questions  # noqa: E402
-from src.rag import retrieve  # noqa: E402
+from eval.ground_truth import load_questions
+from src.rag import retrieve
 
 TOP_K = 5
 
@@ -117,7 +118,7 @@ def apply(rows: list[Scored], threshold: float | None) -> Outcome:
 def select_threshold(dev: list[Scored]) -> tuple[float, Outcome]:
     """Every midpoint between adjacent observed scores is a candidate."""
     scores = sorted({r.top_dense for r in dev})
-    candidates = [(a + b) / 2 for a, b in zip(scores, scores[1:])]
+    candidates = [(a + b) / 2 for a, b in itertools.pairwise(scores)]
     if not candidates:
         return 0.0, apply(dev, 0.0)
     best = max(candidates, key=lambda t: (apply(dev, t).youden_j, -t))
@@ -128,7 +129,9 @@ def separation(rows: list[Scored]) -> dict:
     """How far apart the two populations sit, before any rule is drawn."""
     ans = [r.top_dense for r in rows if r.answerable]
     una = [r.top_dense for r in rows if not r.answerable]
-    mean = lambda xs: sum(xs) / len(xs) if xs else 0.0  # noqa: E731
+    def mean(xs: list[float]) -> float:
+        return sum(xs) / len(xs) if xs else 0.0
+
     overlap = sum(1 for u in una if u >= min(ans)) if ans else 0
     return {
         "answerable_mean": round(mean(ans), 4),
@@ -210,7 +213,6 @@ def main() -> int:
         f"{sep['unanswerable_total']} unanswerable questions score above the weakest "
         "answerable one, which is why no clean cut exists."
     )
-    improved = adopted
 
     if args.out:
         Path(args.out).write_text(
