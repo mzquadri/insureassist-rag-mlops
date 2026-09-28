@@ -155,7 +155,7 @@ python scripts/figures/generate_figures.py
 | [Retrieval scorecard](figures/01_retrieval_scorecard.png) | hybrid against both baselines, with the question count behind every rate |
 | [Confidence intervals](figures/02_confidence_intervals.png) | the same numbers with 95% Wilson intervals — they all overlap |
 | [By category](figures/03_by_category.png) | where retrieval fails, and how few questions each category holds |
-| [Benchmark composition](figures/04_benchmark_composition.png) | the corpus and the 40 questions, by category and difficulty |
+| [Benchmark composition](figures/04_benchmark_composition.png) | the corpus and the 50 questions, by category and difficulty |
 | [Abstention and citations](figures/05_abstention_and_citations.png) | the part that does not work |
 | [Chunking sweep](figures/06_chunking_sweep.png) | why the chunks are 800 characters |
 

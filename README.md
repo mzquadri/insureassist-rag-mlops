@@ -166,7 +166,7 @@ python scripts/figures/generate_diagrams.py   # architecture and pipeline SVGs
 | [Retrieval scorecard](docs/figures/01_retrieval_scorecard.png) | hybrid against both baselines, with the question count behind every rate |
 | [Confidence intervals](docs/figures/02_confidence_intervals.png) | the same numbers with 95% Wilson intervals — they all overlap |
 | [By category](docs/figures/03_by_category.png) | where retrieval fails, and how few questions each category holds |
-| [Benchmark composition](docs/figures/04_benchmark_composition.png) | the corpus and the 40 questions |
+| [Benchmark composition](docs/figures/04_benchmark_composition.png) | the corpus and the 50 questions |
 | [Abstention and citations](docs/figures/05_abstention_and_citations.png) | the part that does not work |
 | [Chunking sweep](docs/figures/06_chunking_sweep.png) | why the chunks are 800 characters |
 
@@ -182,7 +182,7 @@ two questions each, so "0 of 2" is the whole story. The category worth acting on
 |---|---|
 | Reference run | [`eval/reference_run.json`](eval/reference_run.json) |
 | Frozen retrieval config | [`eval/retrieval_config.json`](eval/retrieval_config.json) |
-| Ground truth (40 labels) | [`eval/ground_truth/`](eval/ground_truth/) |
+| Ground truth (50 labels) | [`eval/ground_truth/`](eval/ground_truth/) |
 | Dev selection evidence | [`eval/dev_comparison.json`](eval/dev_comparison.json), [`eval/dev_chunking_sweep.json`](eval/dev_chunking_sweep.json) |
 | Corpus + provenance | [`data/corpus/manifest.json`](data/corpus/manifest.json), [`docs/DATA.md`](docs/DATA.md) |
 | Methodology | [`docs/EVALUATION.md`](docs/EVALUATION.md) |

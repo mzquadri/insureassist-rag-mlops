@@ -12,6 +12,11 @@ Checks:
   * the corpus files still hash to what the manifest records
   * the reference run's corpus hash matches the committed corpus
   * every documented metric appears in the artefact with the same value
+  * the baselines a comparison is measured against, not only the headline
+  * the size of the question set, which went stale once when the unanswerable set
+    grew from eight to eighteen and the prose was left at forty
+  * the abstention numbers, from their own artefact, and that it still reports the
+    threshold as rejected
   * the frozen retrieval config hash matches the config the run used
   * no abstention threshold has appeared
 """
@@ -37,13 +42,89 @@ DOCUMENTED_CLAIMS = [
     ("README.md", r"\*\*Top-document accuracy ([\d.]+)\*\*",
      "retrieval.metrics.top_document_accuracy"),
     ("README.md", r"hit rate@5 ([\d.]+)", "retrieval.metrics.hit_rate@5"),
+
+    # The baseline row is what turns a metric into a comparison, so it is pinned the
+    # same way the headline is. Without these, a document could quote the system's
+    # MRR correctly and invent the number it is measured against.
+    ("docs/BENCHMARK.md", r"\| Dense only \| ([\d.]+) \|",
+     "retrieval.baselines.dense.hit_rate@5"),
+    ("docs/BENCHMARK.md", r"\| Dense only \| [\d.]+ \| ([\d.]+) \|",
+     "retrieval.baselines.dense.mrr"),
+    ("docs/BENCHMARK.md", r"\| Dense only \| [\d.]+ \| [\d.]+ \| ([\d.]+) \|",
+     "retrieval.baselines.dense.top_document_accuracy"),
+    ("docs/BENCHMARK.md", r"\| BM25 only \| \*\*([\d.]+)\*\* \|",
+     "retrieval.baselines.bm25.hit_rate@5"),
+    ("docs/BENCHMARK.md", r"\| BM25 only \| \*\*[\d.]+\*\* \| ([\d.]+) \|",
+     "retrieval.baselines.bm25.mrr"),
+    ("docs/BENCHMARK.md", r"\| BM25 only \| \*\*[\d.]+\*\* \| [\d.]+ \| ([\d.]+) \|",
+     "retrieval.baselines.bm25.top_document_accuracy"),
+
+    # The size of the question set went stale once: the documents said forty while the
+    # run had grown to fifty, because the unanswerable set was enlarged and the prose
+    # was not. Counts are claims too.
+    ("docs/LIMITATIONS.md", r"\*\*(\d+) questions, \d+ in the test split",
+     "questions.total"),
+    ("docs/LIMITATIONS.md", r"\*\*\d+ questions, (\d+) in the test split",
+     "questions.by_split.test"),
+    ("docs/LIMITATIONS.md", r"invalidates all (\d+) labels", "questions.total"),
+    ("docs/BENCHMARK.md", r"the corpus and the (\d+) questions", "questions.total"),
+    ("README.md", r"the corpus and the (\d+) questions", "questions.total"),
+    ("README.md", r"Ground truth \((\d+) labels\)", "questions.total"),
 ]
+
+#: Claims about the abstention experiment, which lives in its own artefact.
+ABSTENTION_CLAIMS = [
+    ("docs/LIMITATIONS.md", r"balanced accuracy ([\d.]+) on dev", "dev.balanced_accuracy"),
+    ("docs/LIMITATIONS.md", r"balanced accuracy [\d.]+ on dev, ([\d.]+) on\s+test",
+     "test.balanced_accuracy"),
+    ("docs/LIMITATIONS.md", r"(\d+) of the \d+ unanswerable questions score",
+     "separation.unanswerable_scoring_above_the_weakest_answerable"),
+    ("docs/LIMITATIONS.md", r"\d+ of the (\d+) unanswerable questions score",
+     "separation.unanswerable_total"),
+]
+
+
+#: The abstention threshold was tested and rejected; its numbers live here rather than
+#: in the reference run, because nothing about it is served.
+ABSTENTION_PATH = REPO_ROOT / "eval" / "abstention_threshold.json"
 
 
 def dig(data: dict, path: str):
     for part in path.split("."):
         data = data[part]
     return data
+
+
+def check_claims(claims: list, artefact: dict, source_name: str) -> list[str]:
+    """Every number a document quotes must be in the artefact, to within rounding.
+
+    A claim that matches nothing is a failure rather than a skip. A pattern that
+    stops matching usually means the sentence around it was rewritten and the
+    number quietly stopped being checked, which is the failure this exists to
+    catch.
+    """
+    problems: list[str] = []
+    for document, pattern, path in claims:
+        source = REPO_ROOT / document
+        if not source.exists():
+            problems.append(f"{document} is missing")
+            continue
+        text = source.read_text(encoding="utf-8")
+        matches = re.findall(pattern, text)
+        if not matches:
+            problems.append(
+                f"{document}: nothing matches {pattern!r}, so {path} from "
+                f"{source_name} is no longer being checked"
+            )
+            continue
+        expected = dig(artefact, path)
+        for found in matches:
+            if abs(float(found) - float(expected)) > 0.0005:
+                problems.append(
+                    f"{document}: documents {found} for {path}, "
+                    f"{source_name} says {expected}"
+                )
+    return problems
 
 
 def main() -> int:
@@ -78,22 +159,17 @@ def main() -> int:
         problems.append("run chunk size does not match the frozen config")
 
     # --- documented numbers -------------------------------------------------------------
-    for document, pattern, path in DOCUMENTED_CLAIMS:
-        source = REPO_ROOT / document
-        if not source.exists():
-            problems.append(f"{document} is missing")
-            continue
-        text = source.read_text(encoding="utf-8")
-        matches = re.findall(pattern, text)
-        if not matches:
-            problems.append(f"{document}: no value found for {path} (pattern {pattern!r})")
-            continue
-        expected = dig(run, path)
-        for found in matches:
-            if abs(float(found) - float(expected)) > 0.0005:
-                problems.append(
-                    f"{document}: documents {found} for {path}, artefact says {expected}"
-                )
+    problems += check_claims(DOCUMENTED_CLAIMS, run, "the reference run")
+
+    # --- the abstention experiment, which lives in its own artefact ----------------------
+    if ABSTENTION_PATH.exists():
+        rejected = json.loads(ABSTENTION_PATH.read_text(encoding="utf-8"))
+        problems += check_claims(ABSTENTION_CLAIMS, rejected, "the abstention run")
+        if rejected.get("adopted"):
+            problems.append(
+                "the abstention artefact now reports adopted=true; the documents still "
+                "describe a threshold that was tested and rejected"
+            )
 
     # --- no threshold may appear ---------------------------------------------------------
     abstention = run["generation"]["abstention"]
@@ -112,7 +188,9 @@ def main() -> int:
     print(f"  corpus hash        {run['corpus']['corpus_hash'][:16]}")
     print(f"  question set hash  {run['questions']['question_set_hash'][:16]}")
     print(f"  architecture       {run['retrieval']['architecture']}")
-    print(f"  checked claims     {len(DOCUMENTED_CLAIMS)}")
+    checked = len(DOCUMENTED_CLAIMS) + (len(ABSTENTION_CLAIMS)
+                                       if ABSTENTION_PATH.exists() else 0)
+    print(f"  checked claims     {checked}")
     return 0
 
 

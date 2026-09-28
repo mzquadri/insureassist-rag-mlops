@@ -4,7 +4,7 @@ The complete list. Nothing here is softened.
 
 ## Benchmark
 
-- **40 questions, 22 in the test split.** Small. Category cells of n=2-5 carry no reliable
+- **50 questions, 27 in the test split, 18 of them answerable.** Small. Category cells of n=2-5 carry no reliable
   signal, and per-form numbers (3-8 questions each) are not reported as findings.
 - **Dev did not generalise**: hit@5 1.000 on dev, 0.556 on test.
 - **One jurisdiction, one peril, three documents.** Results describe US flood policy wording,
@@ -56,7 +56,7 @@ The complete list. Nothing here is softened.
 
 - **Trailing duplicate chunk.** A document whose length lands just past a chunk boundary
   emits a final chunk wholly contained in the previous one. Retained deliberately: fixing it
-  changes every chunk ID, which invalidates all 40 labels and the reference run. The benefit
+  changes every chunk ID, which invalidates all 50 labels and the reference run. The benefit
   does not justify the migration. It is pinned by a test so it cannot change silently.
 - Chunking is character-based, not token-based or structure-aware.
 
