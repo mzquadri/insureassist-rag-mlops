@@ -56,7 +56,11 @@ Everything published is derived from [`eval/reference_run.json`](eval/reference_
 
 ## Architecture
 
-![System architecture](docs/architecture.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/architecture-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/architecture.svg">
+  <img src="docs/architecture.svg" alt="System architecture: hybrid retrieval over three NFIP policy forms">
+</picture>
 
 Every label in that diagram is read from
 [`eval/reference_run.json`](eval/reference_run.json), so it describes the system that
@@ -66,7 +70,11 @@ Details in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ### How a change reaches production
 
-![Pipeline](docs/mlops-pipeline.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/mlops-pipeline-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/mlops-pipeline.svg">
+  <img src="docs/mlops-pipeline.svg" alt="Pipeline: ingest, evaluate, verify, containerize, deploy">
+</picture>
 
 ## Reproduce locally
 
