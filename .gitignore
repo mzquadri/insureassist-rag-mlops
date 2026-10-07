@@ -12,3 +12,6 @@ mlruns/
 # stray files sometimes created by tooling
 pip
 python
+
+# generated answer cache; regenerate with eval/citation_run.py
+eval/.citation_answers.json

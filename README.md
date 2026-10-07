@@ -151,6 +151,14 @@ Timings describe this machine. Nothing in CI depends on a GPU.
 - **Dev did not generalise**: hybrid scored 1.000 hit@5 on dev, 0.556 on test.
 - **No answer-quality metrics.** Only one local model is available and grading its own output
   is circular.
+- **28% of answers cite a block that was never supplied.** The prompt numbers five context
+  blocks; on the 18 answerable test questions the model produced `[6]`, `[7]` and `[16]` —
+  5 of 18, 27.8% [12.5%, 50.9%]. Every answer cited something, so the failure is a dangling
+  reference rather than a missing one. The `citations` field itself still resolves to exact
+  offsets, because it lists the retrieved blocks rather than the ones the answer used — mean
+  coverage 27.8%, so most listed citations support nothing in the text beside them. Measured
+  without a judge by [`eval/citation_run.py`](eval/citation_run.py); these are facts about
+  the string, not opinions about the answer.
 - **One jurisdiction, one peril, three documents.** Results do not transfer.
 - **Fine-tuning is archived, not used** — its training data was the old evaluation set. See
   [`archive/README.md`](archive/README.md).
@@ -189,6 +197,7 @@ two questions each, so "0 of 2" is the whole story. The category worth acting on
 | | |
 |---|---|
 | Reference run | [`eval/reference_run.json`](eval/reference_run.json) |
+| Citation use by the generator | [`eval/citation_structure.json`](eval/citation_structure.json) |
 | Frozen retrieval config | [`eval/retrieval_config.json`](eval/retrieval_config.json) |
 | Ground truth (50 labels) | [`eval/ground_truth/`](eval/ground_truth/) |
 | Dev selection evidence | [`eval/dev_comparison.json`](eval/dev_comparison.json), [`eval/dev_chunking_sweep.json`](eval/dev_chunking_sweep.json) |

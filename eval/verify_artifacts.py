@@ -20,6 +20,7 @@ Checks:
   * the frozen retrieval config hash matches the config the run used
   * no abstention threshold has appeared
 """
+
 from __future__ import annotations
 
 import json
@@ -34,38 +35,69 @@ from src.paths import RETRIEVAL_CONFIG_PATH as CONFIG_PATH
 #: Numbers quoted in prose, and where they must come from in the artefact.
 #: Each entry is (document, regex capturing the number, dotted path into the run).
 DOCUMENTED_CLAIMS = [
-    ("docs/BENCHMARK.md", r"\| Hit rate \| [\d.]+ \| [\d.]+ \| \*\*([\d.]+)\*\* \|",
-     "retrieval.metrics.hit_rate@5"),
+    (
+        "docs/BENCHMARK.md",
+        r"\| Hit rate \| [\d.]+ \| [\d.]+ \| \*\*([\d.]+)\*\* \|",
+        "retrieval.metrics.hit_rate@5",
+    ),
     ("docs/BENCHMARK.md", r"MRR \*\*([\d.]+)\*\*", "retrieval.metrics.mrr"),
-    ("docs/BENCHMARK.md", r"top-document accuracy \*\*([\d.]+)\*\*",
-     "retrieval.metrics.top_document_accuracy"),
-    ("README.md", r"\*\*Top-document accuracy ([\d.]+)\*\*",
-     "retrieval.metrics.top_document_accuracy"),
+    (
+        "docs/BENCHMARK.md",
+        r"top-document accuracy \*\*([\d.]+)\*\*",
+        "retrieval.metrics.top_document_accuracy",
+    ),
+    (
+        "README.md",
+        r"\*\*Top-document accuracy ([\d.]+)\*\*",
+        "retrieval.metrics.top_document_accuracy",
+    ),
     ("README.md", r"hit rate@5 ([\d.]+)", "retrieval.metrics.hit_rate@5"),
-
     # The baseline row is what turns a metric into a comparison, so it is pinned the
     # same way the headline is. Without these, a document could quote the system's
     # MRR correctly and invent the number it is measured against.
-    ("docs/BENCHMARK.md", r"\| Dense only \| ([\d.]+) \|",
-     "retrieval.baselines.dense.hit_rate@5"),
-    ("docs/BENCHMARK.md", r"\| Dense only \| [\d.]+ \| ([\d.]+) \|",
-     "retrieval.baselines.dense.mrr"),
-    ("docs/BENCHMARK.md", r"\| Dense only \| [\d.]+ \| [\d.]+ \| ([\d.]+) \|",
-     "retrieval.baselines.dense.top_document_accuracy"),
-    ("docs/BENCHMARK.md", r"\| BM25 only \| \*\*([\d.]+)\*\* \|",
-     "retrieval.baselines.bm25.hit_rate@5"),
-    ("docs/BENCHMARK.md", r"\| BM25 only \| \*\*[\d.]+\*\* \| ([\d.]+) \|",
-     "retrieval.baselines.bm25.mrr"),
-    ("docs/BENCHMARK.md", r"\| BM25 only \| \*\*[\d.]+\*\* \| [\d.]+ \| ([\d.]+) \|",
-     "retrieval.baselines.bm25.top_document_accuracy"),
-
+    (
+        "docs/BENCHMARK.md",
+        r"\| Dense only \| ([\d.]+) \|",
+        "retrieval.baselines.dense.hit_rate@5",
+    ),
+    (
+        "docs/BENCHMARK.md",
+        r"\| Dense only \| [\d.]+ \| ([\d.]+) \|",
+        "retrieval.baselines.dense.mrr",
+    ),
+    (
+        "docs/BENCHMARK.md",
+        r"\| Dense only \| [\d.]+ \| [\d.]+ \| ([\d.]+) \|",
+        "retrieval.baselines.dense.top_document_accuracy",
+    ),
+    (
+        "docs/BENCHMARK.md",
+        r"\| BM25 only \| \*\*([\d.]+)\*\* \|",
+        "retrieval.baselines.bm25.hit_rate@5",
+    ),
+    (
+        "docs/BENCHMARK.md",
+        r"\| BM25 only \| \*\*[\d.]+\*\* \| ([\d.]+) \|",
+        "retrieval.baselines.bm25.mrr",
+    ),
+    (
+        "docs/BENCHMARK.md",
+        r"\| BM25 only \| \*\*[\d.]+\*\* \| [\d.]+ \| ([\d.]+) \|",
+        "retrieval.baselines.bm25.top_document_accuracy",
+    ),
     # The size of the question set went stale once: the documents said forty while the
     # run had grown to fifty, because the unanswerable set was enlarged and the prose
     # was not. Counts are claims too.
-    ("docs/LIMITATIONS.md", r"\*\*(\d+) questions, \d+ in the test split",
-     "questions.total"),
-    ("docs/LIMITATIONS.md", r"\*\*\d+ questions, (\d+) in the test split",
-     "questions.by_split.test"),
+    (
+        "docs/LIMITATIONS.md",
+        r"\*\*(\d+) questions, \d+ in the test split",
+        "questions.total",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\*\*\d+ questions, (\d+) in the test split",
+        "questions.by_split.test",
+    ),
     ("docs/LIMITATIONS.md", r"invalidates all (\d+) labels", "questions.total"),
     ("docs/BENCHMARK.md", r"the corpus and the (\d+) questions", "questions.total"),
     ("README.md", r"the corpus and the (\d+) questions", "questions.total"),
@@ -74,19 +106,51 @@ DOCUMENTED_CLAIMS = [
 
 #: Claims about the abstention experiment, which lives in its own artefact.
 ABSTENTION_CLAIMS = [
-    ("docs/LIMITATIONS.md", r"balanced accuracy ([\d.]+) on dev", "dev.balanced_accuracy"),
-    ("docs/LIMITATIONS.md", r"balanced accuracy [\d.]+ on dev, ([\d.]+) on\s+test",
-     "test.balanced_accuracy"),
-    ("docs/LIMITATIONS.md", r"(\d+) of the \d+ unanswerable questions score",
-     "separation.unanswerable_scoring_above_the_weakest_answerable"),
-    ("docs/LIMITATIONS.md", r"\d+ of the (\d+) unanswerable questions score",
-     "separation.unanswerable_total"),
+    (
+        "docs/LIMITATIONS.md",
+        r"balanced accuracy ([\d.]+) on dev",
+        "dev.balanced_accuracy",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"balanced accuracy [\d.]+ on dev, ([\d.]+) on\s+test",
+        "test.balanced_accuracy",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"(\d+) of the \d+ unanswerable questions score",
+        "separation.unanswerable_scoring_above_the_weakest_answerable",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\d+ of the (\d+) unanswerable questions score",
+        "separation.unanswerable_total",
+    ),
 ]
 
 
 #: The abstention threshold was tested and rejected; its numbers live here rather than
 #: in the reference run, because nothing about it is served.
 ABSTENTION_PATH = REPO_ROOT / "eval" / "abstention_threshold.json"
+
+#: Claims about what the generator did with its citations. Its own artefact, because it
+#: measures generation and the reference run measures retrieval; mixing them would let a
+#: generation regression hide behind a retrieval number.
+CITATION_CLAIMS = [
+    ("docs/LIMITATIONS.md", r"(\d+) of 18, \*\*27\.8%", "summary.with_out_of_range"),
+    (
+        "docs/LIMITATIONS.md",
+        r"Mean context coverage is \*\*([\d.]+)%",
+        "summary.mean_context_coverage_pct",
+    ),
+    ("README.md", r"5 of 18, ([\d.]+)% \[", "summary.out_of_range_pct"),
+    ("README.md", r"mean\s+coverage ([\d.]+)%", "summary.mean_context_coverage_pct"),
+]
+
+
+#: Generation-side evidence. Absent until eval/citation_run.py has been run, which needs
+#: a local model, so its checks are skipped rather than failed when it is not there.
+CITATION_PATH = REPO_ROOT / "eval" / "citation_structure.json"
 
 
 def dig(data: dict, path: str):
@@ -165,6 +229,11 @@ def main() -> int:
     if ABSTENTION_PATH.exists():
         rejected = json.loads(ABSTENTION_PATH.read_text(encoding="utf-8"))
         problems += check_claims(ABSTENTION_CLAIMS, rejected, "the abstention run")
+
+    # --- what the generator did with its citations --------------------------------------
+    if CITATION_PATH.exists():
+        citations = json.loads(CITATION_PATH.read_text(encoding="utf-8"))
+        problems += check_claims(CITATION_CLAIMS, citations, "the citation run")
         if rejected.get("adopted"):
             problems.append(
                 "the abstention artefact now reports adopted=true; the documents still "
@@ -188,8 +257,9 @@ def main() -> int:
     print(f"  corpus hash        {run['corpus']['corpus_hash'][:16]}")
     print(f"  question set hash  {run['questions']['question_set_hash'][:16]}")
     print(f"  architecture       {run['retrieval']['architecture']}")
-    checked = len(DOCUMENTED_CLAIMS) + (len(ABSTENTION_CLAIMS)
-                                       if ABSTENTION_PATH.exists() else 0)
+    checked = len(DOCUMENTED_CLAIMS) + (
+        len(ABSTENTION_CLAIMS) if ABSTENTION_PATH.exists() else 0
+    )
     print(f"  checked claims     {checked}")
     return 0
 

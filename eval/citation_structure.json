@@ -1,0 +1,348 @@
+{
+  "generated_utc": "2026-10-07T08:33:20Z",
+  "what_this_measures": "Whether the generator cited at all, and whether the blocks it cited were supplied to it. Facts about the string; no judge, so no circularity. It does not measure whether a cited block supports the sentence, which is citation correctness and needs an entailment model.",
+  "generation": {
+    "backend": "ollama",
+    "model": "llama3.2:3b",
+    "temperature": 0.0,
+    "seed": 17,
+    "differs_from_serving": "Serving uses the backend default and is non-deterministic. These settings are pinned so the run reproduces, and are not what the service does."
+  },
+  "retrieval": {
+    "source": "eval/reference_run.json per_question",
+    "note": "Held fixed at the published retrieval; this measures generation only.",
+    "serving_top_k": 5,
+    "chunking": {
+      "size": 800,
+      "overlap": 120,
+      "unit": "characters",
+      "note": "Selected on dev from {400/80, 600/100, 600/150, 800/120, 1000/150}. Larger chunks keep a provision and its form-identifying context in the same window, which is what the dominant failure mode required."
+    }
+  },
+  "summary": {
+    "answers": 18,
+    "cited_any": 18,
+    "uncited": 0,
+    "with_out_of_range": 5,
+    "uncited_rate": 0.0,
+    "out_of_range_rate": 0.2778,
+    "mean_context_coverage": 0.2778,
+    "uncited_pct": 0.0,
+    "out_of_range_pct": 27.8,
+    "mean_context_coverage_pct": 27.8
+  },
+  "per_question": [
+    {
+      "question_id": "nfip-002",
+      "category": "numeric_limit",
+      "n_contexts": 5,
+      "answer_chars": 89,
+      "answer": "[2], [5]\n\nThe maximum payable under Coverage D, Increased Cost of Compliance, is $30,000.",
+      "cited": [
+        2,
+        5
+      ],
+      "in_range": [
+        2,
+        5
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.4
+    },
+    {
+      "question_id": "nfip-004",
+      "category": "single_chunk",
+      "n_contexts": 5,
+      "answer_chars": 4,
+      "answer": "[16]",
+      "cited": [
+        16
+      ],
+      "in_range": [],
+      "out_of_range": [
+        16
+      ],
+      "cited_any": true,
+      "context_coverage": 0.0
+    },
+    {
+      "question_id": "nfip-005",
+      "category": "near_miss",
+      "n_contexts": 5,
+      "answer_chars": 162,
+      "answer": "[6] According to Section 6 of the Standard Flood Insurance Policy - General Property Form, the special limit for artwork, photographs, and collectibles is $2,500.",
+      "cited": [
+        6
+      ],
+      "in_range": [],
+      "out_of_range": [
+        6
+      ],
+      "cited_any": true,
+      "context_coverage": 0.0
+    },
+    {
+      "question_id": "nfip-008",
+      "category": "exclusion",
+      "n_contexts": 5,
+      "answer_chars": 509,
+      "answer": "[2], [3], and [4] provide relevant information.\n\nAccording to [2], the Dwelling Form states that we do not insure for loss to property caused directly by earth movement even if the earth movement is caused by flood.\n\nHowever, [3] and [4] do not provide a clear answer to this question. They both mention that we do not insure for loss to property caused directly by earth movement, but they do not specifically address the scenario where the earth movement is itself caused by flood.\n\nTherefore, I don't know.",
+      "cited": [
+        2,
+        3,
+        4
+      ],
+      "in_range": [
+        2,
+        3,
+        4
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.6
+    },
+    {
+      "question_id": "nfip-009",
+      "category": "exclusion",
+      "n_contexts": 5,
+      "answer_chars": 192,
+      "answer": "[2], [3], and [4] were used to answer the question.\n\nAccording to the context, the policy does not cover loss to property caused directly by earth movement, including landslide and earthquake.",
+      "cited": [
+        2,
+        3,
+        4
+      ],
+      "in_range": [
+        2,
+        3,
+        4
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.6
+    },
+    {
+      "question_id": "nfip-014",
+      "category": "time_period",
+      "n_contexts": 5,
+      "answer_chars": 540,
+      "answer": "[1], [2], [4], and [5] don't mention the time frame for notifying the insurer if you intend to claim additional liability after a community conversion. However, [2] does mention that you may disregard the replacement cost conditions above and make claim under this policy for loss to dwellings on an actual cash value basis, and you may then make claim for any additional liability according to R.2.a, b, and c above, provided you notify us of your intent to do so within 180 days after the date of loss.\n\nTherefore, the answer is 180 days.",
+      "cited": [
+        1,
+        2,
+        4,
+        5
+      ],
+      "in_range": [
+        1,
+        2,
+        4,
+        5
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.8
+    },
+    {
+      "question_id": "nfip-015",
+      "category": "time_period",
+      "n_contexts": 5,
+      "answer_chars": 3,
+      "answer": "[3]",
+      "cited": [
+        3
+      ],
+      "in_range": [
+        3
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-016",
+      "category": "time_period",
+      "n_contexts": 5,
+      "answer_chars": 3,
+      "answer": "[6]",
+      "cited": [
+        6
+      ],
+      "in_range": [],
+      "out_of_range": [
+        6
+      ],
+      "cited_any": true,
+      "context_coverage": 0.0
+    },
+    {
+      "question_id": "nfip-017",
+      "category": "time_period",
+      "n_contexts": 5,
+      "answer_chars": 176,
+      "answer": "[1] and [4]\n\nAccording to the context, if a second bill is mailed providing a revised due date, the revised due date will be 30 days after the date on which the bill is mailed.",
+      "cited": [
+        1,
+        4
+      ],
+      "in_range": [
+        1,
+        4
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.4
+    },
+    {
+      "question_id": "nfip-020",
+      "category": "near_miss",
+      "n_contexts": 5,
+      "answer_chars": 159,
+      "answer": "[2], [4], and [5] \n\nAccording to the context, the Increased Cost of Compliance limit is $30,000, which applies to policies with building coverage (Coverage A).",
+      "cited": [
+        2,
+        4,
+        5
+      ],
+      "in_range": [
+        2,
+        4,
+        5
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.6
+    },
+    {
+      "question_id": "nfip-021",
+      "category": "near_miss",
+      "n_contexts": 5,
+      "answer_chars": 152,
+      "answer": "[2] According to section 1.d of the policy, the maximum payable for Increased Cost of Compliance under the RCBAP is the maximum permitted under the Act.",
+      "cited": [
+        2
+      ],
+      "in_range": [
+        2
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-022",
+      "category": "numeric_limit",
+      "n_contexts": 5,
+      "answer_chars": 193,
+      "answer": "[4] According to Section 4 of the Standard Flood Insurance Policy - Dwelling Form, a Base Flood is defined as a flood having a one percent chance of being equaled or exceeded in any given year.",
+      "cited": [
+        4
+      ],
+      "in_range": [
+        4
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-023",
+      "category": "single_chunk",
+      "n_contexts": 5,
+      "answer_chars": 199,
+      "answer": "[3] According to the context, an elevated building is defined as a building located in zones A1-A30, AE, AH, AR, AR/A, AR/AE, AR/AH, AR/A1-A30, V1-V30, or VE, or in a basement regardless of the zone.",
+      "cited": [
+        3
+      ],
+      "in_range": [
+        3
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-024",
+      "category": "multi_chunk",
+      "n_contexts": 5,
+      "answer_chars": 3,
+      "answer": "[7]",
+      "cited": [
+        7
+      ],
+      "in_range": [],
+      "out_of_range": [
+        7
+      ],
+      "cited_any": true,
+      "context_coverage": 0.0
+    },
+    {
+      "question_id": "nfip-025",
+      "category": "multi_chunk",
+      "n_contexts": 5,
+      "answer_chars": 361,
+      "answer": "[5] According to section 5 of the Standard Flood Insurance Policy - General Property Form (44 CFR Part 61, Appendix A(2) to Part 61), you must use your own judgment concerning the amount of loss and justify that amount. You must also submit the proof of loss within 60 days after the loss, even if the adjuster does not furnish the form or help you complete it.",
+      "cited": [
+        5
+      ],
+      "in_range": [
+        5
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-028",
+      "category": "near_miss",
+      "n_contexts": 5,
+      "answer_chars": 415,
+      "answer": "[6] According to section I.A.2 of the General Property Form, a building under construction is covered, but only if the structure is not yet walled or roofed as described in the definition for building (see II.C.6.a). In this case, coverage applies: (1) Only while such work is in progress; or (2) If such work is hindered by the flood, then coverage applies for the period of time during which the work is hindered.",
+      "cited": [
+        6
+      ],
+      "in_range": [],
+      "out_of_range": [
+        6
+      ],
+      "cited_any": true,
+      "context_coverage": 0.0
+    },
+    {
+      "question_id": "nfip-031",
+      "category": "exclusion",
+      "n_contexts": 5,
+      "answer_chars": 647,
+      "answer": "According to the context, [2] Source: Standard Flood Insurance Policy - General Property Form (44 CFR Part 61, Appendix A(2) to Part 61), mudflow is defined as:\n\n\"...unusual and rapid accumulation or runoff of surface waters from any source;\"\n\nHowever, the context also states that mudflow is specifically excluded from coverage, along with other earth movements such as:\n\n\"...earthquake; landslides; land subsidence; sinkholes; destabilization or movement of land that results from accumulation of water in subsurface land areas; or gradual erosion.\"\n\nTherefore, mudflow is both defined and excluded from coverage under the General Property Form.",
+      "cited": [
+        2
+      ],
+      "in_range": [
+        2
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-032",
+      "category": "near_miss",
+      "n_contexts": 5,
+      "answer_chars": 580,
+      "answer": "[4], [5]\n\nAccording to Section I.G of the Residential Condominium Building Association Policy (RCBAP), the insurer may repair or replace damaged property instead of paying, as stated in Section I.G, \"3. If we give you written notice within 30 days after we receive your signed, sworn proof of loss, we may: a. Repair, rebuild, or replace any part of the lost, damaged, or destroyed property with material or property of like kind and quality or its functional equivalent; and b. Take all or any part of the damaged property at the value that we agree upon or its appraised value.\"",
+      "cited": [
+        4,
+        5
+      ],
+      "in_range": [
+        4,
+        5
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.4
+    }
+  ]
+}

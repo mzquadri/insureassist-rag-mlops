@@ -49,8 +49,26 @@ The complete list. Nothing here is softened.
 - **No answer-quality metric is published.** Only one local model is available, and grading
   its own output is circular.
 - Generation is non-deterministic (default temperature) and is not part of the reference gate.
-- The model is prompted to cite context numbers, but **whether it does so correctly is not
-  measured**. The citation metrics score *retrieval*, not the generator's use of it.
+- **28% of answers cite a context block that was never supplied.** The prompt numbers five
+  blocks and asks the model to cite the numbers it used. On the 18 answerable test
+  questions it produced `[6]`, `[7]` and `[16]`: 5 of 18, **27.8% [12.5%, 50.9%]**. Every
+  answer cited something, so the failure is not silence, it is a reference that points at
+  nothing. Measured by `eval/citation_run.py`, pinned in `eval/citation_structure.json`.
+  No judge is involved — these are facts about the string, which is why the circularity
+  objection above does not reach them.
+- **The `citations` field is retrieval, not attribution.** `answer()` returns
+  `[citation(c) for c in contexts]`: all five retrieved blocks, whatever the answer used.
+  Mean context coverage is **27.8%**, so most of the listed citations support nothing in
+  the text they are attached to. The offsets resolve exactly, as claimed; what they do not
+  establish is that the answer came from there.
+- **The measurement is reproducible but not bit-exact.** Generation is pinned to
+  temperature 0 with a fixed seed, which is not how the service runs and is declared in the
+  artefact. Two independent runs agreed on 17 of 18 answers and on the headline 5 of 18;
+  one question cited `[2]` rather than `[2, 4]`, moving mean coverage by 1.1 points. A
+  local backend at temperature 0 is close to deterministic and is not guaranteed to be.
+- **Whether a cited block supports its sentence is still not measured.** That is citation
+  correctness, it needs an entailment model rather than the generator, and it is a
+  different question from whether the citation is structurally real. Not attempted.
 
 ## Ingestion
 
