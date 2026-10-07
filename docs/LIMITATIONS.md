@@ -66,6 +66,31 @@ The complete list. Nothing here is softened.
   artefact. Two independent runs agreed on 17 of 18 answers and on the headline 5 of 18;
   one question cited `[2]` rather than `[2, 4]`, moving mean coverage by 1.1 points. A
   local backend at temperature 0 is close to deterministic and is not guaranteed to be.
+- **Stating the valid range helps, and 18 questions cannot establish that it does.** The
+  served prompt says "cite the numbers you used" and never says which numbers exist. A
+  variant differing by one clause — "the context blocks are numbered 1 to 5; cite only
+  those numbers" — was run over the same questions and the same pinned retrieval:
+
+  | | cite a block never given | mean context coverage |
+  |---|---|---|
+  | served | 5/18, 27.8% [12.5%, 50.9%] | 27.8% |
+  | range stated | 2/18, 11.1% [3.1%, 32.8%] | 17.8% |
+
+  Paired on the same questions it fixed three and broke none, which is the right
+  direction; McNemar's exact test on three discordant pairs gives **p = 0.250**, and the
+  two intervals overlap across most of their width. This is a hint, not a result.
+
+  It also costs breadth. Coverage falls from 27.8% to 17.8% because the variant cites one
+  block where the served prompt cited several, so part of the improvement is the model
+  citing less rather than citing better.
+
+  `nfip-016` and `nfip-024` emit `[6]` and `[7]` under both prompts, so two of the five
+  failures are not the prompt's doing.
+
+  **The served prompt is unchanged.** A variant ahead on eighteen questions at p = 0.250
+  which also narrows what gets cited is not evidence enough to change what ships.
+  Reproduce with `python eval/citation_run.py --variant ranged`; pinned in
+  `eval/citation_structure_ranged.json`.
 - **Whether a cited block supports its sentence is still not measured.** That is citation
   correctness, it needs an entailment model rather than the generator, and it is a
   different question from whether the citation is structurally real. Not attempted.

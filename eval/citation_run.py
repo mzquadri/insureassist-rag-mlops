@@ -22,6 +22,7 @@ is declared in the artifact rather than left for a reader to assume.
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import sys
@@ -36,12 +37,22 @@ import urllib.error
 import urllib.request
 
 from eval.citation_structure import summarise, use_of_citations
+from eval.prompt_variants import VARIANTS
 from src.config import cfg
 from src.corpus import chunk_corpus, load_corpus
-from src.rag import build_prompt
 
 REFERENCE = ROOT / "eval" / "reference_run.json"
-OUT = ROOT / "eval" / "citation_structure.json"
+
+
+def out_path(variant: str) -> Path:
+    """Served keeps the canonical name; other arms get their own file.
+
+    One file per arm, because an experiment that overwrites the published result makes
+    the published result depend on the last thing anyone tried.
+    """
+    suffix = "" if variant == "served" else f"_{variant}"
+    return ROOT / "eval" / f"citation_structure{suffix}.json"
+
 
 #: Pinned so a rerun gives the same answers. Serving does not do this; see the docstring.
 TEMPERATURE = 0.0
@@ -97,6 +108,17 @@ def contexts_for(
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(prog="citation_run")
+    parser.add_argument(
+        "--variant",
+        choices=sorted(VARIANTS),
+        default="served",
+        help="which prompt arm to run; 'served' is what the service sends",
+    )
+    args = parser.parse_args()
+    build = VARIANTS[args.variant]
+    out = out_path(args.variant)
+
     reference = json.loads(REFERENCE.read_text(encoding="utf-8"))
     chunking = reference["retrieval"]["chunking"]
     top_k = int(reference["retrieval"]["serving_top_k"])
@@ -138,7 +160,7 @@ def main() -> int:
         chunk_ids = entry["retrieved_chunk_ids"][:top_k]
         blocks = contexts_for(chunk_ids, by_id, by_document)
 
-        prompt = build_prompt(question, blocks)
+        prompt = build(question, blocks)
         key = hashlib.sha256(
             f"{model}\n{TEMPERATURE}\n{SEED}\n{prompt}".encode()
         ).hexdigest()
@@ -172,6 +194,7 @@ def main() -> int:
         )
 
     payload = {
+        "prompt_variant": args.variant,
         "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "what_this_measures": (
             "Whether the generator cited at all, and whether the blocks it cited were "
@@ -200,7 +223,7 @@ def main() -> int:
         "per_question": rows,
     }
 
-    OUT.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
     s = payload["summary"]
     print()
@@ -211,7 +234,7 @@ def main() -> int:
         f"cited a block not given {s['with_out_of_range']}  ({s['out_of_range_rate']:.1%})"
     )
     print(f"mean context coverage   {s['mean_context_coverage']:.1%} of {top_k} blocks")
-    print(f"\nwrote {OUT.relative_to(ROOT)}")
+    print(f"\nwrote {out.relative_to(ROOT)}")
     return 0
 
 

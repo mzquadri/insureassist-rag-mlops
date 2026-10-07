@@ -152,6 +152,28 @@ CITATION_CLAIMS = [
 #: a local model, so its checks are skipped rather than failed when it is not there.
 CITATION_PATH = REPO_ROOT / "eval" / "citation_structure.json"
 
+#: The prompt variant is a separate arm in a separate file, so it is checked separately.
+#: Its numbers sit in LIMITATIONS beside the served ones and must not drift from them.
+RANGED_CLAIMS = [
+    (
+        "docs/LIMITATIONS.md",
+        r"\| range stated \| (\d+)/18",
+        "summary.with_out_of_range",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| range stated \| \d+/18, ([\d.]+)%",
+        "summary.out_of_range_pct",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"Coverage falls from [\d.]+% to ([\d.]+)%",
+        "summary.mean_context_coverage_pct",
+    ),
+]
+
+RANGED_PATH = REPO_ROOT / "eval" / "citation_structure_ranged.json"
+
 
 def dig(data: dict, path: str):
     for part in path.split("."):
@@ -234,6 +256,10 @@ def main() -> int:
     if CITATION_PATH.exists():
         citations = json.loads(CITATION_PATH.read_text(encoding="utf-8"))
         problems += check_claims(CITATION_CLAIMS, citations, "the citation run")
+
+    if RANGED_PATH.exists():
+        ranged = json.loads(RANGED_PATH.read_text(encoding="utf-8"))
+        problems += check_claims(RANGED_CLAIMS, ranged, "the range-stated prompt arm")
         if rejected.get("adopted"):
             problems.append(
                 "the abstention artefact now reports adopted=true; the documents still "

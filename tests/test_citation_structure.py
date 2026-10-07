@@ -142,3 +142,44 @@ def test_percentages_are_zero_on_an_empty_summary():
 
     assert summary["out_of_range_pct"] == 0.0
     assert summary["mean_context_coverage_pct"] == 0.0
+
+
+# ------------------------------------------------- the prompt variant under test
+
+from eval.prompt_variants import VARIANTS, ranged_prompt
+
+BLOCKS = [
+    {
+        "text": "Proof of loss is due within 60 days.",
+        "source": "Dwelling",
+        "cfr_citation": "A",
+    },
+    {
+        "text": "Increased Cost of Compliance is $30,000.",
+        "source": "Dwelling",
+        "cfr_citation": "B",
+    },
+]
+
+
+def test_the_ranged_prompt_names_the_highest_valid_number():
+    """The served prompt says "cite the numbers you used" and never says which numbers
+    exist. The model answered with [6], [7] and [16] against five blocks."""
+    assert "1 to 2" in ranged_prompt("How long do I have?", BLOCKS)
+
+
+def test_the_ranged_prompt_still_carries_every_block_and_the_question():
+    prompt = ranged_prompt("How long do I have?", BLOCKS)
+
+    assert "Proof of loss is due within 60 days." in prompt
+    assert "Increased Cost of Compliance is $30,000." in prompt
+    assert "How long do I have?" in prompt
+    assert "[1]" in prompt and "[2]" in prompt
+
+
+def test_the_variant_table_includes_the_served_prompt_unchanged():
+    """The comparison is only meaningful if one arm is what the service actually sends."""
+    from src.rag import build_prompt
+
+    assert VARIANTS["served"] is build_prompt
+    assert set(VARIANTS) == {"served", "ranged"}

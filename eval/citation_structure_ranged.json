@@ -1,0 +1,325 @@
+{
+  "prompt_variant": "ranged",
+  "generated_utc": "2026-10-07T10:38:26Z",
+  "what_this_measures": "Whether the generator cited at all, and whether the blocks it cited were supplied to it. Facts about the string; no judge, so no circularity. It does not measure whether a cited block supports the sentence, which is citation correctness and needs an entailment model.",
+  "generation": {
+    "backend": "ollama",
+    "model": "llama3.2:3b",
+    "temperature": 0.0,
+    "seed": 17,
+    "differs_from_serving": "Serving uses the backend default and is non-deterministic. These settings are pinned so the run reproduces, and are not what the service does."
+  },
+  "retrieval": {
+    "source": "eval/reference_run.json per_question",
+    "note": "Held fixed at the published retrieval; this measures generation only.",
+    "serving_top_k": 5,
+    "chunking": {
+      "size": 800,
+      "overlap": 120,
+      "unit": "characters",
+      "note": "Selected on dev from {400/80, 600/100, 600/150, 800/120, 1000/150}. Larger chunks keep a provision and its form-identifying context in the same window, which is what the dominant failure mode required."
+    }
+  },
+  "summary": {
+    "answers": 18,
+    "cited_any": 18,
+    "uncited": 0,
+    "with_out_of_range": 2,
+    "uncited_rate": 0.0,
+    "out_of_range_rate": 0.1111,
+    "mean_context_coverage": 0.1778,
+    "uncited_pct": 0.0,
+    "out_of_range_pct": 11.1,
+    "mean_context_coverage_pct": 17.8
+  },
+  "per_question": [
+    {
+      "question_id": "nfip-002",
+      "category": "numeric_limit",
+      "n_contexts": 5,
+      "answer_chars": 3,
+      "answer": "[2]",
+      "cited": [
+        2
+      ],
+      "in_range": [
+        2
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-004",
+      "category": "single_chunk",
+      "n_contexts": 5,
+      "answer_chars": 3,
+      "answer": "[3]",
+      "cited": [
+        3
+      ],
+      "in_range": [
+        3
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-005",
+      "category": "near_miss",
+      "n_contexts": 5,
+      "answer_chars": 3,
+      "answer": "[1]",
+      "cited": [
+        1
+      ],
+      "in_range": [
+        1
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-008",
+      "category": "exclusion",
+      "n_contexts": 5,
+      "answer_chars": 3,
+      "answer": "[2]",
+      "cited": [
+        2
+      ],
+      "in_range": [
+        2
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-009",
+      "category": "exclusion",
+      "n_contexts": 5,
+      "answer_chars": 3,
+      "answer": "[2]",
+      "cited": [
+        2
+      ],
+      "in_range": [
+        2
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-014",
+      "category": "time_period",
+      "n_contexts": 5,
+      "answer_chars": 3,
+      "answer": "[2]",
+      "cited": [
+        2
+      ],
+      "in_range": [
+        2
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-015",
+      "category": "time_period",
+      "n_contexts": 5,
+      "answer_chars": 3,
+      "answer": "[3]",
+      "cited": [
+        3
+      ],
+      "in_range": [
+        3
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-016",
+      "category": "time_period",
+      "n_contexts": 5,
+      "answer_chars": 3,
+      "answer": "[6]",
+      "cited": [
+        6
+      ],
+      "in_range": [],
+      "out_of_range": [
+        6
+      ],
+      "cited_any": true,
+      "context_coverage": 0.0
+    },
+    {
+      "question_id": "nfip-017",
+      "category": "time_period",
+      "n_contexts": 5,
+      "answer_chars": 3,
+      "answer": "[1]",
+      "cited": [
+        1
+      ],
+      "in_range": [
+        1
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-020",
+      "category": "near_miss",
+      "n_contexts": 5,
+      "answer_chars": 3,
+      "answer": "[2]",
+      "cited": [
+        2
+      ],
+      "in_range": [
+        2
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-021",
+      "category": "near_miss",
+      "n_contexts": 5,
+      "answer_chars": 3,
+      "answer": "[5]",
+      "cited": [
+        5
+      ],
+      "in_range": [
+        5
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-022",
+      "category": "numeric_limit",
+      "n_contexts": 5,
+      "answer_chars": 3,
+      "answer": "[4]",
+      "cited": [
+        4
+      ],
+      "in_range": [
+        4
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-023",
+      "category": "single_chunk",
+      "n_contexts": 5,
+      "answer_chars": 3,
+      "answer": "[3]",
+      "cited": [
+        3
+      ],
+      "in_range": [
+        3
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-024",
+      "category": "multi_chunk",
+      "n_contexts": 5,
+      "answer_chars": 3,
+      "answer": "[7]",
+      "cited": [
+        7
+      ],
+      "in_range": [],
+      "out_of_range": [
+        7
+      ],
+      "cited_any": true,
+      "context_coverage": 0.0
+    },
+    {
+      "question_id": "nfip-025",
+      "category": "multi_chunk",
+      "n_contexts": 5,
+      "answer_chars": 122,
+      "answer": "[5] In completing the proof of loss, you must use your own judgment concerning the amount of loss and justify that amount.",
+      "cited": [
+        5
+      ],
+      "in_range": [
+        5
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-028",
+      "category": "near_miss",
+      "n_contexts": 5,
+      "answer_chars": 3,
+      "answer": "[5]",
+      "cited": [
+        5
+      ],
+      "in_range": [
+        5
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-031",
+      "category": "exclusion",
+      "n_contexts": 5,
+      "answer_chars": 160,
+      "answer": "[2] According to the General Property Form, mudflow is defined as a result of erosion that is specifically covered under the definition of flood (see II.B.1.c).",
+      "cited": [
+        2
+      ],
+      "in_range": [
+        2
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    },
+    {
+      "question_id": "nfip-032",
+      "category": "near_miss",
+      "n_contexts": 5,
+      "answer_chars": 3,
+      "answer": "[5]",
+      "cited": [
+        5
+      ],
+      "in_range": [
+        5
+      ],
+      "out_of_range": [],
+      "cited_any": true,
+      "context_coverage": 0.2
+    }
+  ]
+}

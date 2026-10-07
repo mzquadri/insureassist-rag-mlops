@@ -1,5 +1,6 @@
 {
-  "generated_utc": "2026-10-07T08:33:20Z",
+  "prompt_variant": "served",
+  "generated_utc": "2026-10-07T10:45:27Z",
   "what_this_measures": "Whether the generator cited at all, and whether the blocks it cited were supplied to it. Facts about the string; no judge, so no circularity. It does not measure whether a cited block supports the sentence, which is citation correctness and needs an entailment model.",
   "generation": {
     "backend": "ollama",
