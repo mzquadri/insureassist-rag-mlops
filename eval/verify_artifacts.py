@@ -174,6 +174,24 @@ RANGED_CLAIMS = [
 
 RANGED_PATH = REPO_ROOT / "eval" / "citation_structure_ranged.json"
 
+#: The citation-correctness arm reports no rate, because its judge failed its control.
+#: Only the control itself is pinned, so the sentence disqualifying the metric cannot
+#: drift away from the artefact that disqualifies it.
+CORRECTNESS_CLAIMS = [
+    (
+        "docs/LIMITATIONS.md",
+        r"It entailed \*\*(\d+) of 30\*\*",
+        "judge_control.positive_entailed",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"(\d+) of 30 on sentences\s+from elsewhere",
+        "judge_control.negative_entailed",
+    ),
+]
+
+CORRECTNESS_PATH = REPO_ROOT / "eval" / "citation_correctness.json"
+
 
 def dig(data: dict, path: str):
     for part in path.split("."):
@@ -260,6 +278,12 @@ def main() -> int:
     if RANGED_PATH.exists():
         ranged = json.loads(RANGED_PATH.read_text(encoding="utf-8"))
         problems += check_claims(RANGED_CLAIMS, ranged, "the range-stated prompt arm")
+
+    if CORRECTNESS_PATH.exists():
+        correctness = json.loads(CORRECTNESS_PATH.read_text(encoding="utf-8"))
+        problems += check_claims(
+            CORRECTNESS_CLAIMS, correctness, "the citation-correctness arm"
+        )
         if rejected.get("adopted"):
             problems.append(
                 "the abstention artefact now reports adopted=true; the documents still "

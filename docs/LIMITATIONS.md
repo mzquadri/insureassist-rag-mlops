@@ -91,9 +91,31 @@ The complete list. Nothing here is softened.
   which also narrows what gets cited is not evidence enough to change what ships.
   Reproduce with `python eval/citation_run.py --variant ranged`; pinned in
   `eval/citation_structure_ranged.json`.
-- **Whether a cited block supports its sentence is still not measured.** That is citation
-  correctness, it needs an entailment model rather than the generator, and it is a
-  different question from whether the citation is structurally real. Not attempted.
+- **Whether a cited block supports its sentence was attempted and is not reported.** This
+  is citation correctness: ALCE's recall and precision (Gao et al., arXiv:2305.14627),
+  judged by an entailment model rather than by the generator, which is the standard answer
+  to the circularity above. `eval/citation_correctness.py` implements the metric and
+  `eval/citation_correctness_run.py` runs it with `MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli`.
+
+  **The judge did not pass its own control, so its numbers are withheld.** The control
+  pairs each block with a complete sentence lifted verbatim out of it, which a working
+  judge must entail. It entailed **16 of 30**. Specificity was fine — 2 of 30 on sentences
+  from elsewhere in the corpus — so the problem is sensitivity, not indiscriminacy.
+
+  Two causes, both found rather than guessed. Chunks are cut at 800 characters, so the
+  premise is long legalistic prose; and much of this corpus is exclusion schedules, whose
+  entries — "Food freezers, other than walk-in, and food in any freezer." — end in a full
+  stop but assert nothing standing alone. The same text as its own premise *is* entailed,
+  so the model works and degrades on this shape of input.
+
+  At that sensitivity a recall figure cannot be attributed to the system rather than to the
+  judge, so the computed values stay in `eval/citation_correctness.json` next to the control
+  that disqualifies them and are not quoted as a result. A larger entailment model, or
+  passage-level premises that depart from ALCE's definition, might clear the control; neither
+  was tried.
+
+  Worth recording even so: 3 of 18 answers produced no scoreable sentence at all, because
+  their only citations were out of range.
 
 ## Ingestion
 
