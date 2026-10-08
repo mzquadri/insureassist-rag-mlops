@@ -11,7 +11,14 @@ Both are pure functions of a scorer, so both are tested against a stated fake.
 
 from __future__ import annotations
 
-from eval.nli_aggregation import best_sentence_score, youden_threshold
+from eval.nli_aggregation import (
+    batch_plan,
+    best_scores,
+    best_sentence_score,
+    chunk_covering,
+    paraphrase_control,
+    youden_threshold,
+)
 
 
 def scorer(table: dict[tuple[str, str], float]):
@@ -76,8 +83,6 @@ def test_youden_prefers_separation_over_catching_everything():
 
 # ------------------------------------------- a control shaped like the task it calibrates
 
-from eval.nli_aggregation import paraphrase_control
-
 
 ROWS = [
     {
@@ -128,8 +133,6 @@ def test_the_control_is_paraphrase_not_copy():
 
 # ----------------------------------- positives must actually contain the labelled evidence
 
-from eval.nli_aggregation import chunk_covering
-
 
 class Chunk:
     def __init__(self, cid, doc, start, end, text):
@@ -161,8 +164,6 @@ def test_a_span_nothing_covers_returns_nothing():
 
 
 # --------------------------------------------- scoring many pairs in one pass
-
-from eval.nli_aggregation import best_scores
 
 
 def batch_scorer(table):
@@ -201,8 +202,6 @@ def test_an_empty_premise_scores_zero_without_reaching_the_model():
 
 
 # ------------------------------------------------------------------ batch planning
-
-from eval.nli_aggregation import batch_plan
 
 
 def test_short_pairs_batch_together_and_long_ones_do_not():

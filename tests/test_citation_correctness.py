@@ -12,8 +12,11 @@ own control in the runner.
 from __future__ import annotations
 
 from eval.citation_correctness import (
+    Claim,
     citation_precision,
+    citation_precision_counts,
     citation_recall,
+    citation_recall_counts,
     claims,
     split_sentences,
 )
@@ -106,11 +109,6 @@ def test_citations_on_an_unsupported_sentence_are_not_counted_as_precise():
 
 # ---------------------------------------------------------- counts behind the rates
 
-from eval.citation_correctness import (
-    Claim,
-    citation_precision_counts,
-    citation_recall_counts,
-)
 
 
 class TestCountsBehindTheRates:
@@ -124,7 +122,9 @@ class TestCountsBehindTheRates:
             Claim(sentence="The waiting period is 30 days. [1]", citations=[1]),
             Claim(sentence="Pets are covered. [2]", citations=[2]),
         ]
-        entails = lambda p, h: h.rstrip(".").lower() in p.lower()  # noqa: E731
+        def entails(premise, hypothesis):
+            return hypothesis.rstrip(".").lower() in premise.lower()
+
 
         assert citation_recall_counts(items, blocks, entails) == (1, 2)
 
@@ -137,7 +137,9 @@ class TestCountsBehindTheRates:
             Claim(sentence="A is true. [1]", citations=[1]),
             Claim(sentence="C is true. [2]", citations=[2]),
         ]
-        entails = lambda p, h: h.rstrip(".").lower() in p.lower()  # noqa: E731
+        def entails(premise, hypothesis):
+            return hypothesis.rstrip(".").lower() in premise.lower()
+
 
         supported, total = citation_recall_counts(items, blocks, entails)
         assert supported / total == citation_recall(items, blocks, entails)
@@ -145,7 +147,9 @@ class TestCountsBehindTheRates:
     def test_precision_counts_give_needed_over_offered(self):
         blocks = {1: "The limit is $250,000.", 2: "Filler sentence."}
         items = [Claim(sentence="The limit is $250,000. [1][2]", citations=[1, 2])]
-        entails = lambda p, h: "250,000" in p and "250,000" in h  # noqa: E731
+        def entails(premise, hypothesis):
+            return "250,000" in premise and "250,000" in hypothesis
+
 
         # Both citations are offered; only block 1 is needed.
         assert citation_precision_counts(items, blocks, entails) == (1, 2)
@@ -153,7 +157,9 @@ class TestCountsBehindTheRates:
     def test_precision_counts_agree_with_the_rate(self):
         blocks = {1: "The limit is $250,000.", 2: "Filler sentence."}
         items = [Claim(sentence="The limit is $250,000. [1][2]", citations=[1, 2])]
-        entails = lambda p, h: "250,000" in p and "250,000" in h  # noqa: E731
+        def entails(premise, hypothesis):
+            return "250,000" in premise and "250,000" in hypothesis
+
 
         needed, total = citation_precision_counts(items, blocks, entails)
         assert needed / total == citation_precision(items, blocks, entails)
