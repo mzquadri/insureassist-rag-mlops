@@ -7,11 +7,18 @@ The judge is an entailment model, not the generator, which is ALCE's answer to t
 circularity `docs/LIMITATIONS.md` objects to. A different model doing a different task
 can be wrong, but it cannot be wrong in the generator's favour by construction.
 
-**The judge is controlled before it is trusted.** A sentence lifted verbatim out of a
-block must be entailed by it, and a sentence from an unrelated block must not. Both are
-built from the committed corpus, so the control measures the judge on this domain rather
-than on MNLI. A low citation score from an untrustworthy judge is unreadable, and the
-control is what separates the two.
+**The judge is calibrated before it is trusted.** A low citation score from an
+untrustworthy judge is unreadable, and the calibration is what separates the two. It is
+built from the ground truth: a human-written `gold_answer` against the chunk holding its
+labelled evidence offsets must be entailed, and the same answer against a chunk the
+labels do not mark relevant must not. That is the shape of a citation - a paraphrase
+supported by a passage - which is why it sets the threshold.
+
+A second control pairs each block with a sentence copied verbatim out of it. It is still
+run and recorded, as a check that the judge works at all, but it does **not** set the
+threshold: copies score near 1.0, so calibrating on them puts the cut near 1.0 and
+rejects the supported paraphrases the metric exists to count. A control has to be
+representative as well as discriminative.
 
     python eval/citation_correctness_run.py
     python eval/citation_correctness_run.py --variant ranged
@@ -50,10 +57,11 @@ from eval.nli_aggregation import (
 )
 from src.corpus import chunk_corpus, load_corpus
 
-#: Candidate judges. ALCE used TRUE (T5-11B), which does not fit here, so the agreement
-#: figures in their paper do not carry over and the control below is what any result
-#: rests on instead. The base model failed that control at 16 of 30; a larger one is the
-#: obvious thing to try before concluding the measurement cannot be made.
+#: Candidate judges. ALCE used TRUE (T5-11B), which does not fit on a 2 GiB card, so the
+#: agreement figures in their paper do not carry over and the calibration below is what any
+#: result rests on instead. The base model clears it once the premise is split and the cut
+#: is calibrated on paraphrase; the larger one was tried while the base model was still
+#: failing, and over-entails badly enough that it is kept only as a recorded negative.
 JUDGES = {
     "base": "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli",
     "large": "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
