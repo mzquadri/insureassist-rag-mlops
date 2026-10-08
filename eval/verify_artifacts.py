@@ -177,32 +177,90 @@ RANGED_PATH = REPO_ROOT / "eval" / "citation_structure_ranged.json"
 #: The citation-correctness arm reports no rate, because its judge failed its control.
 #: Only the control itself is pinned, so the sentence disqualifying the metric cannot
 #: drift away from the artefact that disqualifies it.
+#: The base judge now clears its calibration, so its rates are quoted and must be pinned
+#: alongside the counts behind them. Counts are pinned because the rates are derived from
+#: them: if a count drifts and a rate does not, one of the two is stale.
 CORRECTNESS_CLAIMS = [
     (
         "docs/LIMITATIONS.md",
-        r"\| DeBERTa-v3-base \| (\d+)/30",
-        "judge_control.positive_entailed",
+        r"\| citation recall \| (\d+)/16 cited sentences supported",
+        "summary.recall_counts.supported",
     ),
     (
         "docs/LIMITATIONS.md",
-        r"\| DeBERTa-v3-base \| \d+/30 \| (\d+)/30",
-        "judge_control.negative_entailed",
+        r"\| citation recall \| \d+/(\d+) cited sentences supported",
+        "summary.recall_counts.cited",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| citation recall \| \d+/\d+ cited sentences supported \| ([\d.]+) \|",
+        "summary.citation_recall",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| citation precision \| (\d+)/\d+ citations needed",
+        "summary.precision_counts.needed",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| citation precision \| \d+/(\d+) citations needed",
+        "summary.precision_counts.offered",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| citation precision \| \d+/\d+ citations needed \| ([\d.]+) \|",
+        "summary.citation_precision",
+    ),
+    # The calibration table. A rate is only readable through the control that licensed it,
+    # so the threshold and both rates it was chosen for are pinned too.
+    (
+        "docs/LIMITATIONS.md",
+        r"\| 32 / 32 \| ([\d.]+) \|",
+        "calibration.threshold",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| 32 / 32 \| [\d.]+ \| ([\d.]+) \|",
+        "calibration.sensitivity",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| 32 / 32 \| [\d.]+ \| [\d.]+ \| ([\d.]+) \|",
+        "calibration.specificity",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| 32 / 32 \| [\d.]+ \| [\d.]+ \| [\d.]+ \| ([\d.]+) \|",
+        "calibration.balanced_accuracy",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"sensitivity of ([\d.]+) means it misses",
+        "calibration.sensitivity",
+    ),
+    # The verbatim control is still run as a second check; its figures are quoted in the
+    # history table and must track the artefact rather than the narrative.
+    (
+        "docs/LIMITATIONS.md",
+        r"\| Youden cut on verbatim positives \| (\d+)/30",
+        "judge_control_verbatim.positive_entailed",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| Youden cut on verbatim positives \| \d+/30, (\d+)/30",
+        "judge_control_verbatim.negative_entailed",
     ),
 ]
 
 CORRECTNESS_PATH = REPO_ROOT / "eval" / "citation_correctness.json"
 
-#: The larger judge failed the same control in the opposite direction, so its control is
-#: pinned too. Both rows disqualify a rate; neither rate is quoted anywhere.
+#: The larger judge failed the same control in the opposite direction and its rate is still
+#: not quoted. Only the disqualifying count appears in the history table, so only that is
+#: pinned.
 CORRECTNESS_LARGE_CLAIMS = [
     (
         "docs/LIMITATIONS.md",
-        r"\| DeBERTa-v3-large \| (\d+)/30",
-        "judge_control.positive_entailed",
-    ),
-    (
-        "docs/LIMITATIONS.md",
-        r"\| DeBERTa-v3-large \| \d+/30 \| (\d+)/30",
+        r"\| same, larger judge \| (\d+)/30 \*foreign\* pairs entailed",
         "judge_control.negative_entailed",
     ),
 ]

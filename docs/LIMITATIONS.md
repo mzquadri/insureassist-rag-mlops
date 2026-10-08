@@ -91,48 +91,78 @@ The complete list. Nothing here is softened.
   which also narrows what gets cited is not evidence enough to change what ships.
   Reproduce with `python eval/citation_run.py --variant ranged`; pinned in
   `eval/citation_structure_ranged.json`.
-- **Whether a cited block supports its sentence was attempted and is not reported.** This
-  is citation correctness: ALCE's recall and precision (Gao et al., arXiv:2305.14627),
-  judged by an entailment model rather than by the generator, which is the standard answer
-  to the circularity above. `eval/citation_correctness.py` implements the metric and
+- **Most cited sentences are not supported by the block they cite.** This is citation
+  correctness: ALCE's recall and precision (Gao et al., arXiv:2305.14627), judged by an
+  entailment model rather than by the generator, which is the standard answer to the
+  circularity above. `eval/citation_correctness.py` implements the metric and
   `eval/citation_correctness_run.py` runs it with `MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli`.
 
-  **Neither judge passed its own control, so no rate is reported.** The control pairs each
-  block with a complete sentence lifted verbatim out of it, which a working judge must
-  entail, and pairs it with a sentence from elsewhere in the corpus, which it must not.
-
-  | judge | verbatim entailed | foreign entailed | failure |
+  | metric | count | rate | 95% Wilson |
   |---|---|---|---|
-  | DeBERTa-v3-base | 16/30 | 2/30 | under-entails: misses real support |
-  | DeBERTa-v3-large | 25/30 | 15/30 | over-entails: accepts unrelated text |
+  | citation recall | 5/16 cited sentences supported | 0.3125 | [0.142, 0.556] |
+  | citation precision | 4/9 citations needed | 0.4444 | [0.189, 0.733] |
 
-  They fail in opposite directions and both directions are disqualifying. The base model's
-  recall of 0.3125 is depressed by declining support that is there; the large model's 0.75
-  is inflated by accepting support that is not. A judge entailing half of unrelated pairs
-  reaches 12 of 16 by chance with p = 0.038, so the larger model's figure is barely
-  separable from an indiscriminate one.
+  **What this does and does not establish.** Sixteen cited sentences is a small
+  denominator and the intervals are correspondingly wide, so the rate itself is not pinned.
+  What the interval does exclude is the comfortable reading: recall's upper bound is 0.556,
+  so even on the most generous reading consistent with the data, fewer than three in five
+  cited sentences are supported by what they cite. Combined with the 27.8% dangling-citation
+  rate above, a citation in this system is weak evidence that the answer rests on the
+  passage named.
 
-  Both failures were diagnosed rather than assumed. The base model is given 800-character
-  premises of legalistic prose, and much of this corpus is exclusion schedules whose
-  entries — "Food freezers, other than walk-in, and food in any freezer." — end in a full
-  stop and assert nothing standing alone; the same text as its own premise *is* entailed,
-  so the model works and degrades on this shape of input. The large model's false
-  entailments are not an artefact of the three forms sharing language: sampled pairs it
-  accepted are not contained in their premise at all, and include generic statements like
-  "The application is part of this flood insurance policy." being entailed by a block that
-  does not say it.
+  The judge's own sensitivity of 0.844 means it misses roughly one supported pair in six,
+  so 0.3125 is biased low rather than high; the direction of the error does not rescue the
+  figure, it widens it upward. Correctness is also not faithfulness: a block supporting a
+  claim does not establish the model derived the claim from it.
 
-  The computed values stay in `eval/citation_correctness.json` and
-  `eval/citation_correctness_large.json` beside the controls that disqualify them, and only
-  the controls are quoted here. Reproduce with
-  `python eval/citation_correctness_run.py --judge base|large`.
+  **The judge is calibrated against the ground truth before any rate is read.** Positives
+  pair a human-written `gold_answer` with the chunk containing its labelled evidence
+  offsets; negatives pair the same answer with a chunk the labels do not mark relevant. The
+  cut is chosen by Youden's J, the method `eval/abstention_threshold.py` already uses here.
 
-  What would move this: an entailment model of TRUE's class, which ALCE validated at
-  Cohen's kappa 0.698 and which does not run here; or passage-level premises, which would
-  depart from ALCE's definition rather than implement it. Neither was tried.
+  | pairs | threshold | sensitivity | specificity | balanced accuracy |
+  |---|---|---|---|---|
+  | 32 / 32 | 0.608 | 0.844 | 0.969 | 0.906 |
 
-  Worth recording even so: 3 of 18 answers produced no scoreable sentence at all, because
-  their only citations were out of range.
+  Both floors — 0.80 sensitivity and 0.80 specificity — were fixed in the script before the
+  run, following `eval/abstention_threshold.py`, and the artefact carries `reportable:
+  false` when either is missed. Three earlier attempts missed them, and each failure was a
+  fault in the measurement rather than a reason to lower the bar:
+
+  | attempt | control | outcome |
+  |---|---|---|
+  | argmax on whole 800-char blocks | 16/30 verbatim entailed | judge under-entails; no rate |
+  | same, larger judge | 15/30 *foreign* pairs entailed | judge over-entails; no rate |
+  | Youden cut on verbatim positives | 30/30, 1/30 | cut lands at 0.98; rejects paraphrase |
+
+  The first row is history and cannot be reproduced from the current code, which no longer
+  decides by argmax. The second is still in `eval/citation_correctness_large.json` and is
+  pinned from there; the third is still run on every invocation as a second check.
+
+  The first failure was diagnosed, not assumed: much of this corpus is exclusion schedules
+  whose entries — "Food freezers, other than walk-in, and food in any freezer." — end in a
+  full stop and assert nothing standing alone, and the premise was ten times the length the
+  model was trained on. The fix is to score each premise sentence separately and take the
+  best, which is "retrieve-and-classify" from *Stretching Sentence-pair NLI Models to Reason
+  over Long Documents* (arXiv:2204.07447); it moves the premise **towards** ALCE's
+  granularity, which segments corpora into 100-word passages, rather than away from it.
+
+  The third failure is the subtler one and is worth stating plainly. A control built from
+  sentences copied verbatim out of their premise separates almost perfectly, which looks
+  like success, and calibrates the wrong task: copies score near 1.0, so Youden's J put the
+  cut at 0.98, and a citation metric never scores copies — an answer paraphrases its source.
+  Applying that cut halved recall to 0.125. A control has to be *representative* as well as
+  discriminative. The verbatim control is still run and recorded, as a second check in
+  `judge_control_verbatim`, but it no longer sets the threshold.
+
+  Reproduce with `python eval/citation_correctness_run.py --judge base|large`. Counts as
+  well as rates are recorded in `eval/citation_correctness.json`, so the intervals above can
+  be recomputed without re-running the model.
+
+  Still open: ALCE validated against TRUE (T5-11B) at Cohen's kappa 0.698, which does not
+  run on the 2 GiB card this was measured on, so that agreement is not inherited. And 3 of
+  18 answers produced no scoreable sentence at all, because their only citations were out of
+  range.
 
 ## Ingestion
 

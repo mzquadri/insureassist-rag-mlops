@@ -1,24 +1,62 @@
 {
   "prompt_variant": "served",
-  "generated_utc": "2026-10-08T09:46:32Z",
+  "generated_utc": "2026-10-08T12:34:16Z",
   "metric": "ALCE citation recall and precision (Gao et al., arXiv:2305.14627)",
   "judge": {
+    "name": "base",
     "model": "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli",
     "device": "cuda",
-    "decision": "argmax over NLI labels"
+    "decision": "entailment probability, max over premise sentences, calibrated cut"
   },
-  "judge_control": {
+  "calibration": {
+    "built_from": "gold_answer against labelled relevant / irrelevant chunks",
+    "why": "A citation metric scores paraphrase, not copies. Calibrating on verbatim text puts the cut near 1.0 and rejects supported paraphrases.",
+    "positive_pairs": 32,
+    "negative_pairs": 32,
+    "threshold": 0.6084,
+    "chosen_by": "Youden's J, as in eval/abstention_threshold.py",
+    "sensitivity": 0.8438,
+    "specificity": 0.9688,
+    "balanced_accuracy": 0.9062,
+    "usable": true,
+    "declared_floor": {
+      "sensitivity": 0.8,
+      "specificity": 0.8,
+      "declared": "before the run, in the script"
+    }
+  },
+  "judge_control_verbatim": {
     "positive_pairs": 30,
-    "positive_entailed": 16,
+    "positive_entailed": 30,
     "negative_pairs": 30,
-    "negative_entailed": 2,
+    "negative_entailed": 1,
+    "threshold": 0.9805,
+    "chosen_by": "Youden's J on the control, as in eval/abstention_threshold.py",
+    "sensitivity": 1.0,
+    "specificity": 0.9667,
+    "balanced_accuracy": 0.9833,
+    "declared_floor": {
+      "sensitivity": 0.8,
+      "specificity": 0.8,
+      "declared": "before the run, in the script"
+    },
+    "usable": true,
     "note": "Positives are sentences lifted verbatim from the block used as premise, so a judge that works should entail nearly all of them. Negatives pair a block with a sentence from elsewhere in the corpus and should be entailed rarely. Both are drawn from the committed corpus, so this measures the judge on policy prose rather than on MNLI."
   },
   "caveats": "ALCE validated against TRUE (T5-11B) and reported Cohen's kappa 0.698 for recall; a smaller judge does not inherit that. Correctness is not faithfulness: a block supporting a claim does not establish the model derived the claim from it.",
   "summary": {
     "cited_sentences": 16,
     "citation_recall": 0.3125,
-    "citation_precision": 0.3333333333333333
+    "recall_counts": {
+      "supported": 5,
+      "cited": 16
+    },
+    "citation_precision": 0.4444444444444444,
+    "precision_counts": {
+      "needed": 4,
+      "offered": 9
+    },
+    "reportable": true
   },
   "per_question": [
     {
@@ -127,7 +165,7 @@
       "question_id": "nfip-032",
       "cited_sentences": 1,
       "recall": 1.0,
-      "precision": 0.5
+      "precision": 1.0
     }
   ]
 }
