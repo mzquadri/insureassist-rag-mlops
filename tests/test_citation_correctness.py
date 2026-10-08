@@ -102,3 +102,58 @@ def test_citations_on_an_unsupported_sentence_are_not_counted_as_precise():
     text = "Something unsupported [1][2]."
 
     assert citation_precision(claims(text, 3), BLOCKS, entails_if_substring) is None
+
+
+# ---------------------------------------------------------- counts behind the rates
+
+from eval.citation_correctness import (
+    Claim,
+    citation_precision_counts,
+    citation_recall_counts,
+)
+
+
+class TestCountsBehindTheRates:
+    """A rate on its own cannot carry an interval. 5/16 and 50/160 are the same number
+    and not the same evidence, and this arm's denominators are small enough that the
+    difference decides whether anything can be concluded."""
+
+    def test_recall_counts_give_supported_over_cited(self):
+        blocks = {1: "The waiting period is 30 days.", 2: "Unrelated text about pets."}
+        items = [
+            Claim(sentence="The waiting period is 30 days. [1]", citations=[1]),
+            Claim(sentence="Pets are covered. [2]", citations=[2]),
+        ]
+        entails = lambda p, h: h.rstrip(".").lower() in p.lower()  # noqa: E731
+
+        assert citation_recall_counts(items, blocks, entails) == (1, 2)
+
+    def test_recall_counts_are_zero_over_zero_when_nothing_is_cited(self):
+        assert citation_recall_counts([], {}, lambda p, h: True) == (0, 0)
+
+    def test_the_counts_agree_with_the_rate_they_explain(self):
+        blocks = {1: "A is true.", 2: "B is true."}
+        items = [
+            Claim(sentence="A is true. [1]", citations=[1]),
+            Claim(sentence="C is true. [2]", citations=[2]),
+        ]
+        entails = lambda p, h: h.rstrip(".").lower() in p.lower()  # noqa: E731
+
+        supported, total = citation_recall_counts(items, blocks, entails)
+        assert supported / total == citation_recall(items, blocks, entails)
+
+    def test_precision_counts_give_needed_over_offered(self):
+        blocks = {1: "The limit is $250,000.", 2: "Filler sentence."}
+        items = [Claim(sentence="The limit is $250,000. [1][2]", citations=[1, 2])]
+        entails = lambda p, h: "250,000" in p and "250,000" in h  # noqa: E731
+
+        # Both citations are offered; only block 1 is needed.
+        assert citation_precision_counts(items, blocks, entails) == (1, 2)
+
+    def test_precision_counts_agree_with_the_rate(self):
+        blocks = {1: "The limit is $250,000.", 2: "Filler sentence."}
+        items = [Claim(sentence="The limit is $250,000. [1][2]", citations=[1, 2])]
+        entails = lambda p, h: "250,000" in p and "250,000" in h  # noqa: E731
+
+        needed, total = citation_precision_counts(items, blocks, entails)
+        assert needed / total == citation_precision(items, blocks, entails)

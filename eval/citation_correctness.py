@@ -80,6 +80,24 @@ def _premise(blocks: Mapping[int, str], citations: Sequence[int]) -> str:
     return "\n".join(blocks[n] for n in citations if n in blocks)
 
 
+def citation_recall_counts(
+    items: Sequence[Claim], blocks: Mapping[int, str], entails: Entails
+) -> tuple[int, int]:
+    """(supported, cited) behind the recall rate.
+
+    The rate alone cannot carry a confidence interval, and 5/16 and 50/160 are the same
+    number on very different evidence. This arm's denominators are small enough that the
+    distinction decides whether the figure supports a conclusion, so the counts are
+    returned and recorded rather than reconstructed from a rounded rate.
+    """
+    supported = sum(
+        1
+        for c in items
+        if entails(_premise(blocks, c.citations), hypothesis_of(c.sentence))
+    )
+    return supported, len(items)
+
+
 def citation_recall(
     items: Sequence[Claim], blocks: Mapping[int, str], entails: Entails
 ) -> float | None:
@@ -88,14 +106,8 @@ def citation_recall(
     None when nothing was cited: there is no recall to report, and zero would read as
     total failure rather than as absence of evidence.
     """
-    if not items:
-        return None
-    supported = sum(
-        1
-        for c in items
-        if entails(_premise(blocks, c.citations), hypothesis_of(c.sentence))
-    )
-    return supported / len(items)
+    supported, total = citation_recall_counts(items, blocks, entails)
+    return supported / total if total else None
 
 
 def citation_precision(
@@ -110,6 +122,19 @@ def citation_precision(
     A sole citation on a supported sentence is necessary by construction: removing it
     leaves nothing to entail from.
     """
+    needed, total = citation_precision_counts(items, blocks, entails)
+    return needed / total if total else None
+
+
+def citation_precision_counts(
+    items: Sequence[Claim], blocks: Mapping[int, str], entails: Entails
+) -> tuple[int, int]:
+    """(needed, offered) behind the precision rate.
+
+    Recorded for the same reason as the recall counts: precision's denominator is the
+    number of citations on supported sentences, which is smaller than the sentence count
+    and is not recoverable from the rate.
+    """
     total = 0
     needed = 0
     for claim in items:
@@ -121,13 +146,15 @@ def citation_precision(
             rest = [n for n in claim.citations if n != citation]
             if not rest or not entails(_premise(blocks, rest), hypothesis):
                 needed += 1
-    return needed / total if total else None
+    return needed, total
 
 
 __all__ = [
     "Claim",
     "citation_precision",
+    "citation_precision_counts",
     "citation_recall",
+    "citation_recall_counts",
     "claims",
     "hypothesis_of",
     "split_sentences",
