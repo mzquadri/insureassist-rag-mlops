@@ -180,17 +180,34 @@ RANGED_PATH = REPO_ROOT / "eval" / "citation_structure_ranged.json"
 CORRECTNESS_CLAIMS = [
     (
         "docs/LIMITATIONS.md",
-        r"It entailed \*\*(\d+) of 30\*\*",
+        r"\| DeBERTa-v3-base \| (\d+)/30",
         "judge_control.positive_entailed",
     ),
     (
         "docs/LIMITATIONS.md",
-        r"(\d+) of 30 on sentences\s+from elsewhere",
+        r"\| DeBERTa-v3-base \| \d+/30 \| (\d+)/30",
         "judge_control.negative_entailed",
     ),
 ]
 
 CORRECTNESS_PATH = REPO_ROOT / "eval" / "citation_correctness.json"
+
+#: The larger judge failed the same control in the opposite direction, so its control is
+#: pinned too. Both rows disqualify a rate; neither rate is quoted anywhere.
+CORRECTNESS_LARGE_CLAIMS = [
+    (
+        "docs/LIMITATIONS.md",
+        r"\| DeBERTa-v3-large \| (\d+)/30",
+        "judge_control.positive_entailed",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| DeBERTa-v3-large \| \d+/30 \| (\d+)/30",
+        "judge_control.negative_entailed",
+    ),
+]
+
+CORRECTNESS_LARGE_PATH = REPO_ROOT / "eval" / "citation_correctness_large.json"
 
 
 def dig(data: dict, path: str):
@@ -283,6 +300,14 @@ def main() -> int:
         correctness = json.loads(CORRECTNESS_PATH.read_text(encoding="utf-8"))
         problems += check_claims(
             CORRECTNESS_CLAIMS, correctness, "the citation-correctness arm"
+        )
+
+    if CORRECTNESS_LARGE_PATH.exists():
+        large = json.loads(CORRECTNESS_LARGE_PATH.read_text(encoding="utf-8"))
+        problems += check_claims(
+            CORRECTNESS_LARGE_CLAIMS,
+            large,
+            "the citation-correctness arm (large judge)",
         )
         if rejected.get("adopted"):
             problems.append(

@@ -40,10 +40,15 @@ from eval.citation_correctness import (
 )
 from src.corpus import chunk_corpus, load_corpus
 
-#: A mid-sized NLI model. ALCE used TRUE (T5-11B), which does not fit here; the agreement
-#: figures in their paper therefore do not carry over, and the control below is what this
-#: result rests on instead.
-MODEL = "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli"
+#: Candidate judges. ALCE used TRUE (T5-11B), which does not fit here, so the agreement
+#: figures in their paper do not carry over and the control below is what any result
+#: rests on instead. The base model failed that control at 16 of 30; a larger one is the
+#: obvious thing to try before concluding the measurement cannot be made.
+JUDGES = {
+    "base": "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli",
+    "large": "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
+}
+DEFAULT_JUDGE = "base"
 
 #: Entailment is the argmax over the three NLI labels. A probability cut would need
 #: calibrating, and nothing here has the data to calibrate it.
@@ -55,18 +60,22 @@ def artefact_for(variant: str) -> Path:
     return ROOT / "eval" / f"citation_structure{suffix}.json"
 
 
-def out_for(variant: str) -> Path:
-    suffix = "" if variant == "served" else f"_{variant}"
-    return ROOT / "eval" / f"citation_correctness{suffix}.json"
+def out_for(variant: str, judge: str = DEFAULT_JUDGE) -> Path:
+    """One file per (arm, judge). A judge that clears the control and one that does not
+    are different measurements and must not overwrite each other."""
+    parts = "" if variant == "served" else f"_{variant}"
+    parts += "" if judge == DEFAULT_JUDGE else f"_{judge}"
+    return ROOT / "eval" / f"citation_correctness{parts}.json"
 
 
-def build_judge():
+def build_judge(name: str = DEFAULT_JUDGE):
     """Return (entails, describe). Loaded lazily so importing this module stays cheap."""
     import torch
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-    tokeniser = AutoTokenizer.from_pretrained(MODEL)
-    model = AutoModelForSequenceClassification.from_pretrained(MODEL)
+    checkpoint = JUDGES[name]
+    tokeniser = AutoTokenizer.from_pretrained(checkpoint)
+    model = AutoModelForSequenceClassification.from_pretrained(checkpoint)
     model.eval()
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model.to(device)
@@ -87,7 +96,8 @@ def build_judge():
         return labels[int(scores.argmax())] == "entailment"
 
     return entails, {
-        "model": MODEL,
+        "name": name,
+        "model": checkpoint,
         "device": device,
         "decision": "argmax over NLI labels",
     }
@@ -157,6 +167,7 @@ def control(blocks_by_question: dict[str, dict[int, str]], entails) -> dict[str,
 def main() -> int:
     parser = argparse.ArgumentParser(prog="citation_correctness_run")
     parser.add_argument("--variant", default="served")
+    parser.add_argument("--judge", choices=sorted(JUDGES), default=DEFAULT_JUDGE)
     args = parser.parse_args()
 
     structure = json.loads(artefact_for(args.variant).read_text(encoding="utf-8"))
@@ -177,7 +188,7 @@ def main() -> int:
         for qid, ids in retrieved.items()
     }
 
-    entails, judge = build_judge()
+    entails, judge = build_judge(args.judge)
     judge_control = control(blocks_by_question, entails)
 
     rows: list[dict[str, Any]] = []
@@ -236,7 +247,7 @@ def main() -> int:
         "per_question": rows,
     }
 
-    out = out_for(args.variant)
+    out = out_for(args.variant, args.judge)
     out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
     c = judge_control

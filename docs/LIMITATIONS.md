@@ -97,22 +97,39 @@ The complete list. Nothing here is softened.
   to the circularity above. `eval/citation_correctness.py` implements the metric and
   `eval/citation_correctness_run.py` runs it with `MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli`.
 
-  **The judge did not pass its own control, so its numbers are withheld.** The control
-  pairs each block with a complete sentence lifted verbatim out of it, which a working
-  judge must entail. It entailed **16 of 30**. Specificity was fine — 2 of 30 on sentences
-  from elsewhere in the corpus — so the problem is sensitivity, not indiscriminacy.
+  **Neither judge passed its own control, so no rate is reported.** The control pairs each
+  block with a complete sentence lifted verbatim out of it, which a working judge must
+  entail, and pairs it with a sentence from elsewhere in the corpus, which it must not.
 
-  Two causes, both found rather than guessed. Chunks are cut at 800 characters, so the
-  premise is long legalistic prose; and much of this corpus is exclusion schedules, whose
+  | judge | verbatim entailed | foreign entailed | failure |
+  |---|---|---|---|
+  | DeBERTa-v3-base | 16/30 | 2/30 | under-entails: misses real support |
+  | DeBERTa-v3-large | 25/30 | 15/30 | over-entails: accepts unrelated text |
+
+  They fail in opposite directions and both directions are disqualifying. The base model's
+  recall of 0.3125 is depressed by declining support that is there; the large model's 0.75
+  is inflated by accepting support that is not. A judge entailing half of unrelated pairs
+  reaches 12 of 16 by chance with p = 0.038, so the larger model's figure is barely
+  separable from an indiscriminate one.
+
+  Both failures were diagnosed rather than assumed. The base model is given 800-character
+  premises of legalistic prose, and much of this corpus is exclusion schedules whose
   entries — "Food freezers, other than walk-in, and food in any freezer." — end in a full
-  stop but assert nothing standing alone. The same text as its own premise *is* entailed,
-  so the model works and degrades on this shape of input.
+  stop and assert nothing standing alone; the same text as its own premise *is* entailed,
+  so the model works and degrades on this shape of input. The large model's false
+  entailments are not an artefact of the three forms sharing language: sampled pairs it
+  accepted are not contained in their premise at all, and include generic statements like
+  "The application is part of this flood insurance policy." being entailed by a block that
+  does not say it.
 
-  At that sensitivity a recall figure cannot be attributed to the system rather than to the
-  judge, so the computed values stay in `eval/citation_correctness.json` next to the control
-  that disqualifies them and are not quoted as a result. A larger entailment model, or
-  passage-level premises that depart from ALCE's definition, might clear the control; neither
-  was tried.
+  The computed values stay in `eval/citation_correctness.json` and
+  `eval/citation_correctness_large.json` beside the controls that disqualify them, and only
+  the controls are quoted here. Reproduce with
+  `python eval/citation_correctness_run.py --judge base|large`.
+
+  What would move this: an entailment model of TRUE's class, which ALCE validated at
+  Cohen's kappa 0.698 and which does not run here; or passage-level premises, which would
+  depart from ALCE's definition rather than implement it. Neither was tried.
 
   Worth recording even so: 3 of 18 answers produced no scoreable sentence at all, because
   their only citations were out of range.
