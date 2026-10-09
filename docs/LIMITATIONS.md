@@ -91,7 +91,7 @@ The complete list. Nothing here is softened.
   which also narrows what gets cited is not evidence enough to change what ships.
   Reproduce with `python eval/citation_run.py --variant ranged`; pinned in
   `eval/citation_structure_ranged.json`.
-- **Most cited sentences are not supported by the block they cite.** This is citation
+- **Citations are frequently redundant, and support is uncertain.** This is citation
   correctness: ALCE's recall and precision (Gao et al., arXiv:2305.14627), judged by an
   entailment model rather than by the generator, which is the standard answer to the
   circularity above. `eval/citation_correctness.py` implements the metric and
@@ -99,21 +99,87 @@ The complete list. Nothing here is softened.
 
   | metric | count | rate | 95% Wilson |
   |---|---|---|---|
-  | citation recall | 5/16 cited sentences supported | 0.3125 | [0.142, 0.556] |
-  | citation precision | 4/9 citations needed | 0.4444 | [0.189, 0.733] |
+  | citation recall | 7/15 scoreable sentences supported | 0.4667 | [0.248, 0.699] |
+  | citation precision | 5/15 citations needed | 0.3333 | [0.152, 0.583] |
 
-  **What this does and does not establish.** Sixteen cited sentences is a small
-  denominator and the intervals are correspondingly wide, so the rate itself is not pinned.
-  What the interval does exclude is the comfortable reading: recall's upper bound is 0.556,
-  so even on the most generous reading consistent with the data, fewer than three in five
-  cited sentences are supported by what they cite. Combined with the 27.8% dangling-citation
-  rate above, a citation in this system is weak evidence that the answer rests on the
-  passage named.
+  Over all 16 cited sentences, including the one with no content to score, recall is
+  7/16 = 0.4375 [0.231, 0.668]. Both are in `eval/citation_correctness.json`; the
+  scoreable denominator is the one quoted, for the reason in the next paragraph.
 
-  The judge's own sensitivity of 0.844 means it misses roughly one supported pair in six,
-  so 0.3125 is biased low rather than high; the direction of the error does not rescue the
-  figure, it widens it upward. Correctness is also not faithfulness: a block supporting a
-  claim does not establish the model derived the claim from it.
+  **What this does and does not establish.** Precision is the firmer of the two: its upper
+  bound is 0.583, so even on the most favourable reading consistent with the data, at least
+  two citations in five were not needed — drop them and the rest still support the sentence.
+  Recall is genuinely uncertain. Its interval spans 0.248 to 0.699, which straddles a half,
+  so the honest statement is that somewhere between a quarter and seven-tenths of cited
+  sentences are supported and fifteen sentences cannot narrow it further. An earlier version
+  of this entry claimed recall's ceiling put support below three in five; that rested on a
+  figure since corrected, and the claim is withdrawn.
+
+  **A quarter of the published recall figure was marker-removal debris.** The first version
+  of this entry reported 5/16 = 0.3125. That was wrong, and the fault was in extracting the
+  claim rather than in the judge. This generator places its citations in subject position —
+  the raw answer to `nfip-002` is literally `"[2], [5]\n\nThe maximum payable under Coverage
+  D ... is $30,000."` — so stripping the markers left a comma and a paragraph break glued to
+  the front of the sentence. Nine of sixteen hypotheses were malformed that way and one was
+  the empty string, which no premise can entail. Collapsing the whitespace and stripping the
+  stranded punctuation moved recall from 0.3125 to 0.4667 and precision from 0.4444 to
+  0.3333. The judge was never the problem here; the text handed to it was.
+
+  Exactly 1 sentence is excluded from the scoreable denominator: after removing its
+  markers nothing remained, so there is no statement for a person or a model to rule on, and
+  `eval/citation_structure.py` already reports it as a structural failure. Fragments are
+  *not* excluded. An intermediate version of this fix discarded any hypothesis beginning
+  with a conjunction, which threw away `"and According to the context, ... the revised due
+  date will be 30 days after the date on which the bill is mailed"` — a real claim with a
+  connective stuck to the front. Guessing at grammar with a regex is how a measurement
+  quietly loses its evidence; the conjunction is now stripped as debris and the sentence is
+  kept.
+
+  **Four of the fifteen sentences are about the retrieval, not about flood policy.**
+  `"provide relevant information"`, `"were used to answer the question"`, `"do not provide a
+  clear answer to this question"`. Their grammatical subject is the retrieved blocks, so no
+  passage of policy text can entail them and they count against recall for a reason that has
+  nothing to do with citation quality. Nine of the fifteen open with `"According to ..."`.
+  That the generator narrates its own retrieval this often is a finding about the generator,
+  and it is a confound in this metric rather than a result of it.
+
+  **The calibration is on a proxy population, not this one.** This is the sharpest caveat
+  and it was missing from the first version of this entry. The judge is calibrated on
+  *(chunk, gold_answer)* pairs; the rates are computed on *(concatenated cited blocks,
+  generated sentence)* pairs. The premise is built differently and the hypothesis comes
+  from a different writer, so the 0.844 sensitivity does not transfer to the measured
+  pairs, and no correction for judge error can be read off it. An earlier version of this
+  entry used it to argue the rate was "biased low"; that inference is withdrawn — the
+  direction of the judge's error on the pairs actually scored is unmeasured.
+
+  This also closes off the obvious statistical repair. Prediction-powered inference would
+  debias a machine-labelled rate using a labelled subset, but its validity rests on that
+  subset being drawn from the target population, and this one is not.
+
+  **A human-labelled gold standard is the fix, and the worksheet exists.** ALCE validates
+  its own judge the same way — 100 human-annotated examples per dataset — and that step has
+  never been done here. At fifteen scoreable sentences, labelling every pair by hand costs
+  less than any statistical correction and settles both open questions at once: what the
+  rate actually is, and whether this judge agrees with a person *on the pairs that produced
+  the number*. `python -m eval.citation_gold_run --build` writes
+  `eval/citation_gold/worksheet.md` — 15 support judgments and 21 drop-one necessity
+  judgments, each showing the exact premise the metric scored — and `--score` reports the
+  human rates alongside the judge's sensitivity, specificity and Cohen's kappa against them.
+
+  **The labels are not in yet, so no human rate is published.** `eval/citation_gold.json`
+  appears only once `labels.jsonl` is filled in, and `human_counts` returns `None` until
+  every support judgment is answered: a rate over half the sentences is a different quantity
+  wearing the same name. A pre-seeded `null` is treated as unanswered rather than as `false`,
+  so an untouched worksheet cannot be mistaken for a corpus of unsupported citations.
+
+  ALCE's own agreement figures set the ceiling on what this arm can claim even when the
+  judge is right: on 100 human-annotated examples per dataset they report Cohen's kappa
+  0.698 for citation recall and **0.525 for citation precision** — only moderate. The
+  precision figure above rests on the weaker of the two metrics, measured here by a much
+  smaller judge than the T5-11B those kappas describe.
+
+  Correctness is also not faithfulness: a block supporting a claim does not establish the
+  model derived the claim from it.
 
   **The judge is calibrated against the ground truth before any rate is read.** Positives
   pair a human-written `gold_answer` with the chunk containing its labelled evidence

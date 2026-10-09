@@ -70,10 +70,47 @@ def claims(answer: str, n_contexts: int) -> list[Claim]:
 _MARKER_SPAN = re.compile(r"\s*\[\s*\d+(?:\s*[,;]\s*\d+)*\s*\]")
 
 
+#: Debris left at the front when the markers were part of the sentence rather than
+#: attached to it. The generator cites in subject position - "[1], [2] and provide
+#: relevant information." - so removing the markers strands the punctuation and the
+#: conjunction that joined them. Both are notation's remains, not part of the claim.
+_LEADING_DEBRIS = re.compile(r"^(?:[\s,;:.\-]|\b(?:and|or|but|nor|as well as)\b)+")
+
+
 def hypothesis_of(sentence: str) -> str:
-    """The sentence as a claim: citation markers removed, punctuation tidied."""
-    stripped = _MARKER_SPAN.sub("", sentence or "").strip()
-    return re.sub(r"\s+([.,;:!?])", r"\1", stripped)
+    """The sentence as a claim: citation markers removed, whitespace and debris tidied.
+
+    Internal newlines are collapsed because the generator emits its citations as a
+    preamble - "[2], [5]\\n\\nThe maximum payable is..." - and a hypothesis carrying a
+    paragraph break is not the sentence anyone meant to score. Leading punctuation and a
+    leading conjunction go for the same reason: they are what the markers left behind.
+
+    Stripping the conjunction rather than rejecting the sentence matters. An earlier
+    version treated any remainder starting with "and" as unscoreable, which discarded
+    "and According to the context, ... the revised due date will be 30 days after the
+    date on which the bill is mailed" - a real claim with a connective stuck to the
+    front. That was a hand-made grammar rule getting the grammar wrong.
+    """
+    stripped = _MARKER_SPAN.sub("", sentence or "")
+    collapsed = re.sub(r"\s+", " ", stripped).strip()
+    tidied = re.sub(r"\s+([.,;:!?])", r"\1", collapsed)
+    return _LEADING_DEBRIS.sub("", tidied).strip()
+
+
+def is_claim(hypothesis: str) -> bool:
+    """Whether there is anything left to judge.
+
+    Deliberately the weakest possible test: non-empty. A sentence whose entire content
+    was its citations - "[1] [2] [3]" - leaves nothing, and neither a person nor an
+    entailment model can rule on nothing; including it in a correctness rate scores the
+    generator's citation placement, which `eval/citation_structure.py` already reports.
+
+    Everything else goes to the annotator, including fragments like "provide relevant
+    information" that assert something about the blocks rather than about flood policy.
+    Those are judgments about meaning, and the point of the human pass is that a person
+    makes them. A regex deciding instead is how the previous version lost a real claim.
+    """
+    return bool((hypothesis or "").strip())
 
 
 def _premise(blocks: Mapping[int, str], citations: Sequence[int]) -> str:
@@ -157,5 +194,6 @@ __all__ = [
     "citation_recall_counts",
     "claims",
     "hypothesis_of",
+    "is_claim",
     "split_sentences",
 ]

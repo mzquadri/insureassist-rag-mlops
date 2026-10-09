@@ -46,6 +46,8 @@ from eval.citation_correctness import (
     citation_recall,
     citation_recall_counts,
     claims,
+    hypothesis_of,
+    is_claim,
 )
 from eval.nli_aggregation import (
     batch_plan,
@@ -367,6 +369,26 @@ def main() -> int:
                 "cited_sentences": len(items),
                 "recall": citation_recall(items, blocks, entails),
                 "precision": citation_precision(items, blocks, entails),
+                # Per-sentence verdicts, not just the rate. A rate cannot be unpicked -
+                # 0.333 over three sentences says one was supported, not which - and
+                # eval/citation_gold_run.py needs the individual decisions to measure
+                # the judge against human labels on every pair rather than only on
+                # questions that happen to have a single cited sentence.
+                "sentences": [
+                    {
+                        "index": i,
+                        "citations": list(c.citations),
+                        "supported": bool(
+                            entails(
+                                "\n".join(
+                                    blocks[n] for n in c.citations if n in blocks
+                                ),
+                                hypothesis_of(c.sentence),
+                            )
+                        ),
+                    }
+                    for i, c in enumerate(items, start=1)
+                ],
             }
         )
         print(f"  {qid:<10} {len(items)} cited sentence(s)", flush=True)
@@ -390,6 +412,14 @@ def main() -> int:
             type(claim)(sentence=claim.sentence, citations=list(remap.values()))
         )
 
+    # The same pooling, restricted to sentences that assert something. Kept as a parallel
+    # set rather than replacing `pooled`, so both rates can be published side by side.
+    claim_only = [c for c in flat if is_claim(hypothesis_of(c.sentence))]
+    keep = {id(c) for c in claim_only}
+    pooled_claims = [
+        p for c, p in zip(flat, pooled, strict=True) if id(c) in keep
+    ]
+
     payload = {
         "prompt_variant": args.variant,
         "generated_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -406,6 +436,49 @@ def main() -> int:
         # Rates are computed either way so the artefact records what was seen, and are
         # marked unusable when the judge missed its declared floor. The documentation
         # quotes the control, never these, unless `usable` is true.
+        # Both ways round. Nine of sixteen hypotheses were debris left by removing
+        # citation markers from a sentence that cited in subject position, and a fragment
+        # cannot be entailed by anything, so including them measures citation placement
+        # rather than citation correctness. Excluding them silently would be worse than
+        # including them, so the rate appears with and without, and the count of what was
+        # excluded is named.
+        "non_claims": {
+            "excluded": len(flat) - len(claim_only),
+            "of": len(flat),
+            "why": (
+                "Nothing survived removing the citation markers - the sentence's entire "
+                "content was its citations, so neither a person nor an entailment model "
+                "can rule on it. Fragments are NOT excluded; they go to the annotator."
+            ),
+            "examples": [
+                hypothesis_of(c.sentence) or "(empty)"
+                for c in flat
+                if not is_claim(hypothesis_of(c.sentence))
+            ][:5],
+        },
+        "claims_only": {
+            "cited_sentences": len(claim_only),
+            "citation_recall": citation_recall(
+                pooled_claims, pooled_blocks, entails
+            ),
+            "recall_counts": dict(
+                zip(
+                    ("supported", "cited"),
+                    citation_recall_counts(pooled_claims, pooled_blocks, entails),
+                    strict=True,
+                )
+            ),
+            "citation_precision": citation_precision(
+                pooled_claims, pooled_blocks, entails
+            ),
+            "precision_counts": dict(
+                zip(
+                    ("needed", "offered"),
+                    citation_precision_counts(pooled_claims, pooled_blocks, entails),
+                    strict=True,
+                )
+            ),
+        },
         # Counts as well as rates. Sixteen cited sentences carry a wide interval, and a
         # reader cannot compute one from a rate alone; precision's denominator is the
         # citations on supported sentences, which is not recoverable from the rate at all.

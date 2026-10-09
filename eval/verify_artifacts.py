@@ -180,39 +180,62 @@ RANGED_PATH = REPO_ROOT / "eval" / "citation_structure_ranged.json"
 #: The base judge now clears its calibration, so its rates are quoted and must be pinned
 #: alongside the counts behind them. Counts are pinned because the rates are derived from
 #: them: if a count drifts and a rate does not, one of the two is stale.
+#: The base judge clears its calibration, so its rates are quoted and pinned alongside the
+#: counts behind them. Counts are pinned because the rates derive from them: if a count
+#: drifts and a rate does not, one of the two is stale.
 CORRECTNESS_CLAIMS = [
     (
         "docs/LIMITATIONS.md",
-        r"\| citation recall \| (\d+)/16 cited sentences supported",
-        "summary.recall_counts.supported",
+        r"\| citation recall \| (\d+)/15 scoreable sentences supported",
+        "claims_only.recall_counts.supported",
     ),
     (
         "docs/LIMITATIONS.md",
-        r"\| citation recall \| \d+/(\d+) cited sentences supported",
-        "summary.recall_counts.cited",
+        r"\| citation recall \| \d+/(\d+) scoreable sentences supported",
+        "claims_only.recall_counts.cited",
     ),
     (
         "docs/LIMITATIONS.md",
-        r"\| citation recall \| \d+/\d+ cited sentences supported \| ([\d.]+) \|",
-        "summary.citation_recall",
+        r"\| citation recall \| \d+/\d+ scoreable sentences supported \| ([\d.]+) \|",
+        "claims_only.citation_recall",
     ),
     (
         "docs/LIMITATIONS.md",
         r"\| citation precision \| (\d+)/\d+ citations needed",
-        "summary.precision_counts.needed",
+        "claims_only.precision_counts.needed",
     ),
     (
         "docs/LIMITATIONS.md",
         r"\| citation precision \| \d+/(\d+) citations needed",
-        "summary.precision_counts.offered",
+        "claims_only.precision_counts.offered",
     ),
     (
         "docs/LIMITATIONS.md",
         r"\| citation precision \| \d+/\d+ citations needed \| ([\d.]+) \|",
-        "summary.citation_precision",
+        "claims_only.citation_precision",
     ),
-    # The calibration table. A rate is only readable through the control that licensed it,
-    # so the threshold and both rates it was chosen for are pinned too.
+    # The all-pairs denominator, quoted in prose so the excluded sentence stays visible.
+    (
+        "docs/LIMITATIONS.md",
+        r"recall is\s+(\d+)/16 = [\d.]+",
+        "summary.recall_counts.supported",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"recall is\s+\d+/16 = (\d\.\d+)",
+        "summary.citation_recall",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"moved recall from \d\.\d+ to (\d\.\d+)",
+        "claims_only.citation_recall",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"precision from \d\.\d+ to\s+(\d\.\d+)",
+        "claims_only.citation_precision",
+    ),
+    # The calibration that licenses reading any of it.
     (
         "docs/LIMITATIONS.md",
         r"\| 32 / 32 \| ([\d.]+) \|",
@@ -235,11 +258,10 @@ CORRECTNESS_CLAIMS = [
     ),
     (
         "docs/LIMITATIONS.md",
-        r"sensitivity of ([\d.]+) means it misses",
+        r"the ([\d.]+) sensitivity does not transfer",
         "calibration.sensitivity",
     ),
-    # The verbatim control is still run as a second check; its figures are quoted in the
-    # history table and must track the artefact rather than the narrative.
+    # The verbatim control, still run as a second check.
     (
         "docs/LIMITATIONS.md",
         r"\| Youden cut on verbatim positives \| (\d+)/30",
@@ -249,6 +271,12 @@ CORRECTNESS_CLAIMS = [
         "docs/LIMITATIONS.md",
         r"\| Youden cut on verbatim positives \| \d+/30, (\d+)/30",
         "judge_control_verbatim.negative_entailed",
+    ),
+    # How many cited sentences the scoreable denominator leaves out, and of how many.
+    (
+        "docs/LIMITATIONS.md",
+        r"Exactly (\d+) sentence is excluded from the scoreable denominator",
+        "non_claims.excluded",
     ),
 ]
 

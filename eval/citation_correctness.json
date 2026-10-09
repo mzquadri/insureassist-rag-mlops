@@ -1,6 +1,6 @@
 {
   "prompt_variant": "served",
-  "generated_utc": "2026-10-08T12:34:16Z",
+  "generated_utc": "2026-10-09T10:33:32Z",
   "metric": "ALCE citation recall and precision (Gao et al., arXiv:2305.14627)",
   "judge": {
     "name": "base",
@@ -44,17 +44,38 @@
     "note": "Positives are sentences lifted verbatim from the block used as premise, so a judge that works should entail nearly all of them. Negatives pair a block with a sentence from elsewhere in the corpus and should be entailed rarely. Both are drawn from the committed corpus, so this measures the judge on policy prose rather than on MNLI."
   },
   "caveats": "ALCE validated against TRUE (T5-11B) and reported Cohen's kappa 0.698 for recall; a smaller judge does not inherit that. Correctness is not faithfulness: a block supporting a claim does not establish the model derived the claim from it.",
+  "non_claims": {
+    "excluded": 1,
+    "of": 16,
+    "why": "Nothing survived removing the citation markers - the sentence's entire content was its citations, so neither a person nor an entailment model can rule on it. Fragments are NOT excluded; they go to the annotator.",
+    "examples": [
+      "(empty)"
+    ]
+  },
+  "claims_only": {
+    "cited_sentences": 15,
+    "citation_recall": 0.4666666666666667,
+    "recall_counts": {
+      "supported": 7,
+      "cited": 15
+    },
+    "citation_precision": 0.3333333333333333,
+    "precision_counts": {
+      "needed": 5,
+      "offered": 15
+    }
+  },
   "summary": {
     "cited_sentences": 16,
-    "citation_recall": 0.3125,
+    "citation_recall": 0.4375,
     "recall_counts": {
-      "supported": 5,
+      "supported": 7,
       "cited": 16
     },
-    "citation_precision": 0.4444444444444444,
+    "citation_precision": 0.3333333333333333,
     "precision_counts": {
-      "needed": 4,
-      "offered": 9
+      "needed": 5,
+      "offered": 15
     },
     "reportable": true
   },
@@ -63,109 +84,265 @@
       "question_id": "nfip-002",
       "cited_sentences": 1,
       "recall": 0.0,
-      "precision": null
+      "precision": null,
+      "sentences": [
+        {
+          "index": 1,
+          "citations": [
+            2,
+            5
+          ],
+          "supported": false
+        }
+      ]
     },
     {
       "question_id": "nfip-004",
       "cited_sentences": 0,
       "recall": null,
-      "precision": null
+      "precision": null,
+      "sentences": []
     },
     {
       "question_id": "nfip-005",
       "cited_sentences": 0,
       "recall": null,
-      "precision": null
+      "precision": null,
+      "sentences": []
     },
     {
       "question_id": "nfip-008",
       "cited_sentences": 3,
-      "recall": 0.0,
-      "precision": null
+      "recall": 0.3333333333333333,
+      "precision": 0.3333333333333333,
+      "sentences": [
+        {
+          "index": 1,
+          "citations": [
+            2,
+            3,
+            4
+          ],
+          "supported": true
+        },
+        {
+          "index": 2,
+          "citations": [
+            2
+          ],
+          "supported": false
+        },
+        {
+          "index": 3,
+          "citations": [
+            3,
+            4
+          ],
+          "supported": false
+        }
+      ]
     },
     {
       "question_id": "nfip-009",
       "cited_sentences": 1,
-      "recall": 0.0,
-      "precision": null
+      "recall": 1.0,
+      "precision": 0.0,
+      "sentences": [
+        {
+          "index": 1,
+          "citations": [
+            2,
+            3,
+            4
+          ],
+          "supported": true
+        }
+      ]
     },
     {
       "question_id": "nfip-014",
       "cited_sentences": 2,
       "recall": 0.0,
-      "precision": null
+      "precision": null,
+      "sentences": [
+        {
+          "index": 1,
+          "citations": [
+            1,
+            2,
+            4,
+            5
+          ],
+          "supported": false
+        },
+        {
+          "index": 2,
+          "citations": [
+            2
+          ],
+          "supported": false
+        }
+      ]
     },
     {
       "question_id": "nfip-015",
       "cited_sentences": 1,
       "recall": 0.0,
-      "precision": null
+      "precision": null,
+      "sentences": [
+        {
+          "index": 1,
+          "citations": [
+            3
+          ],
+          "supported": false
+        }
+      ]
     },
     {
       "question_id": "nfip-016",
       "cited_sentences": 0,
       "recall": null,
-      "precision": null
+      "precision": null,
+      "sentences": []
     },
     {
       "question_id": "nfip-017",
       "cited_sentences": 1,
       "recall": 1.0,
-      "precision": 0.0
+      "precision": 0.0,
+      "sentences": [
+        {
+          "index": 1,
+          "citations": [
+            1,
+            4
+          ],
+          "supported": true
+        }
+      ]
     },
     {
       "question_id": "nfip-020",
       "cited_sentences": 1,
       "recall": 1.0,
-      "precision": 0.0
+      "precision": 0.0,
+      "sentences": [
+        {
+          "index": 1,
+          "citations": [
+            2,
+            4,
+            5
+          ],
+          "supported": true
+        }
+      ]
     },
     {
       "question_id": "nfip-021",
       "cited_sentences": 1,
       "recall": 0.0,
-      "precision": null
+      "precision": null,
+      "sentences": [
+        {
+          "index": 1,
+          "citations": [
+            2
+          ],
+          "supported": false
+        }
+      ]
     },
     {
       "question_id": "nfip-022",
       "cited_sentences": 1,
       "recall": 0.0,
-      "precision": null
+      "precision": null,
+      "sentences": [
+        {
+          "index": 1,
+          "citations": [
+            4
+          ],
+          "supported": false
+        }
+      ]
     },
     {
       "question_id": "nfip-023",
       "cited_sentences": 1,
       "recall": 1.0,
-      "precision": 1.0
+      "precision": 1.0,
+      "sentences": [
+        {
+          "index": 1,
+          "citations": [
+            3
+          ],
+          "supported": true
+        }
+      ]
     },
     {
       "question_id": "nfip-024",
       "cited_sentences": 0,
       "recall": null,
-      "precision": null
+      "precision": null,
+      "sentences": []
     },
     {
       "question_id": "nfip-025",
       "cited_sentences": 1,
       "recall": 0.0,
-      "precision": null
+      "precision": null,
+      "sentences": [
+        {
+          "index": 1,
+          "citations": [
+            5
+          ],
+          "supported": false
+        }
+      ]
     },
     {
       "question_id": "nfip-028",
       "cited_sentences": 0,
       "recall": null,
-      "precision": null
+      "precision": null,
+      "sentences": []
     },
     {
       "question_id": "nfip-031",
       "cited_sentences": 1,
       "recall": 1.0,
-      "precision": 1.0
+      "precision": 1.0,
+      "sentences": [
+        {
+          "index": 1,
+          "citations": [
+            2
+          ],
+          "supported": true
+        }
+      ]
     },
     {
       "question_id": "nfip-032",
       "cited_sentences": 1,
       "recall": 1.0,
-      "precision": 1.0
+      "precision": 1.0,
+      "sentences": [
+        {
+          "index": 1,
+          "citations": [
+            4,
+            5
+          ],
+          "supported": true
+        }
+      ]
     }
   ]
 }

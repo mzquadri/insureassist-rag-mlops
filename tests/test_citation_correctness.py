@@ -18,6 +18,8 @@ from eval.citation_correctness import (
     citation_recall,
     citation_recall_counts,
     claims,
+    hypothesis_of,
+    is_claim,
     split_sentences,
 )
 
@@ -163,3 +165,76 @@ class TestCountsBehindTheRates:
 
         needed, total = citation_precision_counts(items, blocks, entails)
         assert needed / total == citation_precision(items, blocks, entails)
+
+
+# ------------------------------------------- hypotheses the judge can actually read
+
+
+class TestHypothesisIsCleanedOfMarkerDebris:
+    """The generator sometimes cites in subject position - "[1], [2], and provide
+    relevant information." - so removing the markers leaves punctuation and a dangling
+    conjunction rather than a statement. Nine of sixteen scored pairs looked like this,
+    and one was the empty string. An entailment model cannot support a fragment, so those
+    pairs failed by construction and the published rate was partly measuring the
+    generator's citation placement."""
+
+    def test_a_paragraph_break_inside_the_sentence_becomes_a_space(self):
+        got = hypothesis_of("[2], [5]\n\nThe maximum payable is $30,000.")
+        assert "\n" not in got
+        assert got == "The maximum payable is $30,000."
+
+    def test_leading_punctuation_and_connective_left_by_markers_are_stripped(self):
+        assert hypothesis_of("[1],, and provide relevant information.") == (
+            "provide relevant information."
+        )
+
+    def test_a_sentence_that_was_only_citations_becomes_empty(self):
+        assert hypothesis_of("[1] [2] [3]") == ""
+
+    def test_internal_runs_of_whitespace_collapse(self):
+        assert hypothesis_of("The   limit  is\n$250,000.") == "The limit is $250,000."
+
+    def test_ordinary_sentences_are_untouched_apart_from_the_markers(self):
+        assert hypothesis_of("Proof of loss is due in 60 days. [1]") == (
+            "Proof of loss is due in 60 days."
+        )
+
+
+class TestIsClaim:
+    """Whether what survived marker removal can be judged at all.
+
+    An earlier version of this rejected any remainder starting with "and", which threw
+    away a real claim: "and According to the context, ... the revised due date will be 30
+    days after the date on which the bill is mailed." That is a statement with a
+    connective stuck to the front, and discarding it was a hand-made grammar rule getting
+    the grammar wrong. The connective is now stripped as debris, and the only thing
+    excluded is a hypothesis with nothing left in it - which no person could label and no
+    passage could entail. Whether "provide relevant information" is supported is a
+    judgment for the annotator, not for a regex."""
+
+    def test_an_empty_hypothesis_is_not_a_claim(self):
+        assert is_claim("") is False
+
+    def test_whitespace_only_is_not_a_claim(self):
+        assert is_claim("   ") is False
+
+    def test_a_statement_behind_a_leading_connective_survives(self):
+        text = hypothesis_of(
+            "[1] and According to the context, the revised due date will be 30 days."
+        )
+        assert text == "According to the context, the revised due date will be 30 days."
+        assert is_claim(text) is True
+
+    def test_a_citation_referential_fragment_is_still_put_to_the_annotator(self):
+        """It is not a claim about flood policy - it is a claim about the blocks - but a
+        person can read it and decide. A regex deciding for them is what went wrong."""
+        text = hypothesis_of("[1], [2] and provide relevant information.")
+        assert text == "provide relevant information."
+        assert is_claim(text) is True
+
+    def test_an_ordinary_statement_is_a_claim(self):
+        assert is_claim("The maximum payable is $30,000.") is True
+
+    def test_a_statement_merely_containing_and_is_untouched(self):
+        text = hypothesis_of("Coverage A and Coverage D are separate limits.")
+        assert text == "Coverage A and Coverage D are separate limits."
