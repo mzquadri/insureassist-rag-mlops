@@ -26,7 +26,7 @@ import argparse
 import hashlib
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -195,7 +195,7 @@ def main() -> int:
 
     payload = {
         "prompt_variant": args.variant,
-        "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generated_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "what_this_measures": (
             "Whether the generator cited at all, and whether the blocks it cited were "
             "supplied to it. Facts about the string; no judge, so no circularity. It "

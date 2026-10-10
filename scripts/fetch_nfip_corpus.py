@@ -26,7 +26,7 @@ import re
 import sys
 import urllib.request
 import xml.etree.ElementTree as ET
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 #: Pinned eCFR issue date. Bumping this is a deliberate corpus change: it alters the
@@ -175,7 +175,7 @@ def build(check_only: bool = False) -> int:
         "description": (
             "NFIP Standard Flood Insurance Policy forms as published in 44 CFR Part 61."
         ),
-        "retrieved_at": datetime.now(timezone.utc).date().isoformat(),
+        "retrieved_at": datetime.now(UTC).date().isoformat(),
         "ecfr_issue_date": ECFR_ISSUE_DATE,
         "source_xml_sha256": sha256_bytes(raw),
         "extraction": {

@@ -1,2 +1,9 @@
 # Test-only dependencies. The service itself needs only requirements.txt.
 pytest>=8.0
+
+# Pinned exactly, not floored. The CI lint step used to run `pip install ruff` with no
+# constraint, so an upstream release turned a green build red twice in one day with no
+# change to the code: 0.16.10 added RUF100 and I001 findings, 0.17.0 added UP017 in two
+# files nobody had touched. A lint result that depends on the day it ran is not a check.
+# Raise this deliberately and fix what the new version finds in the same commit.
+ruff==0.17.0
