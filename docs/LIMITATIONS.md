@@ -171,6 +171,47 @@ The complete list. Nothing here is softened.
   every support judgment is answered: a rate over half the sentences is a different quantity
   wearing the same name. A pre-seeded `null` is treated as unanswered rather than as `false`,
   so an untouched worksheet cannot be mistaken for a corpus of unsupported citations.
+- **The generator puts its citations before the claim, and no prompt tried here changes
+  that.** The `[n]` convention, and ALCE's metric built on it, assume the marker *follows*
+  the statement it supports — that is what makes "which claim does this citation back"
+  answerable at all. This model does the opposite. No judge is involved: whether a sentence
+  opens with a marker is a fact about the string, which is why this escapes the circularity
+  objection above for the same reason the dangling-citation rate does.
+
+  | | opens with a citation | citations joined by a conjunction |
+  |---|---|---|
+  | served | 12/16, 0.75 [0.505, 0.898] | 6/16, 0.375 [0.185, 0.614] |
+  | range stated | 16/16, 1.0 [0.806, 1.0] | 0/16, 0.0 [0.0, 0.194] |
+
+  **Placement is systematic, not a prompt artefact.** Paired on the 13 questions that cited
+  something under both prompts, 12 open with a citation under *both*, none under neither,
+  and the single discordant pair goes to the range-stated prompt: McNemar's exact test gives
+  p = 1.0. Restating which block numbers exist does not move where the model puts them.
+
+  **Stating the range does remove coordinated citations, and this is the clearest prompt
+  effect measured in this repository.** Five questions emit `"[2], [3], and [4] provide
+  relevant information"` under the served prompt and none do under the variant, with no pair
+  going the other way: p = 0.0625. That is still above 0.05 on thirteen questions, so it is
+  a strong hint rather than a result — but it is four times better evidence than the
+  p = 0.250 for the dangling-citation comparison above, and it points the same way.
+
+  **This is what broke the correctness measurement**, which is why it is worth a metric of
+  its own rather than a footnote. Leading markers are what stranded punctuation at the front
+  of nine of sixteen hypotheses and emptied one of them entirely, and repairing that moved
+  recall from 0.3125 to 0.4667. A defect that silently cost a quarter of a published figure
+  is not cosmetic.
+
+  It also weakens a promise the README makes carefully. Citations resolve to exact character
+  offsets, and they do; what offsets cannot do is say which sentence they belong to when the
+  marker precedes every claim in the answer. Three of the five excluded questions
+  (`nfip-004`, `nfip-005`, `nfip-028`) cited nothing at all under the served prompt, so they
+  are left out of the pairing — an answer with no citations has not placed them well, and
+  counting it as a win would reward silence.
+
+  Reproduce with `python -m eval.citation_placement_run`; pinned in
+  `eval/citation_placement.json`. The exact McNemar test is now in
+  `eval/citation_placement.py` and pinned by a test against the p = 0.250 quoted above,
+  which until now had been computed by hand.
 
   ALCE's own agreement figures set the ceiling on what this arm can claim even when the
   judge is right: on 100 human-annotated examples per dataset they report Cohen's kappa

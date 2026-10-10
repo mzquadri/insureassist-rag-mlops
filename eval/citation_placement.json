@@ -1,0 +1,84 @@
+{
+  "generated_utc": "2026-10-10T12:02:42Z",
+  "measures": "Where the generator puts its citation markers. 'leading' = the sentence opens with a marker before any prose; 'coordinated' = markers joined by a conjunction, so they serve as a noun phrase.",
+  "why": "Citation correctness was first reported from malformed hypotheses, because removing leading markers stranded punctuation at the front of the sentence. Repairing that moved recall from 0.3125 to 0.4667. This asks whether the placement is incidental or systematic.",
+  "judge": "none - every quantity here is a fact about the pinned answer strings",
+  "variants": {
+    "served": {
+      "cited_sentences": 16,
+      "leading": {
+        "count": 12,
+        "of": 16,
+        "rate": 0.75,
+        "wilson_95": [
+          0.505,
+          0.898
+        ]
+      },
+      "coordinated": {
+        "count": 6,
+        "of": 16,
+        "rate": 0.375,
+        "wilson_95": [
+          0.185,
+          0.614
+        ]
+      }
+    },
+    "ranged": {
+      "cited_sentences": 16,
+      "leading": {
+        "count": 16,
+        "of": 16,
+        "rate": 1.0,
+        "wilson_95": [
+          0.806,
+          1.0
+        ]
+      },
+      "coordinated": {
+        "count": 0,
+        "of": 16,
+        "rate": 0.0,
+        "wilson_95": [
+          0.0,
+          0.194
+        ]
+      }
+    }
+  },
+  "paired": {
+    "leading": {
+      "questions": 13,
+      "both": 12,
+      "neither": 0,
+      "served_only": [],
+      "ranged_only": [
+        "nfip-031"
+      ],
+      "p_mcnemar_exact": 1.0
+    },
+    "coordinated": {
+      "questions": 13,
+      "both": 0,
+      "neither": 8,
+      "served_only": [
+        "nfip-008",
+        "nfip-009",
+        "nfip-014",
+        "nfip-017",
+        "nfip-020"
+      ],
+      "ranged_only": [],
+      "p_mcnemar_exact": 0.0625
+    }
+  },
+  "paired_note": "Questions that cited nothing under either prompt are excluded from the pairing: an answer with no citations has not placed them well, and counting it as a win would reward silence.",
+  "paired_excluded": [
+    "nfip-004",
+    "nfip-005",
+    "nfip-016",
+    "nfip-024",
+    "nfip-028"
+  ]
+}

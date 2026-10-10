@@ -280,6 +280,69 @@ CORRECTNESS_CLAIMS = [
     ),
 ]
 
+#: The citation-placement arm. Judge-free, so these are the least hedged numbers in the
+#: generation section and the ones most worth pinning tightly.
+PLACEMENT_CLAIMS = [
+    (
+        "docs/LIMITATIONS.md",
+        r"\| served \| (\d+)/16, [\d.]+ \[[\d., ]+\] \| \d+/16",
+        "variants.served.leading.count",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| served \| \d+/16, ([\d.]+) \[",
+        "variants.served.leading.rate",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| served \| \d+/16, [\d.]+ \[[\d., ]+\] \| (\d+)/16",
+        "variants.served.coordinated.count",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| served \| \d+/16, [\d.]+ \[[\d., ]+\] \| \d+/16, ([\d.]+) \[",
+        "variants.served.coordinated.rate",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| range stated \| (\d+)/16, [\d.]+ \[[\d., ]+\] \| \d+/16",
+        "variants.ranged.leading.count",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| range stated \| \d+/16, ([\d.]+) \[",
+        "variants.ranged.leading.rate",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| range stated \| \d+/16, [\d.]+ \[[\d., ]+\] \| (\d+)/16, [\d.]+ \[",
+        "variants.ranged.coordinated.count",
+    ),
+    # The paired comparison, which is what licenses "systematic, not a prompt artefact".
+    (
+        "docs/LIMITATIONS.md",
+        r"Paired on the (\d+) questions that cited",
+        "paired.leading.questions",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"(\d+) open with a citation under \*both\*",
+        "paired.leading.both",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"McNemar's exact test gives\s+p = (\d\.\d+)",
+        "paired.leading.p_mcnemar_exact",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"no pair\s+going the other way: p = (\d\.\d+)",
+        "paired.coordinated.p_mcnemar_exact",
+    ),
+]
+
+PLACEMENT_PATH = REPO_ROOT / "eval" / "citation_placement.json"
+
 CORRECTNESS_PATH = REPO_ROOT / "eval" / "citation_correctness.json"
 
 #: The larger judge failed the same control in the opposite direction and its rate is still
@@ -386,6 +449,12 @@ def main() -> int:
         correctness = json.loads(CORRECTNESS_PATH.read_text(encoding="utf-8"))
         problems += check_claims(
             CORRECTNESS_CLAIMS, correctness, "the citation-correctness arm"
+        )
+
+    if PLACEMENT_PATH.exists():
+        placement = json.loads(PLACEMENT_PATH.read_text(encoding="utf-8"))
+        problems += check_claims(
+            PLACEMENT_CLAIMS, placement, "the citation-placement arm"
         )
 
     if CORRECTNESS_LARGE_PATH.exists():
