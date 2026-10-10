@@ -174,16 +174,32 @@ RANGED_CLAIMS = [
 
 RANGED_PATH = REPO_ROOT / "eval" / "citation_structure_ranged.json"
 
-#: The citation-correctness arm reports no rate, because its judge failed its control.
-#: Only the control itself is pinned, so the sentence disqualifying the metric cannot
-#: drift away from the artefact that disqualifies it.
-#: The base judge now clears its calibration, so its rates are quoted and must be pinned
-#: alongside the counts behind them. Counts are pinned because the rates are derived from
-#: them: if a count drifts and a rate does not, one of the two is stale.
 #: The base judge clears its calibration, so its rates are quoted and pinned alongside the
 #: counts behind them. Counts are pinned because the rates derive from them: if a count
-#: drifts and a rate does not, one of the two is stale.
+#: drifts and a rate does not, one of the two is stale. The README quotes the same figures
+#: in summary, and those are pinned to the same artefact so the summary cannot drift from
+#: the detail - which is the failure mode this whole script exists for.
 CORRECTNESS_CLAIMS = [
+    (
+        "README.md",
+        r"ALCE's recall is (\d+)/15 scoreable sentences",
+        "claims_only.recall_counts.supported",
+    ),
+    (
+        "README.md",
+        r"recall is \d+/15 scoreable sentences, (\d\.\d+)",
+        "claims_only.citation_recall",
+    ),
+    (
+        "README.md",
+        r"precision (\d+)/15, [\d.]+",
+        "claims_only.precision_counts.needed",
+    ),
+    (
+        "README.md",
+        r"precision \d+/15, ([\d.]+) \[",
+        "claims_only.citation_precision",
+    ),
     (
         "docs/LIMITATIONS.md",
         r"\| citation recall \| (\d+)/15 scoreable sentences supported",
@@ -319,6 +335,21 @@ PLACEMENT_CLAIMS = [
         "variants.ranged.coordinated.count",
     ),
     # The paired comparison, which is what licenses "systematic, not a prompt artefact".
+    (
+        "README.md",
+        r"(\d+) of 16 cited\s+sentences open with a citation marker",
+        "variants.served.leading.count",
+    ),
+    (
+        "README.md",
+        r"Paired on the (\d+) questions that cited something under\s+both prompts",
+        "paired.leading.questions",
+    ),
+    (
+        "README.md",
+        r"both prompts, (\d+) lead under both",
+        "paired.leading.both",
+    ),
     (
         "docs/LIMITATIONS.md",
         r"Paired on the (\d+) questions that cited",

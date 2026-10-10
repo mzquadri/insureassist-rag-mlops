@@ -150,7 +150,23 @@ Timings describe this machine. Nothing in CI depends on a GPU.
   top-document accuracy; that trade-off is stated, not hidden.
 - **Dev did not generalise**: hybrid scored 1.000 hit@5 on dev, 0.556 on test.
 - **No answer-quality metrics.** Only one local model is available and grading its own output
-  is circular.
+  is circular. Citation *correctness* is measured, because that needs an entailment model
+  rather than a better generator: ALCE's recall is 7/15 scoreable sentences, 0.4667
+  [0.248, 0.699], and precision 5/15, 0.3333 [0.152, 0.583]. Fifteen sentences will not pin
+  a rate; what the precision interval does exclude is a comfortable reading, since its upper
+  bound of 0.583 means at least two citations in five were not needed. The judge clears a
+  sensitivity and specificity floor declared before the run, and has still never been
+  checked against a person on these pairs — the worksheet for that is in
+  [`eval/citation_gold/`](eval/citation_gold/), unlabelled.
+- **The model cites before it claims, and no prompt tried here changes it.** 12 of 16 cited
+  sentences open with a citation marker rather than ending with one, and 16 of 16 do under a
+  variant that states the valid range. Paired on the 13 questions that cited something under
+  both prompts, 12 lead under both: McNemar p = 1.0. The `[n]` convention assumes the marker
+  follows the statement it supports, so a marker preceding every claim leaves the attachment
+  ambiguous — the offsets resolve exactly, and they cannot say which sentence they belong to.
+  This is also what corrupted the first correctness figure, stranding punctuation at the
+  front of nine hypotheses and emptying one. Measured without a judge by
+  [`eval/citation_placement_run.py`](eval/citation_placement_run.py).
 - **28% of answers cite a block that was never supplied.** The prompt numbers five context
   blocks; on the 18 answerable test questions the model produced `[6]`, `[7]` and `[16]` —
   5 of 18, 27.8% [12.5%, 50.9%]. Every answer cited something, so the failure is a dangling
