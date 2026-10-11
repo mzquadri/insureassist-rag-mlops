@@ -234,3 +234,116 @@ def test_a_pair_over_budget_still_gets_its_own_batch():
 
 def test_no_pairs_means_no_batches():
     assert batch_plan([], budget=100) == []
+
+
+# ------------------------------------------------------- not scoring the same pair twice
+
+from eval.nli_aggregation import memoise
+
+
+def test_a_repeated_pair_is_scored_once():
+    """The runner asks the same question many times over. citation_recall,
+    citation_recall_counts, citation_precision, citation_precision_counts, the
+    per-question rows, the per-sentence verdicts, and then all of it again for the
+    claims-only variant all walk the same premise-hypothesis pairs. Each call re-ran the
+    model, so a run did ten times the forward passes it needed and the large judge was
+    killed two hours in, just short of writing its artefact."""
+    calls = []
+
+    def entails(premise, hypothesis):
+        calls.append((premise, hypothesis))
+        return premise.startswith(hypothesis)
+
+    cached = memoise(entails)
+
+    assert cached("abc", "ab") is True
+    assert cached("abc", "ab") is True
+    assert cached("abc", "ab") is True
+    assert len(calls) == 1
+
+
+def test_distinct_pairs_are_each_scored():
+    calls = []
+
+    def entails(premise, hypothesis):
+        calls.append((premise, hypothesis))
+        return True
+
+    cached = memoise(entails)
+    cached("a", "x")
+    cached("b", "x")
+    cached("a", "y")
+
+    assert len(calls) == 3
+
+
+def test_the_cached_verdict_matches_the_uncached_one():
+    def entails(premise, hypothesis):
+        return hypothesis in premise
+
+    cached = memoise(entails)
+    for premise, hypothesis in (("abc", "b"), ("abc", "z"), ("", ""), ("x", "x")):
+        assert cached(premise, hypothesis) == entails(premise, hypothesis)
+
+
+def test_a_falsy_verdict_is_cached_rather_than_recomputed():
+    """A cache that stores only truthy results re-runs every negative, which is most of
+    the pairs here."""
+    calls = []
+
+    def entails(premise, hypothesis):
+        calls.append(1)
+        return False
+
+    cached = memoise(entails)
+    cached("a", "b")
+    cached("a", "b")
+
+    assert len(calls) == 1
+
+
+# ---------------------------------------------- an empty hypothesis entails from nothing
+
+
+def test_an_empty_hypothesis_scores_zero_without_consulting_the_model():
+    """Caught by comparing two judges. The single-pair scorer guarded empty inputs; the
+    batched one did not, and routing `_entails` through the batch dropped the guard. The
+    large judge then returned a high entailment probability for nfip-015, whose hypothesis
+    is the empty string after its citation markers are removed, and counted it as
+    supported. Nothing supports an empty claim."""
+    calls = []
+
+    def score_many(pairs):
+        calls.extend(pairs)
+        return [0.99] * len(pairs)
+
+    assert best_scores([("Some policy text.", "")], score_many) == [0.0]
+    assert best_scores([("Some policy text.", "   ")], score_many) == [0.0]
+    assert calls == []
+
+
+def test_an_empty_premise_also_scores_zero():
+    def score_many(pairs):
+        return [0.99] * len(pairs)
+
+    assert best_scores([("", "A real claim.")], score_many) == [0.0]
+
+
+def test_real_pairs_are_unaffected_by_the_guard():
+    def score_many(pairs):
+        return [0.7] * len(pairs)
+
+    assert best_scores([("Some policy text.", "A claim.")], score_many) == [0.7]
+
+
+def test_the_guard_does_not_shift_other_pairs_in_the_batch():
+    """Regrouping is positional, so dropping a pair's parts must not slide the rest."""
+
+    def score_many(pairs):
+        return [0.5 if "first" in p else 0.9 for p, _ in pairs]
+
+    out = best_scores(
+        [("first premise.", "claim"), ("x", ""), ("second premise.", "claim")],
+        score_many,
+    )
+    assert out == [0.5, 0.0, 0.9]

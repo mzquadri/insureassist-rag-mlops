@@ -202,32 +202,38 @@ CORRECTNESS_CLAIMS = [
     ),
     (
         "docs/LIMITATIONS.md",
-        r"\| citation recall \| (\d+)/15 scoreable sentences supported",
+        r"\| DeBERTa-v3-base \| [\d.]+ / [\d.]+ \| (\d+)/15,",
         "claims_only.recall_counts.supported",
     ),
     (
         "docs/LIMITATIONS.md",
-        r"\| citation recall \| \d+/(\d+) scoreable sentences supported",
+        r"\| DeBERTa-v3-base \| [\d.]+ / [\d.]+ \| \d+/(\d+),",
         "claims_only.recall_counts.cited",
     ),
     (
         "docs/LIMITATIONS.md",
-        r"\| citation recall \| \d+/\d+ scoreable sentences supported \| ([\d.]+) \|",
+        r"\| DeBERTa-v3-base \| [\d.]+ / [\d.]+ \| \d+/15, ([\d.]+) \[",
         "claims_only.citation_recall",
     ),
     (
         "docs/LIMITATIONS.md",
-        r"\| citation precision \| (\d+)/\d+ citations needed",
+        (
+            r"\| DeBERTa-v3-base \| [\d.]+ / [\d.]+ \| \d+/15, [\d.]+ \[[\d., ]+\] "
+            r"\| (\d+)/15,"
+        ),
         "claims_only.precision_counts.needed",
     ),
     (
         "docs/LIMITATIONS.md",
-        r"\| citation precision \| \d+/(\d+) citations needed",
+        r"\| DeBERTa-v3-base \| [\d.]+ / [\d.]+ \| \d+/15, [\d.]+ \[[\d., ]+\] \| \d+/(\d+),",
         "claims_only.precision_counts.offered",
     ),
     (
         "docs/LIMITATIONS.md",
-        r"\| citation precision \| \d+/\d+ citations needed \| ([\d.]+) \|",
+        (
+            r"\| DeBERTa-v3-base \| [\d.]+ / [\d.]+ \| \d+/15, [\d.]+ \[[\d., ]+\] "
+            r"\| \d+/15, ([\d.]+) \["
+        ),
         "claims_only.citation_precision",
     ),
     # The all-pairs denominator, quoted in prose so the excluded sentence stays visible.
@@ -376,14 +382,75 @@ PLACEMENT_PATH = REPO_ROOT / "eval" / "citation_placement.json"
 
 CORRECTNESS_PATH = REPO_ROOT / "eval" / "citation_correctness.json"
 
-#: The larger judge failed the same control in the opposite direction and its rate is still
-#: not quoted. Only the disqualifying count appears in the history table, so only that is
-#: pinned.
+#: The larger judge now clears the same calibration, so its rates are quoted beside the
+#: base judge's and pinned the same way. Its withdrawn over-entailment count is pinned too,
+#: so the correction cannot quietly drift back to the figure the argmax produced.
 CORRECTNESS_LARGE_CLAIMS = [
     (
         "docs/LIMITATIONS.md",
-        r"\| same, larger judge \| (\d+)/30 \*foreign\* pairs entailed",
-        "judge_control.negative_entailed",
+        r"\| DeBERTa-v3-large \| ([\d.]+) / [\d.]+ \|",
+        "calibration.sensitivity",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| DeBERTa-v3-large \| [\d.]+ / ([\d.]+) \|",
+        "calibration.specificity",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| DeBERTa-v3-large \| [\d.]+ / [\d.]+ \| (\d+)/15,",
+        "claims_only.recall_counts.supported",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| DeBERTa-v3-large \| [\d.]+ / [\d.]+ \| \d+/15, ([\d.]+) \[",
+        "claims_only.citation_recall",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| DeBERTa-v3-large \|.*?\| (\d+)/25, [\d.]+ \[",
+        "claims_only.precision_counts.needed",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"\| DeBERTa-v3-large \|.*?\| \d+/25, ([\d.]+) \[",
+        "claims_only.citation_precision",
+    ),
+    (
+        "README.md",
+        r"reaches ([\d.]+) calibration sensitivity",
+        "calibration.sensitivity",
+    ),
+    (
+        "README.md",
+        r"scores recall (\d+)/15, [\d.]+",
+        "claims_only.recall_counts.supported",
+    ),
+    (
+        "README.md",
+        r"scores recall \d+/15, ([\d.]+) \[",
+        "claims_only.citation_recall",
+    ),
+    (
+        "README.md",
+        r"0\.3333 against ([\d.]+)\)",
+        "claims_only.citation_precision",
+    ),
+    # The over-entailment that was withdrawn. Pinned so the correction cannot drift back.
+    (
+        "docs/LIMITATIONS.md",
+        r"the same model entails \*\*(\d+) of 30\*\* foreign pairs",
+        "judge_control_verbatim.negative_entailed",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"and large (\d+)/16 = [\d.]+",
+        "summary.recall_counts.supported",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"and large \d+/16 = (\d\.\d+)",
+        "summary.citation_recall",
     ),
 ]
 

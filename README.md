@@ -152,12 +152,18 @@ Timings describe this machine. Nothing in CI depends on a GPU.
 - **No answer-quality metrics.** Only one local model is available and grading its own output
   is circular. Citation *correctness* is measured, because that needs an entailment model
   rather than a better generator: ALCE's recall is 7/15 scoreable sentences, 0.4667
-  [0.248, 0.699], and precision 5/15, 0.3333 [0.152, 0.583]. Fifteen sentences will not pin
-  a rate; what the precision interval does exclude is a comfortable reading, since its upper
-  bound of 0.583 means at least two citations in five were not needed. The judge clears a
-  sensitivity and specificity floor declared before the run, and has still never been
-  checked against a person on these pairs — the worksheet for that is in
-  [`eval/citation_gold/`](eval/citation_gold/), unlabelled.
+  [0.248, 0.699], and precision 5/15, 0.3333 [0.152, 0.583]. Both clear sensitivity and
+  specificity floors declared before the run.
+- **Two entailment judges clear the same calibration and disagree on recall by a third.**
+  `DeBERTa-v3-large` reaches 0.938 calibration sensitivity against the base model's 0.844 at
+  the same specificity, and scores recall 12/15, 0.8000 [0.548, 0.930] — against 0.4667. The
+  intervals meet only between 0.548 and 0.699, and the disagreement is one-directional: the
+  large judge's supported set strictly contains the base judge's, five sentences to none.
+  Precision survives it (0.3333 against 0.3600), so *most citations being redundant* holds
+  either way; **no recall figure is established.** Preferring the better-calibrated judge
+  after seeing its answer is the post-hoc choice the declared floors exist to prevent, so the
+  human labelling pass in [`eval/citation_gold/`](eval/citation_gold/) is the adjudicator —
+  and it is still unlabelled.
 - **The model cites before it claims, and no prompt tried here changes it.** 12 of 16 cited
   sentences open with a citation marker rather than ending with one, and 16 of 16 do under a
   variant that states the valid range. Paired on the 13 questions that cited something under

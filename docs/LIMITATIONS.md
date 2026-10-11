@@ -91,29 +91,47 @@ The complete list. Nothing here is softened.
   which also narrows what gets cited is not evidence enough to change what ships.
   Reproduce with `python eval/citation_run.py --variant ranged`; pinned in
   `eval/citation_structure_ranged.json`.
-- **Citations are frequently redundant, and support is uncertain.** This is citation
-  correctness: ALCE's recall and precision (Gao et al., arXiv:2305.14627), judged by an
-  entailment model rather than by the generator, which is the standard answer to the
-  circularity above. `eval/citation_correctness.py` implements the metric and
-  `eval/citation_correctness_run.py` runs it with `MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli`.
+- **Most citations are redundant; whether the rest are supported depends on which judge
+  you ask.** This is citation correctness: ALCE's recall and precision (Gao et al.,
+  arXiv:2305.14627), judged by an entailment model rather than by the generator, which is
+  the standard answer to the circularity above. `eval/citation_correctness.py` implements
+  the metric; `eval/citation_correctness_run.py --judge base|large` runs it.
 
-  | metric | count | rate | 95% Wilson |
+  **Two judges clear the same calibration and disagree on recall by a third.** Both pass
+  the 0.80 sensitivity and 0.80 specificity floors declared in the script before either was
+  run, on the same 32/32 calibration set.
+
+  | judge | cal. sens / spec | recall | precision |
   |---|---|---|---|
-  | citation recall | 7/15 scoreable sentences supported | 0.4667 | [0.248, 0.699] |
-  | citation precision | 5/15 citations needed | 0.3333 | [0.152, 0.583] |
+  | DeBERTa-v3-base | 0.844 / 0.969 | 7/15, 0.4667 [0.248, 0.699] | 5/15, 0.3333 [0.152, 0.583] |
+  | DeBERTa-v3-large | 0.938 / 0.969 | 12/15, 0.8000 [0.548, 0.930] | 9/25, 0.3600 [0.202, 0.555] |
 
-  Over all 16 cited sentences, including the one with no content to score, recall is
-  7/16 = 0.4375 [0.231, 0.668]. Both are in `eval/citation_correctness.json`; the
-  scoreable denominator is the one quoted, for the reason in the next paragraph.
+  **Precision survives the disagreement; recall does not.** The two precision figures sit
+  almost on top of each other, 0.3333 against 0.3600 with heavily overlapping intervals, so
+  the finding holds whichever judge is used: **roughly two citations in three were not
+  needed** — drop one and the rest still support the sentence. Recall is a different matter.
+  0.4667 against 0.8000 is a third of the scale, and the intervals meet only between 0.548
+  and 0.699. **No recall figure is established here.** Quoting either alone would be
+  choosing the judge after seeing the answer.
 
-  **What this does and does not establish.** Precision is the firmer of the two: its upper
-  bound is 0.583, so even on the most favourable reading consistent with the data, at least
-  two citations in five were not needed — drop them and the rest still support the sentence.
-  Recall is genuinely uncertain. Its interval spans 0.248 to 0.699, which straddles a half,
-  so the honest statement is that somewhere between a quarter and seven-tenths of cited
-  sentences are supported and fifteen sentences cannot narrow it further. An earlier version
-  of this entry claimed recall's ceiling put support below three in five; that rested on a
-  figure since corrected, and the claim is withdrawn.
+  The disagreement is one-directional and significant rather than noise. Paired on the 16
+  cited sentences, the large judge's supported set strictly *contains* the base judge's:
+  five sentences it accepts and the base judge rejects, none the other way, McNemar's exact
+  test p = 0.0625. That is consistent with their calibration — the base judge's sensitivity
+  is 0.844 against 0.938, so it misses real support more often — and it means the two are
+  not making independent errors, one is simply stricter.
+
+  Which to prefer is not for this document to settle by picking the better-calibrated model
+  after the fact. Only the 0.80/0.80 floors were declared in advance; balanced accuracy as a
+  *selection* rule was not, and applying it now would be the same post-hoc choice the floors
+  exist to prevent. **The human labelling pass below is the adjudicator**, and this result is
+  why it has stopped being optional.
+
+  Over all 16 cited sentences, including the one with no content to score, base recall is
+  7/16 = 0.4375 and large 12/16 = 0.7500. Both artefacts carry counts as well as rates.
+
+  **An earlier version of this entry claimed recall's ceiling put support below three in
+  five.** That rested on a figure since corrected twice, and the claim is withdrawn.
 
   **A quarter of the published recall figure was marker-removal debris.** The first version
   of this entry reported 5/16 = 0.3125. That was wrong, and the fault was in extracting the
@@ -242,9 +260,18 @@ The complete list. Nothing here is softened.
   | same, larger judge | 15/30 *foreign* pairs entailed | judge over-entails; no rate |
   | Youden cut on verbatim positives | 30/30, 1/30 | cut lands at 0.98; rejects paraphrase |
 
-  The first row is history and cannot be reproduced from the current code, which no longer
-  decides by argmax. The second is still in `eval/citation_correctness_large.json` and is
-  pinned from there; the third is still run on every invocation as a second check.
+  Neither of the first two rows can be reproduced from the current code, which no longer
+  decides by argmax; they are kept because the reasoning they prompted is on the record.
+
+  **The second row turned out to be mostly an artefact of the argmax, and the conclusion
+  drawn from it was wrong.** This entry used to say the larger judge "over-entails badly
+  enough that it is kept only as a recorded negative." Re-run under the sentence-wise
+  calibrated pipeline, the same model entails **1 of 30** foreign pairs rather than 15, with
+  a specificity of 0.969 — identical to the base judge's — and it clears both floors. The
+  original rejection measured the decision rule, not the model, exactly as the base judge's
+  rejection had. A judge discarded on a flawed protocol deserves re-testing when the
+  protocol is fixed, and it had been sitting in the repository for two days described as a
+  failure it was not.
 
   The first failure was diagnosed, not assumed: much of this corpus is exclusion schedules
   whose entries — "Food freezers, other than walk-in, and food in any freezer." — end in a
@@ -262,9 +289,21 @@ The complete list. Nothing here is softened.
   discriminative. The verbatim control is still run and recorded, as a second check in
   `judge_control_verbatim`, but it no longer sets the threshold.
 
+  **One bug found by running the second judge, which the first had hidden.** Routing the
+  decision through the batched scorer dropped an empty-input guard the single-pair scorer
+  had. The large judge then scored `nfip-015` — whose hypothesis is the empty string once
+  its citation markers are removed — at 0.99 and counted it supported, taking its all-pairs
+  recall from 0.750 to 0.8125. The base judge had scored the same pair below its own
+  threshold, so the bug was invisible with one judge and obvious with two. Nothing supports
+  an empty claim; the guard is restored in `best_scores`, and it records an empty span
+  rather than skipping, because a filter that skips silently reassigns every result behind
+  it. The base artefact is byte-identical before and after the fix.
+
   Reproduce with `python eval/citation_correctness_run.py --judge base|large`. Counts as
-  well as rates are recorded in `eval/citation_correctness.json`, so the intervals above can
-  be recomputed without re-running the model.
+  well as rates are recorded in both artefacts, so the intervals above can be recomputed
+  without re-running the model. Each artefact also records `distinct_pairs_scored`: the
+  whole measurement rests on **29 distinct (premise, hypothesis) decisions** for the base
+  judge, which is worth knowing before reading a rate off it.
 
   Still open: ALCE validated against TRUE (T5-11B) at Cohen's kappa 0.698, which does not
   run on the 2 GiB card this was measured on, so that agreement is not inherited. And 3 of

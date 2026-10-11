@@ -74,9 +74,18 @@ def best_scores(
     flat: list[tuple[str, str]] = []
     spans: list[tuple[int, int]] = []
     for premise, hypothesis in pairs:
-        parts = premise_parts(premise)
         start = len(flat)
-        flat.extend((part, hypothesis) for part in parts)
+        # An empty hypothesis is entailed by nothing, and an empty premise entails
+        # nothing. The single-pair scorer guards this; the batched one does not, and
+        # routing the decision through the batch dropped the guard. The large judge then
+        # scored nfip-015 - whose hypothesis is empty once its citation markers are
+        # removed - at 0.99 and called it supported.
+        #
+        # The span is still appended, empty, so the guard cannot slide the pairs after it
+        # onto the wrong scores. Skipping without recording the span is how a filter
+        # silently reassigns every result behind it.
+        if premise.strip() and hypothesis.strip():
+            flat.extend((part, hypothesis) for part in premise_parts(premise))
         spans.append((start, len(flat)))
 
     scored = score_many(flat) if flat else []
@@ -110,6 +119,34 @@ def batch_plan(lengths: Sequence[int], budget: int) -> list[list[int]]:
     if current:
         batches.append(current)
     return batches
+
+
+def memoise(entails: Callable[[str, str], bool]) -> Callable[[str, str], bool]:
+    """Cache an entailment decision per (premise, hypothesis).
+
+    The decision is deterministic once the threshold is fixed, so this changes no result -
+    it removes work. The runner asks the same question repeatedly: `citation_recall` and
+    `citation_recall_counts` walk the same pairs, so do the precision pair, the
+    per-question rows, the per-sentence verdicts, and then all of it again for the
+    claims-only variant. That was close to ten forward passes per pair, and it is why the
+    large judge ran for two hours and was killed just short of writing its artefact.
+
+    `functools.cache` would do this, but a plain dict keeps the hit count inspectable and
+    does not require the arguments to be hashable by a decorator's rules - premises here
+    are long strings and the cache is per run, not per process.
+    """
+    seen: dict[tuple[str, str], bool] = {}
+
+    def cached(premise: str, hypothesis: str) -> bool:
+        key = (premise, hypothesis)
+        # `in` rather than `get`, so a False verdict is a hit and not recomputed. Most
+        # pairs here are negative, so storing only truthy results would cache nothing.
+        if key not in seen:
+            seen[key] = entails(premise, hypothesis)
+        return seen[key]
+
+    cached.cache = seen  # type: ignore[attr-defined]
+    return cached
 
 
 def youden_threshold(
@@ -238,6 +275,7 @@ __all__ = [
     "batch_plan",
     "best_scores",
     "best_sentence_score",
+    "memoise",
     "paraphrase_control",
     "premise_parts",
     "rates",

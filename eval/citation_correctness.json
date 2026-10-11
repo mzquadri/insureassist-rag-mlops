@@ -1,12 +1,16 @@
 {
   "prompt_variant": "served",
-  "generated_utc": "2026-10-09T10:33:32Z",
+  "generated_utc": "2026-10-11T11:14:55Z",
   "metric": "ALCE citation recall and precision (Gao et al., arXiv:2305.14627)",
   "judge": {
     "name": "base",
     "model": "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli",
     "device": "cuda",
     "decision": "entailment probability, max over premise sentences, calibrated cut"
+  },
+  "scoring": {
+    "distinct_pairs_scored": 29,
+    "note": "Entailment is memoised per (premise, hypothesis). Every rate, count, per-question row and per-sentence verdict walks the same pairs, and the claims-only figures walk them again, so without the cache this arm did close to ten forward passes per pair."
   },
   "calibration": {
     "built_from": "gold_answer against labelled relevant / irrelevant chunks",

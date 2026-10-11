@@ -52,7 +52,7 @@ from eval.citation_correctness import (
 from eval.nli_aggregation import (
     batch_plan,
     best_scores,
-    best_sentence_score,
+    memoise,
     paraphrase_control,
     rates,
     youden_threshold,
@@ -61,9 +61,17 @@ from src.corpus import chunk_corpus, load_corpus
 
 #: Candidate judges. ALCE used TRUE (T5-11B), which does not fit on a 2 GiB card, so the
 #: agreement figures in their paper do not carry over and the calibration below is what any
-#: result rests on instead. The base model clears it once the premise is split and the cut
-#: is calibrated on paraphrase; the larger one was tried while the base model was still
-#: failing, and over-entails badly enough that it is kept only as a recorded negative.
+#: result rests on instead.
+#:
+#: **Both clear that calibration, and they disagree.** Once the premise is split and the cut
+#: is calibrated on paraphrase, base reaches 0.844 sensitivity and large 0.938, at the same
+#: 0.969 specificity - and their citation recall differs by a third, 0.467 against 0.800.
+#: An earlier version of this comment called large a recorded negative that over-entails;
+#: that was an artefact of the argmax it was first tested under, the same flaw that had
+#: rejected base. Neither is preferred here. Picking the better-calibrated model after
+#: seeing its answer is the post-hoc choice the declared floors exist to prevent, and
+#: `eval/citation_gold.py` is what adjudicates.
+
 JUDGES = {
     "base": "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli",
     "large": "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
@@ -307,7 +315,7 @@ def main() -> int:
         for qid, ids in retrieved.items()
     }
 
-    (score, score_many), judge = build_judge(args.judge)
+    (_score, score_many), judge = build_judge(args.judge)
 
     # Two controls. The verbatim one shows the judge can see literal support and is
     # reported; it is not used to calibrate, because copies score near 1.0 and the cut
@@ -355,10 +363,19 @@ def main() -> int:
     # The calibrated decision the rest of the run uses. Sentence-wise over the premise,
     # then the cut the control chose.
 
-    def entails(premise: str, hypothesis: str) -> bool:
-        return (
-            cut is not None and best_sentence_score(premise, hypothesis, score) >= cut
-        )
+    def _entails(premise: str, hypothesis: str) -> bool:
+        # `best_scores` rather than `best_sentence_score`, so the premise's sentences go
+        # through the model in one padded batch instead of one forward pass each. Same
+        # value - max over the parts - at roughly an eighth of the calls.
+        if cut is None:
+            return False
+        return best_scores([(premise, hypothesis)], score_many)[0] >= cut
+
+    # Memoised, because everything below asks the same questions over again: the recall
+    # rate and its counts walk the same pairs, so do the precision pair, the per-question
+    # rows, the per-sentence verdicts, and then all of it a second time for the
+    # claims-only figures. Deterministic once `cut` is fixed, so this changes no number.
+    entails = memoise(_entails)
 
     rows: list[dict[str, Any]] = []
     all_claims = []
@@ -429,6 +446,15 @@ def main() -> int:
         "generated_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "metric": "ALCE citation recall and precision (Gao et al., arXiv:2305.14627)",
         "judge": judge,
+        "scoring": {
+            "distinct_pairs_scored": len(entails.cache),
+            "note": (
+                "Entailment is memoised per (premise, hypothesis). Every rate, count, "
+                "per-question row and per-sentence verdict walks the same pairs, and the "
+                "claims-only figures walk them again, so without the cache this arm did "
+                "close to ten forward passes per pair."
+            ),
+        },
         "calibration": calibration,
         "judge_control_verbatim": judge_control,
         "caveats": (
