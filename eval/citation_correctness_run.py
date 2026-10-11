@@ -70,11 +70,15 @@ JUDGES = {
 }
 DEFAULT_JUDGE = "base"
 
-#: Padded tokens per forward pass. The card this runs on holds 2 GiB, about 1.6 GiB of
-#: it free, and DeBERTa's disentangled attention builds several batch x len x len tensors
-#: per layer. 4,096 is a batch of 8 at full length or 400 short sentence pairs; `forward`
-#: halves anything that still will not fit.
-TOKEN_BUDGET = 4096
+#: Padded tokens per forward pass. This card holds 2 GiB and DeBERTa's disentangled
+#: attention builds several batch x len x len tensors per layer, so the budget is set
+#: per judge: the headroom left after the weights load differs by a factor of two.
+#: Measured on this card rather than guessed: base is 184M parameters and leaves about
+#: 1.26 GiB free, large is 435M (1.62 GiB of fp32 weights) and leaves 0.79 GiB. Large also
+#: has twice the layers and a wider hidden size, so each token costs more. `forward`
+#: halves a batch that still will not fit, so an estimate on the low side costs time
+#: rather than the run.
+TOKEN_BUDGET = {"base": 4096, "large": 1024}
 MAX_TOKENS = 512
 
 #: Declared before the run, following eval/abstention_threshold.py, which fixes its
@@ -117,7 +121,7 @@ def build_judge(name: str = DEFAULT_JUDGE):
     def forward(indices: list[int], pairs: list) -> list[tuple[int, float]]:
         """Score one batch, halving it if the card cannot hold it.
 
-        `TOKEN_BUDGET` is an estimate of what fits, and an estimate that is wrong one way
+        The token budget is an estimate of what fits, and an estimate wrong one way
         loses the whole run. Splitting on OOM makes a bad estimate cost time instead.
         """
         try:
@@ -161,7 +165,7 @@ def build_judge(name: str = DEFAULT_JUDGE):
             for premise, hypothesis in pairs
         ]
         out: list[float] = [0.0] * len(pairs)
-        for batch in batch_plan(lengths, TOKEN_BUDGET):
+        for batch in batch_plan(lengths, TOKEN_BUDGET[name]):
             for index, value in forward(batch, pairs):
                 out[index] = value
         return out

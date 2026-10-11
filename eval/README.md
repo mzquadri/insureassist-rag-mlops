@@ -3,6 +3,15 @@
 A harness that scores generated answers with a local model through Ollama, so it runs
 offline and needs no API key.
 
+> **This documents the original harness, on a different corpus from the rest of the
+> repository.** It scores 10 generic questions (`data/qa_testset.jsonl`) against the two
+> synthetic policies in `data/auto_insurance_policy.md` and `data/home_insurance_policy.md`.
+> The evaluation the project's claims actually rest on uses the three real NFIP flood forms
+> in `data/corpus/`, 50 labelled questions, and 314 chunks — see
+> [`docs/BENCHMARK.md`](../docs/BENCHMARK.md), [`docs/LIMITATIONS.md`](../docs/LIMITATIONS.md)
+> and the arms indexed at the bottom of this file. Nothing below describes that work, and
+> the two should not be read together.
+
 > **These are custom judge metrics, not RAGAS metrics.**
 >
 > Earlier wording here described them as "the same metrics the RAGAS library implements".
@@ -23,11 +32,18 @@ offline and needs no API key.
 
 ## What is not measured
 
-**Retrieval quality is not measured anywhere in this repository.**
+**This harness measures no retrieval quality.** `data/qa_testset.jsonl` contains reference
+*answers* only, with no relevant-document or relevant-chunk labels, so Recall@k, Hit
+Rate@k, MRR and nDCG cannot be computed from it, and there is no lexical baseline to
+compare against.
 
-`data/qa_testset.jsonl` contains reference *answers* only. There are no relevant-document
-or relevant-chunk labels, so Recall@k, Hit Rate@k, MRR and nDCG cannot be computed. There
-is no lexical baseline to compare against either.
+> An earlier version of this sentence read "Retrieval quality is not measured anywhere in
+> this repository." That was true when written and is now false. The NFIP ground truth in
+> `eval/ground_truth/nfip_questions.jsonl` carries `relevant_chunk_ids` and
+> `evidence_spans` for all 50 questions, and `eval/reference_run.json` reports hit@5, MRR
+> and top-document accuracy against BM25 and dense-only baselines. The claim is corrected
+> rather than deleted, because a reader who saw the old wording should be able to find out
+> that it changed.
 
 `context_precision` used to be reported here as a retrieval signal. **It has been withdrawn
 from the headline table.** It scored exactly `0.80` on all ten questions, which is not a
@@ -82,3 +98,30 @@ from it. They describe **the stock `llama3.2:3b` model**, not a fine-tuned one, 
 say nothing about retrieval quality. Given a self-judging 3B model on ten questions from a
 7-chunk corpus, treat them as a smoke test of the harness rather than a measurement of the
 system.
+
+---
+
+## The NFIP evaluation arms
+
+What the project's published claims rest on. Each writes a pinned artefact, and
+`python -m eval.verify_artifacts` fails if a documented number drifts from it.
+
+| Arm | Code | Artefact | Judge? |
+|---|---|---|---|
+| Retrieval benchmark | [`eval/reference_run.py`](reference_run.py) | `reference_run.json` | no |
+| Abstention threshold (tested, rejected) | [`eval/abstention_threshold.py`](abstention_threshold.py) | `abstention_threshold.json` | no |
+| Citation structure — does it cite blocks it was given | [`eval/citation_structure.py`](citation_structure.py) | `citation_structure.json` | no |
+| Prompt variant, same pinned retrieval | [`eval/prompt_variants.py`](prompt_variants.py) | `citation_structure_ranged.json` | no |
+| Citation placement — where the marker sits | [`eval/citation_placement.py`](citation_placement.py) | `citation_placement.json` | no |
+| Citation correctness — ALCE recall/precision | [`eval/citation_correctness.py`](citation_correctness.py) | `citation_correctness.json` | NLI, calibrated |
+| Human gold standard for the above | [`eval/citation_gold.py`](citation_gold.py) | `citation_gold.json` | a person |
+
+Five of the seven need no judge at all, which is the point: they are facts about strings
+and labels, so the circularity objection that rules out self-grading does not reach them.
+The one arm that does use a judge calibrates it against the ground truth first and refuses
+to report a rate if it misses floors declared before the run.
+
+`citation_gold.json` does not exist yet. Its worksheet does
+(`eval/citation_gold/worksheet.md`, built by `python -m eval.citation_gold_run --build`)
+and is unlabelled; the judge has never been checked against a person on the pairs it
+scored, which is the sharpest open caveat in `docs/LIMITATIONS.md`.
