@@ -1,40 +1,43 @@
-# One row per judgment. Change each null to true or false.
-# true  = the blocks shown DO support the statement
-# false = they do not
-# Leave null for anything you have not decided; null is not a label.
-{"pair_id": "nfip-002#s1", "supported": null}
-{"pair_id": "nfip-002#s1-drop2", "supported": null}
-{"pair_id": "nfip-002#s1-drop5", "supported": null}
-{"pair_id": "nfip-008#s1", "supported": null}
-{"pair_id": "nfip-008#s1-drop2", "supported": null}
-{"pair_id": "nfip-008#s1-drop3", "supported": null}
-{"pair_id": "nfip-008#s1-drop4", "supported": null}
-{"pair_id": "nfip-008#s2", "supported": null}
-{"pair_id": "nfip-008#s3", "supported": null}
-{"pair_id": "nfip-008#s3-drop3", "supported": null}
-{"pair_id": "nfip-008#s3-drop4", "supported": null}
-{"pair_id": "nfip-009#s1", "supported": null}
-{"pair_id": "nfip-009#s1-drop2", "supported": null}
-{"pair_id": "nfip-009#s1-drop3", "supported": null}
-{"pair_id": "nfip-009#s1-drop4", "supported": null}
-{"pair_id": "nfip-014#s1", "supported": null}
-{"pair_id": "nfip-014#s1-drop1", "supported": null}
-{"pair_id": "nfip-014#s1-drop2", "supported": null}
-{"pair_id": "nfip-014#s1-drop4", "supported": null}
-{"pair_id": "nfip-014#s1-drop5", "supported": null}
-{"pair_id": "nfip-014#s2", "supported": null}
-{"pair_id": "nfip-017#s1", "supported": null}
-{"pair_id": "nfip-017#s1-drop1", "supported": null}
-{"pair_id": "nfip-017#s1-drop4", "supported": null}
-{"pair_id": "nfip-020#s1", "supported": null}
-{"pair_id": "nfip-020#s1-drop2", "supported": null}
-{"pair_id": "nfip-020#s1-drop4", "supported": null}
-{"pair_id": "nfip-020#s1-drop5", "supported": null}
-{"pair_id": "nfip-021#s1", "supported": null}
-{"pair_id": "nfip-022#s1", "supported": null}
-{"pair_id": "nfip-023#s1", "supported": null}
-{"pair_id": "nfip-025#s1", "supported": null}
-{"pair_id": "nfip-031#s1", "supported": null}
-{"pair_id": "nfip-032#s1", "supported": null}
-{"pair_id": "nfip-032#s1-drop4", "supported": null}
-{"pair_id": "nfip-032#s1-drop5", "supported": null}
+# One row per judgment. Replace each null with one of:
+#   "attributable" - the blocks shown DO support the statement
+#   "extrapolatory" - the blocks do not contain enough to settle it either way
+#   "contradictory" - the blocks say something that contradicts the statement
+# Leave null for anything you have not decided: null means unanswered,
+# never a failure, and a misspelling is rejected rather than guessed at.
+# Contested rows come first - those are the ones the two judges split on.
+{"pair_id": "nfip-002#s1", "label": null}
+{"pair_id": "nfip-008#s3", "label": null}
+{"pair_id": "nfip-014#s1", "label": null}
+{"pair_id": "nfip-014#s2", "label": null}
+{"pair_id": "nfip-022#s1", "label": null}
+{"pair_id": "nfip-002#s1-drop2", "label": null}
+{"pair_id": "nfip-002#s1-drop5", "label": null}
+{"pair_id": "nfip-008#s1", "label": null}
+{"pair_id": "nfip-008#s1-drop2", "label": null}
+{"pair_id": "nfip-008#s1-drop3", "label": null}
+{"pair_id": "nfip-008#s1-drop4", "label": null}
+{"pair_id": "nfip-008#s2", "label": null}
+{"pair_id": "nfip-008#s3-drop3", "label": null}
+{"pair_id": "nfip-008#s3-drop4", "label": null}
+{"pair_id": "nfip-009#s1", "label": null}
+{"pair_id": "nfip-009#s1-drop2", "label": null}
+{"pair_id": "nfip-009#s1-drop3", "label": null}
+{"pair_id": "nfip-009#s1-drop4", "label": null}
+{"pair_id": "nfip-014#s1-drop1", "label": null}
+{"pair_id": "nfip-014#s1-drop2", "label": null}
+{"pair_id": "nfip-014#s1-drop4", "label": null}
+{"pair_id": "nfip-014#s1-drop5", "label": null}
+{"pair_id": "nfip-017#s1", "label": null}
+{"pair_id": "nfip-017#s1-drop1", "label": null}
+{"pair_id": "nfip-017#s1-drop4", "label": null}
+{"pair_id": "nfip-020#s1", "label": null}
+{"pair_id": "nfip-020#s1-drop2", "label": null}
+{"pair_id": "nfip-020#s1-drop4", "label": null}
+{"pair_id": "nfip-020#s1-drop5", "label": null}
+{"pair_id": "nfip-021#s1", "label": null}
+{"pair_id": "nfip-023#s1", "label": null}
+{"pair_id": "nfip-025#s1", "label": null}
+{"pair_id": "nfip-031#s1", "label": null}
+{"pair_id": "nfip-032#s1", "label": null}
+{"pair_id": "nfip-032#s1-drop4", "label": null}
+{"pair_id": "nfip-032#s1-drop5", "label": null}

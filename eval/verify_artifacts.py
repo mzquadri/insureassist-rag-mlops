@@ -454,6 +454,28 @@ CORRECTNESS_LARGE_CLAIMS = [
     ),
 ]
 
+#: The judge-panel spread. The most important numbers in the generation section, because
+#: they are the reason no recall figure is published, so they are pinned tightest.
+PANEL_CLAIMS = [
+    (
+        "docs/LIMITATIONS.md",
+        r"share only \*\*([\d.]+)\*\* of their width",
+        "recall_interval_overlap",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"a spread\s+of \*\*([\d.]+)\*\* between the point estimates",
+        "recall_spread",
+    ),
+    (
+        "docs/LIMITATIONS.md",
+        r"all (\d+) contested sentence ids",
+        "paired.contested_count",
+    ),
+]
+
+PANEL_PATH = REPO_ROOT / "eval" / "judge_panel.json"
+
 CORRECTNESS_LARGE_PATH = REPO_ROOT / "eval" / "citation_correctness_large.json"
 
 
@@ -548,6 +570,11 @@ def main() -> int:
         problems += check_claims(
             CORRECTNESS_CLAIMS, correctness, "the citation-correctness arm"
         )
+
+    if PANEL_PATH.exists():
+        panel = json.loads(PANEL_PATH.read_text(encoding="utf-8"))
+        panel["paired"]["contested_count"] = len(panel["paired"]["contested"])
+        problems += check_claims(PANEL_CLAIMS, panel, "the judge-panel arm")
 
     if PLACEMENT_PATH.exists():
         placement = json.loads(PLACEMENT_PATH.read_text(encoding="utf-8"))

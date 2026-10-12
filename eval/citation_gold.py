@@ -44,6 +44,41 @@ ROOT = Path(__file__).resolve().parents[1]
 SUPPORT = "support"
 NECESSITY = "necessity"
 
+#: AttrScore's three categories (Yue et al., EMNLP Findings 2023, arXiv:2305.06311),
+#: rather than a binary supported/unsupported.
+#:
+#: Binary conflates two different failures. "The blocks do not mention the time frame for
+#: notifying the insurer" is *extrapolatory* - the evidence is missing, which is a
+#: retrieval or coverage problem. "The blocks say otherwise" is *contradictory* - the
+#: generator asserted something the passage denies, which is a generation problem. They
+#: call for different fixes and a single rate hides which one is happening. Several
+#: sentences in this corpus are plainly extrapolatory, so the distinction costs the
+#: annotator nothing and binary throws it away.
+#:
+#: The published rates do not move: `is_supported` maps attributable to supported and
+#: both failure modes to unsupported, which is exactly the binary that was there before.
+ATTRIBUTABLE = "attributable"
+EXTRAPOLATORY = "extrapolatory"
+CONTRADICTORY = "contradictory"
+LABEL_VALUES = (ATTRIBUTABLE, EXTRAPOLATORY, CONTRADICTORY)
+
+#: What the annotator is asked for each category, in their words rather than the paper's.
+LABEL_PROMPTS = {
+    ATTRIBUTABLE: "the blocks shown DO support the statement",
+    EXTRAPOLATORY: "the blocks do not contain enough to settle it either way",
+    CONTRADICTORY: "the blocks say something that contradicts the statement",
+}
+
+
+def is_supported(label: str | None) -> bool:
+    """Whether a label counts as support for ALCE's recall and precision.
+
+    Only `attributable` does. An unanswered label is not support, and is also not a
+    judgment - callers check membership before calling this, so a `None` here means a
+    caller already knows the pair is unlabelled.
+    """
+    return label == ATTRIBUTABLE
+
 GOLD_DIR = ROOT / "eval" / "citation_gold"
 LABELS = GOLD_DIR / "labels.jsonl"
 PAIRS = GOLD_DIR / "pairs.jsonl"
@@ -229,35 +264,102 @@ def excluded_non_claims(structure: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def load_labels(path: Path | str = LABELS) -> dict[str, bool]:
-    """Read `pair_id -> supported` from a JSONL file of human labels.
+def answered_count(path: Path | str = LABELS) -> int | None:
+    """How many judgments are answered, or None if the file cannot be read.
 
-    A row without a `supported` field is an error rather than a False, and an explicit
-    `null` is skipped as unanswered. The worksheet ships pre-seeded with nulls so the
-    annotator edits values instead of writing JSONL, and `bool(None)` is False - reading
-    null as a label would turn every untouched row into evidence that the citation is
-    unsupported, and let a half-finished pass publish a rate.
+    `--build` writes this file, so it must not raise from inside the function whose job
+    is to produce it - and it must never overwrite one that might hold answers. A verdict
+    lets the caller decide: 0 means safe to write, a positive number means leave it
+    alone, and None means a human should look before anything is destroyed.
+
+    This is not hypothetical. Moving from a binary `supported` field to AttrScore's
+    three-way `label` made every existing row unreadable at once.
+    """
+    try:
+        return len(load_labels(path))
+    except (ValueError, json.JSONDecodeError):
+        return None
+
+
+def contested_pairs(
+    base: Mapping[str, Any], large: Mapping[str, Any]
+) -> set[str]:
+    """Pair ids where the two judges reached different verdicts.
+
+    Read from the per-sentence decisions both artefacts record, rather than from their
+    rates: a rate cannot be unpicked into which sentence it disagreed about.
+    """
+
+    def verdicts(artefact: Mapping[str, Any]) -> dict[str, bool]:
+        return {
+            f"{row['question_id']}#s{s['index']}": bool(s["supported"])
+            for row in artefact.get("per_question", [])
+            for s in (row.get("sentences") or [])
+        }
+
+    first, second = verdicts(base), verdicts(large)
+    return {k for k in first.keys() & second.keys() if first[k] != second[k]}
+
+
+def order_by_information(
+    pairs: Sequence[Mapping[str, Any]], contested: set[str]
+) -> list[dict[str, Any]]:
+    """Contested pairs first, everything else in its original order.
+
+    Where two calibrated judges disagree is where a human label is worth most: those
+    sentences are the only ones that can settle which judge to believe, while the agreed
+    ones largely confirm what is already known. This is the cheap form of the
+    epistemic-uncertainty targeting in arXiv:2609.06444, whose authors note that simple
+    heuristics performed comparably on their data.
+
+    Only the order changes. Every pair is still labelled, so a misjudged ordering costs
+    nothing but the sequence a person works through - which matters only if they stop
+    early, which is exactly the case this is for.
+
+    Stable within each group, so two builds produce the same worksheet and a
+    half-finished pass can be resumed against it.
+    """
+    chosen = [dict(p) for p in pairs if p["pair_id"] in contested]
+    rest = [dict(p) for p in pairs if p["pair_id"] not in contested]
+    return chosen + rest
+
+
+def load_labels(path: Path | str = LABELS) -> dict[str, str]:
+    """Read `pair_id -> label` from a JSONL file of human labels.
+
+    A row without a `label` field is an error rather than a failure verdict, an explicit
+    `null` is skipped as unanswered, and an unrecognised value is rejected rather than
+    guessed. The worksheet ships pre-seeded with nulls so the annotator edits values
+    instead of writing JSONL; reading null, or a typo, as "not attributable" would turn
+    an untouched row or a slip into evidence against the system, and let a half-finished
+    pass publish a rate.
     """
     path = Path(path)
     if not path.exists():
         return {}
 
-    labels: dict[str, bool] = {}
+    labels: dict[str, str] = {}
     for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         text = line.strip()
         if not text or text.startswith("#"):
             continue
         row = json.loads(text)
-        if "supported" not in row:
-            raise ValueError(f"{path}:{number}: row has no 'supported' field: {text}")
-        if row["supported"] is None:
+        if "label" not in row:
+            raise ValueError(f"{path}:{number}: row has no 'label' field: {text}")
+        value = row["label"]
+        if value is None:
             continue
-        labels[row["pair_id"]] = bool(row["supported"])
+        if value not in LABEL_VALUES:
+            raise ValueError(
+                f"{path}:{number}: {value!r} is not one of "
+                f"{', '.join(LABEL_VALUES)}: {text}"
+            )
+        labels[row["pair_id"]] = value
     return labels
 
 
 def human_counts(
-    pairs: Sequence[Mapping[str, Any]], labels: Mapping[str, bool]
+    pairs: Sequence[Mapping[str, Any]], labels: Mapping[str, str]
 ) -> dict[str, Any]:
     """ALCE recall and precision from the human labels.
 
@@ -279,10 +381,17 @@ def human_counts(
     if missing_support:
         return result
 
-    supported = {p["pair_id"]: labels[p["pair_id"]] for p in support}
+    supported = {p["pair_id"]: is_supported(labels[p["pair_id"]]) for p in support}
     result["recall"] = {
         "supported": sum(1 for v in supported.values() if v),
         "cited": len(support),
+    }
+    # Which kind of failure, and how often. A recall of 1/3 does not say whether the
+    # evidence was missing or whether the passage said the opposite, and those call for
+    # different fixes - retrieval coverage against generation faithfulness.
+    result["breakdown"] = {
+        value: sum(1 for p in support if labels[p["pair_id"]] == value)
+        for value in LABEL_VALUES
     }
 
     # Precision apportions attribution only on sentences that are supported at all.
@@ -301,23 +410,32 @@ def human_counts(
                 # cannot contribute a precision figure.
                 return {**result, "precision": None}
             offered += 1
-            if not labels[key]:
+            if not is_supported(labels[key]):
                 needed += 1
     result["precision"] = {"needed": needed, "offered": offered}
     return result
 
 
 __all__ = [
+    "ATTRIBUTABLE",
+    "CONTRADICTORY",
+    "EXTRAPOLATORY",
     "LABELS",
+    "LABEL_PROMPTS",
+    "LABEL_VALUES",
     "NECESSITY",
     "PAIRS",
     "SUPPORT",
     "WORKSHEET",
     "agreement",
+    "answered_count",
     "build_blocks",
     "cohen_kappa",
+    "contested_pairs",
     "excluded_non_claims",
     "gold_pairs",
     "human_counts",
+    "is_supported",
     "load_labels",
+    "order_by_information",
 ]

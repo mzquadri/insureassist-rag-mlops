@@ -1,0 +1,100 @@
+{
+  "generated_utc": "2026-10-12T18:30:28Z",
+  "measures": "How far the citation-correctness result depends on which entailment judge is used, rather than on the system being measured.",
+  "why": "Both judges clear sensitivity and specificity floors declared before either was run, and disagree on recall by more than the sampling interval around either figure. AttributionBench (arXiv:2402.15089) finds no single automatic evaluator suffices, and that evaluators are weakest on long evidence in expert domains where claims turn on numbers and dates - which is this corpus.",
+  "no_winner_is_chosen": "Only the 0.80/0.80 floors were declared in advance. Selecting on balanced accuracy after seeing which judge gives the friendlier recall is the post-hoc choice the floors exist to prevent. eval/citation_gold.py adjudicates, with human labels.",
+  "judges": {
+    "base": {
+      "model": "MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli",
+      "calibration": {
+        "built_from": "gold_answer against labelled relevant / irrelevant chunks",
+        "why": "A citation metric scores paraphrase, not copies. Calibrating on verbatim text puts the cut near 1.0 and rejects supported paraphrases.",
+        "positive_pairs": 32,
+        "negative_pairs": 32,
+        "threshold": 0.6084,
+        "chosen_by": "Youden's J, as in eval/abstention_threshold.py",
+        "sensitivity": 0.8438,
+        "specificity": 0.9688,
+        "balanced_accuracy": 0.9062,
+        "usable": true,
+        "declared_floor": {
+          "sensitivity": 0.8,
+          "specificity": 0.8,
+          "declared": "before the run, in the script"
+        }
+      },
+      "claims_only": {
+        "cited_sentences": 15,
+        "citation_recall": 0.4666666666666667,
+        "recall_counts": {
+          "supported": 7,
+          "cited": 15
+        },
+        "citation_precision": 0.3333333333333333,
+        "precision_counts": {
+          "needed": 5,
+          "offered": 15
+        }
+      },
+      "recall_wilson_95": [
+        0.248,
+        0.699
+      ]
+    },
+    "large": {
+      "model": "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
+      "calibration": {
+        "built_from": "gold_answer against labelled relevant / irrelevant chunks",
+        "why": "A citation metric scores paraphrase, not copies. Calibrating on verbatim text puts the cut near 1.0 and rejects supported paraphrases.",
+        "positive_pairs": 32,
+        "negative_pairs": 32,
+        "threshold": 0.3928,
+        "chosen_by": "Youden's J, as in eval/abstention_threshold.py",
+        "sensitivity": 0.9375,
+        "specificity": 0.9688,
+        "balanced_accuracy": 0.9531,
+        "usable": true,
+        "declared_floor": {
+          "sensitivity": 0.8,
+          "specificity": 0.8,
+          "declared": "before the run, in the script"
+        }
+      },
+      "claims_only": {
+        "cited_sentences": 15,
+        "citation_recall": 0.8,
+        "recall_counts": {
+          "supported": 12,
+          "cited": 15
+        },
+        "citation_precision": 0.36,
+        "precision_counts": {
+          "needed": 9,
+          "offered": 25
+        }
+      },
+      "recall_wilson_95": [
+        0.548,
+        0.93
+      ]
+    }
+  },
+  "paired": {
+    "sentences": 16,
+    "both": 7,
+    "neither": 4,
+    "only_base": 0,
+    "only_large": 5,
+    "contested": [
+      "nfip-002#s1",
+      "nfip-008#s3",
+      "nfip-014#s1",
+      "nfip-014#s2",
+      "nfip-022#s1"
+    ],
+    "nested": true,
+    "p_mcnemar_exact": 0.0625
+  },
+  "recall_spread": 0.33333333333333337,
+  "recall_interval_overlap": 0.151
+}

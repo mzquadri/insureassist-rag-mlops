@@ -161,31 +161,31 @@ class TestLoadLabels:
     def test_labels_are_read_by_pair_id(self, tmp_path):
         path = tmp_path / "labels.jsonl"
         path.write_text(
-            '{"pair_id": "q-1#s1", "supported": true}\n'
-            '{"pair_id": "q-1#s2", "supported": false}\n',
+            '{"pair_id": "q-1#s1", "label": "attributable"}\n'
+            '{"pair_id": "q-1#s2", "label": "extrapolatory"}\n',
             encoding="utf-8",
         )
-        assert load_labels(path) == {"q-1#s1": True, "q-1#s2": False}
+        assert load_labels(path) == {"q-1#s1": ATTRIBUTABLE, "q-1#s2": EXTRAPOLATORY}
 
     def test_blank_lines_and_comments_are_skipped(self, tmp_path):
         path = tmp_path / "labels.jsonl"
         path.write_text(
-            '\n# a note from the annotator\n{"pair_id": "q-1#s1", "supported": true}\n',
+            '\n# a note from the annotator\n{"pair_id": "q-1#s1", "label": "attributable"}\n',
             encoding="utf-8",
         )
-        assert load_labels(path) == {"q-1#s1": True}
+        assert load_labels(path) == {"q-1#s1": ATTRIBUTABLE}
 
     def test_an_unlabelled_file_is_empty_not_an_error(self, tmp_path):
         path = tmp_path / "labels.jsonl"
         path.write_text("", encoding="utf-8")
         assert load_labels(path) == {}
 
-    def test_a_missing_supported_field_is_rejected(self, tmp_path):
+    def test_a_missing_label_field_is_rejected(self, tmp_path):
         """An unanswered row must not read as False. Silent coercion would turn a gap in
         the labelling into evidence of an unsupported citation."""
         path = tmp_path / "labels.jsonl"
         path.write_text('{"pair_id": "q-1#s1"}\n', encoding="utf-8")
-        with pytest.raises(ValueError, match="supported"):
+        with pytest.raises(ValueError, match="label"):
             load_labels(path)
 
 
@@ -205,7 +205,7 @@ class TestHumanCounts:
 
     def labels(self, **over):
         pairs = gold_pairs(self.structure, self.blocks)
-        base = {p["pair_id"]: False for p in pairs}
+        base = {p["pair_id"]: EXTRAPOLATORY for p in pairs}
         base.update(over)
         return pairs, base
 
@@ -213,7 +213,7 @@ class TestHumanCounts:
         pairs, labels = self.labels()
         for p in pairs:
             if p["kind"] == SUPPORT and p["citations"] in ([1], [4]):
-                labels[p["pair_id"]] = True
+                labels[p["pair_id"]] = ATTRIBUTABLE
 
         out = human_counts(pairs, labels)
 
@@ -227,7 +227,7 @@ class TestHumanCounts:
         del support
         for p in pairs:
             if p["kind"] == SUPPORT and p["citations"] == [1]:
-                labels[p["pair_id"]] = True
+                labels[p["pair_id"]] = ATTRIBUTABLE
 
         out = human_counts(pairs, labels)
 
@@ -239,12 +239,12 @@ class TestHumanCounts:
         pairs, labels = self.labels()
         for p in pairs:
             if p["kind"] == SUPPORT and p["citations"] == [2, 3]:
-                labels[p["pair_id"]] = True
+                labels[p["pair_id"]] = ATTRIBUTABLE
         # Dropping 2 leaves 3, which does NOT support -> 2 was needed.
         # Dropping 3 leaves 2, which DOES support -> 3 was not needed.
         for p in pairs:
             if p.get("dropped") == 3:
-                labels[p["pair_id"]] = True
+                labels[p["pair_id"]] = ATTRIBUTABLE
 
         out = human_counts(pairs, labels)
 
@@ -290,7 +290,7 @@ def test_the_worksheet_pairs_match_the_pairs_the_metric_scored():
 
 
 class TestNullIsUnansweredNotFalse:
-    """The worksheet ships pre-seeded with `"supported": null` for every row, so the
+    """The worksheet ships pre-seeded with `"label": null` for every row, so the
     annotator edits values rather than writing JSONL by hand. `bool(None)` is False, so
     reading null as a label would silently convert every unanswered row into evidence
     that the citation is unsupported - and a half-finished pass would publish a rate."""
@@ -298,15 +298,15 @@ class TestNullIsUnansweredNotFalse:
     def test_a_null_label_is_skipped_rather_than_read_as_false(self, tmp_path):
         path = tmp_path / "labels.jsonl"
         path.write_text(
-            '{"pair_id": "q-1#s1", "supported": true}\n'
-            '{"pair_id": "q-1#s2", "supported": null}\n',
+            '{"pair_id": "q-1#s1", "label": "attributable"}\n'
+            '{"pair_id": "q-1#s2", "label": null}\n',
             encoding="utf-8",
         )
-        assert load_labels(path) == {"q-1#s1": True}
+        assert load_labels(path) == {"q-1#s1": ATTRIBUTABLE}
 
     def test_a_fully_null_file_leaves_the_rate_unreported(self, tmp_path):
         path = tmp_path / "labels.jsonl"
-        path.write_text('{"pair_id": "q-1#s1", "supported": null}\n', encoding="utf-8")
+        path.write_text('{"pair_id": "q-1#s1", "label": null}\n', encoding="utf-8")
         structure: ClassVar[dict[str, Any]] = {
             "per_question": [
                 {"question_id": "q-1", "n_contexts": 5, "answer": "A is so [1]."}
@@ -412,3 +412,220 @@ class TestNonClaimsAreNotPutToAHuman:
         assert out["excluded"] == 1
         assert out["of"] == 3
         assert out["examples"] == ["(empty)"]
+
+
+# -------------------------------------- AttrScore's three-way label, not a binary one
+
+from eval.citation_gold import ATTRIBUTABLE, CONTRADICTORY, EXTRAPOLATORY, is_supported
+
+
+class TestThreeWayLabel:
+    """AttrScore's categories (Yue et al., EMNLP Findings 2023, arXiv:2305.06311):
+    attributable, extrapolatory, contradictory. Binary conflates the last two, and they
+    are different failures - "the blocks do not mention the time frame" is a retrieval or
+    coverage problem, "the blocks say otherwise" is a generation problem. Several
+    sentences in this corpus are plainly extrapolatory, so the distinction costs the
+    annotator nothing and the binary throws it away.
+
+    Recall and precision are unchanged: attributable is supported, the other two are not.
+    """
+
+    def test_attributable_is_supported(self):
+        assert is_supported(ATTRIBUTABLE) is True
+
+    def test_extrapolatory_is_not_supported(self):
+        assert is_supported(EXTRAPOLATORY) is False
+
+    def test_contradictory_is_not_supported(self):
+        assert is_supported(CONTRADICTORY) is False
+
+    def test_an_unanswered_label_is_not_supported_and_not_a_label(self):
+        assert is_supported(None) is False
+
+    def test_three_way_labels_are_read(self, tmp_path):
+        path = tmp_path / "labels.jsonl"
+        path.write_text(
+            '{"pair_id": "q-1#s1", "label": "attributable"}\n'
+            '{"pair_id": "q-1#s2", "label": "extrapolatory"}\n'
+            '{"pair_id": "q-1#s3", "label": "contradictory"}\n',
+            encoding="utf-8",
+        )
+        assert load_labels(path) == {
+            "q-1#s1": ATTRIBUTABLE,
+            "q-1#s2": EXTRAPOLATORY,
+            "q-1#s3": CONTRADICTORY,
+        }
+
+    def test_a_null_label_is_still_unanswered(self, tmp_path):
+        path = tmp_path / "labels.jsonl"
+        path.write_text('{"pair_id": "q-1#s1", "label": null}\n', encoding="utf-8")
+        assert load_labels(path) == {}
+
+    def test_a_misspelled_label_is_rejected_rather_than_guessed(self, tmp_path):
+        """A typo must not silently become "not supported". That would turn an
+        annotator's slip into evidence against the system."""
+        path = tmp_path / "labels.jsonl"
+        path.write_text(
+            '{"pair_id": "q-1#s1", "label": "attributible"}\n', encoding="utf-8"
+        )
+        with pytest.raises(ValueError, match="attributible"):
+            load_labels(path)
+
+    def test_a_row_with_no_label_field_is_rejected(self, tmp_path):
+        path = tmp_path / "labels.jsonl"
+        path.write_text('{"pair_id": "q-1#s1"}\n', encoding="utf-8")
+        with pytest.raises(ValueError, match="label"):
+            load_labels(path)
+
+
+class TestThreeWayFeedsTheSameRates:
+    structure: ClassVar[dict[str, Any]] = {
+        "per_question": [
+            {
+                "question_id": "q-1",
+                "n_contexts": 5,
+                "answer": "A is so [1]. B is so [2]. C is so [3].",
+            }
+        ]
+    }
+    blocks: ClassVar[dict[str, dict[int, str]]] = {
+        "q-1": {1: "One.", 2: "Two.", 3: "Three."}
+    }
+
+    def test_only_attributable_counts_towards_recall(self):
+        pairs = gold_pairs(self.structure, self.blocks)
+        labels = {
+            "q-1#s1": ATTRIBUTABLE,
+            "q-1#s2": EXTRAPOLATORY,
+            "q-1#s3": CONTRADICTORY,
+        }
+        assert human_counts(pairs, labels)["recall"] == {"supported": 1, "cited": 3}
+
+    def test_the_failure_breakdown_is_reported(self):
+        """The reason for three labels instead of two: which kind of failure, and how
+        often. A rate of 1/3 does not say whether the evidence was missing or wrong."""
+        pairs = gold_pairs(self.structure, self.blocks)
+        labels = {
+            "q-1#s1": ATTRIBUTABLE,
+            "q-1#s2": EXTRAPOLATORY,
+            "q-1#s3": CONTRADICTORY,
+        }
+        out = human_counts(pairs, labels)
+        assert out["breakdown"] == {
+            ATTRIBUTABLE: 1,
+            EXTRAPOLATORY: 1,
+            CONTRADICTORY: 1,
+        }
+
+
+class TestDisagreementFirstOrdering:
+    """Where two calibrated judges disagree is where a label is worth most.
+
+    Both judges clear the declared floors and differ on recall by a third, and the five
+    sentences they split on are the only ones that can settle which to believe. Agreed
+    pairs mostly confirm what is already known. This is the cheap version of the
+    epistemic-uncertainty targeting in arXiv:2609.06444 - whose authors note that simple
+    heuristics performed comparably - and at 36 judgments it only changes the order, not
+    what gets labelled, so nothing is lost if the ordering is wrong.
+    """
+
+    def test_contested_pairs_come_first(self):
+        from eval.citation_gold import order_by_information
+
+        pairs = [
+            {"pair_id": "a#s1", "kind": SUPPORT},
+            {"pair_id": "b#s1", "kind": SUPPORT},
+            {"pair_id": "c#s1", "kind": SUPPORT},
+        ]
+        out = order_by_information(pairs, contested={"c#s1"})
+        assert next(p["pair_id"] for p in out) == "c#s1"
+
+    def test_every_pair_survives_the_reordering(self):
+        from eval.citation_gold import order_by_information
+
+        pairs = [{"pair_id": f"q#s{i}", "kind": SUPPORT} for i in range(5)]
+        out = order_by_information(pairs, contested={"q#s3"})
+        assert sorted(p["pair_id"] for p in out) == sorted(
+            p["pair_id"] for p in pairs
+        )
+
+    def test_order_is_stable_within_a_group(self):
+        """Two runs must produce the same worksheet, or a half-finished labelling pass
+        cannot be resumed against it."""
+        from eval.citation_gold import order_by_information
+
+        pairs = [{"pair_id": f"q#s{i}", "kind": SUPPORT} for i in range(6)]
+        contested = {"q#s4", "q#s1"}
+        first = [p["pair_id"] for p in order_by_information(pairs, contested)]
+        again = [p["pair_id"] for p in order_by_information(pairs, contested)]
+        assert first == again
+        assert first[:2] == ["q#s1", "q#s4"]
+
+    def test_no_contested_set_leaves_the_order_alone(self):
+        from eval.citation_gold import order_by_information
+
+        pairs = [{"pair_id": f"q#s{i}", "kind": SUPPORT} for i in range(4)]
+        out = order_by_information(pairs, contested=set())
+        assert [p["pair_id"] for p in out] == [p["pair_id"] for p in pairs]
+
+    def test_judges_disagreeing_is_read_from_the_artefacts(self):
+        from eval.citation_gold import contested_pairs
+
+        base = {
+            "per_question": [
+                {
+                    "question_id": "q-1",
+                    "sentences": [
+                        {"index": 1, "supported": True},
+                        {"index": 2, "supported": False},
+                    ],
+                }
+            ]
+        }
+        large = {
+            "per_question": [
+                {
+                    "question_id": "q-1",
+                    "sentences": [
+                        {"index": 1, "supported": True},
+                        {"index": 2, "supported": True},
+                    ],
+                }
+            ]
+        }
+        assert contested_pairs(base, large) == {"q-1#s2"}
+
+
+class TestBuildDoesNotDestroyAnswers:
+    """`--build` creates the labels file, so it must not crash on one it cannot read,
+    and must never overwrite one that might hold answers.
+
+    This surfaced for real: changing the schema from a binary `supported` to AttrScore's
+    three-way `label` made every existing row unreadable, and `--build` raised a
+    traceback from inside the function whose job is to produce that file."""
+
+    def test_an_unreadable_labels_file_is_reported_not_crashed(self, tmp_path):
+        from eval.citation_gold import answered_count
+
+        path = tmp_path / "labels.jsonl"
+        path.write_text('{"pair_id": "q-1#s1", "supported": null}\n', encoding="utf-8")
+
+        # Unreadable under the current schema; the caller needs a verdict, not an
+        # exception, so it can decide whether overwriting is safe.
+        assert answered_count(path) is None
+
+    def test_a_readable_file_reports_how_many_are_answered(self, tmp_path):
+        from eval.citation_gold import answered_count
+
+        path = tmp_path / "labels.jsonl"
+        path.write_text(
+            '{"pair_id": "q-1#s1", "label": "attributable"}\n'
+            '{"pair_id": "q-1#s2", "label": null}\n',
+            encoding="utf-8",
+        )
+        assert answered_count(path) == 1
+
+    def test_a_missing_file_has_nothing_to_lose(self, tmp_path):
+        from eval.citation_gold import answered_count
+
+        assert answered_count(tmp_path / "nope.jsonl") == 0

@@ -114,9 +114,10 @@ What the project's published claims rest on. Each writes a pinned artefact, and
 | Prompt variant, same pinned retrieval | [`eval/prompt_variants.py`](prompt_variants.py) | `citation_structure_ranged.json` | no |
 | Citation placement — where the marker sits | [`eval/citation_placement.py`](citation_placement.py) | `citation_placement.json` | no |
 | Citation correctness — ALCE recall/precision | [`eval/citation_correctness.py`](citation_correctness.py) | `citation_correctness.json` | NLI, calibrated |
+| Judge-panel spread — how far the result depends on the instrument | [`eval/judge_panel.py`](judge_panel.py) | `judge_panel.json` | no (reads both runs) |
 | Human gold standard for the above | [`eval/citation_gold.py`](citation_gold.py) | `citation_gold.json` | a person |
 
-Five of the seven need no judge at all, which is the point: they are facts about strings
+Six of the eight need no judge at all, which is the point: they are facts about strings
 and labels, so the circularity objection that rules out self-grading does not reach them.
 The one arm that does use a judge calibrates it against the ground truth first and refuses
 to report a rate if it misses floors declared before the run.
@@ -125,3 +126,11 @@ to report a rate if it misses floors declared before the run.
 (`eval/citation_gold/worksheet.md`, built by `python -m eval.citation_gold_run --build`)
 and is unlabelled; the judge has never been checked against a person on the pairs it
 scored, which is the sharpest open caveat in `docs/LIMITATIONS.md`.
+
+The worksheet uses AttrScore's three labels — attributable, extrapolatory, contradictory
+(Yue et al., EMNLP Findings 2023, arXiv:2305.06311) — rather than a binary, because
+missing evidence and contradicting evidence are different failures pointing at different
+parts of the system. Only `attributable` counts as support, so the ALCE rates are
+unaffected. The five sentences the two judges disagree about are ordered first: they are
+the only ones that can settle which judge to believe, so a pass that stops early still
+answers the open question.

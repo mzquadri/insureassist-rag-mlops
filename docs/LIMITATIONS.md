@@ -119,13 +119,39 @@ The complete list. Nothing here is softened.
   five sentences it accepts and the base judge rejects, none the other way, McNemar's exact
   test p = 0.0625. That is consistent with their calibration — the base judge's sensitivity
   is 0.844 against 0.938, so it misses real support more often — and it means the two are
-  not making independent errors, one is simply stricter.
+  not making independent errors, one is simply stricter. Because the errors are nested
+  rather than independent, averaging the two judges or taking a majority buys nothing.
+
+  **The spread is the dominant uncertainty here, so it is recorded as data rather than
+  prose.** The two recall intervals share only **0.151** of their width, against a spread
+  of **0.3333** between the point estimates: the disagreement is wider than the sampling
+  error around either figure, which is the whole reason neither can be published alone.
+  `eval/judge_panel.json` holds the per-judge calibration, both intervals, the overlap,
+  the contingency table and all 5 contested sentence ids; `python -m eval.judge_panel_run`
+  regenerates it offline from the two correctness artefacts without re-scoring anything.
 
   Which to prefer is not for this document to settle by picking the better-calibrated model
   after the fact. Only the 0.80/0.80 floors were declared in advance; balanced accuracy as a
   *selection* rule was not, and applying it now would be the same post-hoc choice the floors
   exist to prevent. **The human labelling pass below is the adjudicator**, and this result is
   why it has stopped being optional.
+
+  **This corpus is the hardest case for automatic attribution evaluation, and that was
+  known before this arm existed.** [AttributionBench](https://arxiv.org/abs/2402.15089)
+  benchmarks automatic attribution evaluators and finds three things that all apply here.
+  Performance drops from above 80% macro-F1 on short evidence to **60–70% on longer
+  evidence**; on the expert-domain ExpertQA split, GPT-4 and NLI-tuned models alike fall
+  **under ~60%**; and **66% of their error analysis is fine-grained insensitivity** to
+  numbers, dates and names. This corpus serves 800-character blocks of flood-policy prose,
+  in an expert domain, and its claims turn on exactly those details — whether the limit is
+  $30,000, whether the deadline is 60 days or 30. Their conclusion is that no single
+  automatic evaluator suffices, and that switching to a stronger model does not reliably
+  help.
+
+  So the disagreement above is not a defect introduced here. It is the documented behaviour
+  of this class of instrument on this class of input, which is why the response is to
+  measure the spread and anchor on human labels rather than to keep trying judges until one
+  agrees with the other.
 
   Over all 16 cited sentences, including the one with no content to score, base recall is
   7/16 = 0.4375 and large 12/16 = 0.7500. Both artefacts carry counts as well as rates.
