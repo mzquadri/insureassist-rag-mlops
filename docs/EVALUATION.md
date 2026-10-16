@@ -2,8 +2,8 @@
 
 ## Splits
 
-40 hand-authored questions, split by a hash of the question ID stratified by category:
-**dev 18, test 22**. Deterministic, and asserted by a test.
+50 hand-authored questions, split by a hash of the question ID stratified by category:
+**dev 23, test 27**. Deterministic, and asserted by a test.
 
 Dev drove every decision: architecture, chunk size, fusion depth, BM25 parameters, and the
 abstention investigation. **Test was run once**, after the configuration was frozen into

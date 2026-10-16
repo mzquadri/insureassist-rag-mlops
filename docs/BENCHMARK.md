@@ -9,9 +9,9 @@ Every number here is derived from [`eval/reference_run.json`](../eval/reference_
 ## What it measures against
 
 - **Corpus:** 3 NFIP policy forms, 35,639 words, **314 chunks** at 800/120 ([`DATA.md`](DATA.md)).
-- **Questions:** 40 hand-authored labels — 32 answerable, 8 unanswerable (20%).
-- **Split:** deterministic hash of the question ID, stratified by category. Dev 18, test 22.
-- **Retrieval denominator:** the 22 test questions include 4 unanswerable ones, which have
+- **Questions:** 50 hand-authored labels — 32 answerable, 18 unanswerable (36%).
+- **Split:** deterministic hash of the question ID, stratified by category. Dev 23, test 27.
+- **Retrieval denominator:** the 27 test questions include 9 unanswerable ones, which have
   no relevant chunk to retrieve. Every retrieval number on this page is therefore over the
   **18 answerable test questions**. At that size one question is 5.6 percentage points, so
   the gaps between the three retrievers are one or two questions wide — see

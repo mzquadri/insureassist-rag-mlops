@@ -228,7 +228,13 @@ def fig_benchmark(d, r, n, sets):
     axA.set_xticklabels([c.replace("_", "\n") for c in order], fontsize=8.6)
     ps.clean(axA, grid_axis="y")
     axA.set_ylabel("questions", fontsize=10.4)
-    axA.text(0, 1.10, "40 questions by category", transform=axA.transAxes,
+    # Derived, not typed. This title read "40 questions by category" while the
+    # bars underneath it were plotted straight from by_category and summed to
+    # fifty — the chart disagreed with itself, in the one place a reader looks
+    # first. Taking the total from the same dict that draws the bars means the
+    # two cannot drift apart again.
+    axA.text(0, 1.10, f"{sum(cats.values())} questions by category",
+             transform=axA.transAxes,
              fontsize=12.4, color=ps.INK, fontweight="600", va="bottom")
 
     diff = q["by_difficulty"]
@@ -257,17 +263,24 @@ def fig_benchmark(d, r, n, sets):
         axC.text(x, 0.62, val, fontsize=20, color=ps.INK, fontweight="600")
         axC.text(x, 0.20, lab, fontsize=10, color=ps.FAINT)
 
+    # Every count in this block is read from the artefact. It used to be spelled
+    # out in words — "Forty questions ... a fifth of them" — above tiles that
+    # were already deriving fifty and eighteen from the same dict, and a footer
+    # that still said 18 dev, 22 test after the split had become 23/27. The
+    # figure contradicted itself three ways in one image.
     ps.title_block(
         fig, "What the benchmark is made of",
-        "Forty questions written against three NFIP policy forms, a fifth of them "
-        "deliberately unanswerable so abstention\ncan be measured rather than assumed.",
+        f"{q['total']} questions written against {corpus['documents']} NFIP policy "
+        f"forms, {q['unanswerable']} of them deliberately unanswerable\n"
+        "so abstention can be measured rather than assumed.",
         y=0.962, size=23)
     ps.footnote(fig, [
         f"Corpus hash {corpus['corpus_hash'][:16]}…, question set hash " +
         f"{q['question_set_hash'][:16]}…. Both are checked by eval/verify_artifacts.py, " +
         "so a changed corpus cannot silently invalidate a published score.",
         "The split is a deterministic hash of the question id, stratified by category: " +
-        "18 dev, 22 test. Retrieval is scored on the 18 answerable test questions."],
+        f"{q['by_split']['dev']} dev, {q['by_split']['test']} test. "
+        f"Retrieval is scored on the {n} answerable test questions."],
         y=0.072)
     save(fig, "04_benchmark_composition")
 
@@ -307,19 +320,24 @@ def fig_abstention(d, r, n, sets):
              transform=axB.transAxes, fontsize=12.4, color=ps.INK,
              fontweight="600", va="bottom")
 
+    # "four out of four" and "eight unanswerable" below were written when the
+    # unanswerable set was smaller, and survived its enlargement: the bars here
+    # are computed from the artefact and were already drawing nine, directly
+    # above a sentence that said four. Both now come from the same numbers the
+    # chart does.
     ps.title_block(
         fig, "The part that does not work",
         "There is no abstention rule. Retrieval always returns something, so every "
-        "unanswerable question is passed to the\ngenerator and answered — four out of "
-        "four in this run.", y=0.962, size=23)
+        "unanswerable question is passed to the\ngenerator and answered — "
+        f"{answered} out of {n_unans} in this run.", y=0.962, size=23)
     ps.footnote(fig, [
         "No similarity threshold is applied, and none is claimed. On dev, no " +
         "single-threshold rule on the top-1 dense score beat the always-answer " +
         "baseline (0.778 against 0.778), and the hardest unanswerable question scored " +
         "above the answerable mean.",
-        "With eight unanswerable questions in the whole benchmark there is not enough " +
-        "evidence to fit a threshold, so the weakness is recorded rather than papered " +
-        "over.",
+        f"With {d['questions']['unanswerable']} unanswerable questions in the whole " +
+        "benchmark there is not enough evidence to fit a threshold, so the weakness " +
+        "is recorded rather than papered over.",
         f"Citation precision is bounded by design: with {cit['citations_checked']} " +
         "citations checked and five chunks returned for a question that often has one " +
         "relevant chunk, it cannot approach 1.0. Unsupported citation rate is 0.000 — " +
