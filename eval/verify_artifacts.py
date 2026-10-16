@@ -102,7 +102,43 @@ DOCUMENTED_CLAIMS = [
     ("docs/BENCHMARK.md", r"the corpus and the (\d+) questions", "questions.total"),
     ("README.md", r"the corpus and the (\d+) questions", "questions.total"),
     ("README.md", r"Ground truth \((\d+) labels\)", "questions.total"),
+    # ...and it went stale a second time, in the one place the first fix did not
+    # reach. The checks above cover LIMITATIONS.md, README.md and the figure
+    # caption at the foot of BENCHMARK.md — which is why that caption correctly
+    # said fifty while the "What it measures against" block at the top of the
+    # same file still said forty, with a split of 18/22 that had become 23/27.
+    # A reader starts at the top. These pin the block that describes the
+    # benchmark, not just the ones that mention its size in passing.
+    (
+        "docs/BENCHMARK.md",
+        r"\*\*Questions:\*\* (\d+) hand-authored labels",
+        "questions.total",
+    ),
+    (
+        "docs/BENCHMARK.md",
+        r"hand-authored labels — (\d+) answerable",
+        "questions.answerable",
+    ),
+    (
+        "docs/BENCHMARK.md",
+        r"hand-authored labels — \d+ answerable, (\d+) unanswerable",
+        "questions.unanswerable",
+    ),
+    ("docs/BENCHMARK.md", r"Dev (\d+), test \d+", "questions.by_split.dev"),
+    ("docs/BENCHMARK.md", r"Dev \d+, test (\d+)", "questions.by_split.test"),
+    (
+        "docs/BENCHMARK.md",
+        r"the (\d+) test questions include",
+        "questions.by_split.test",
+    ),
 ]
+
+# Two numbers in that same block still have no artefact field to check against:
+# the 9 unanswerable questions inside the test split, and the 18 answerable test
+# questions that form the retrieval denominator. Both are derivable — 27 - 9 = 18,
+# and len(per_question) is 18 — but neither is published as its own key, so
+# check_claims has no path to point at. They are consistent as written and are
+# flagged here rather than left silently unguarded.
 
 #: Claims about the abstention experiment, which lives in its own artefact.
 ABSTENTION_CLAIMS = [
