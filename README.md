@@ -45,7 +45,10 @@ That is exactly what the original system did: it returned the correct policy for
 
 ![Retrieval scorecard](docs/figures/01_retrieval_scorecard.png)
 
-**Top-document accuracy 0.556**, up 3.3× from 0.167. hit rate@5 0.556 — *not* an improvement
+**Top-document accuracy 0.556**, up 3.3× from 0.167 — and that gain is the **chunk size**,
+not the fusion. Dense alone at 800/120 already reaches 0.556; holding the retriever fixed
+and moving 600/100 → 800/120 is what takes 0.167 to 0.556. Fusion earns its place on **MRR,
+0.365 → 0.420**. hit rate@5 0.556 — *not* an improvement
 on the original dense baseline's 0.611; BM25 alone still retrieves more relevant chunks.
 Scored on the **18 answerable** test questions, so that gap is 11 questions against 10 —
 one question, well inside the noise of a benchmark this size.
@@ -146,8 +149,10 @@ Timings describe this machine. Nothing in CI depends on a GPU.
   rejected: balanced accuracy 0.802 on dev collapses to 0.556 on test, and 17 of the 18 score
   above the weakest answerable question. No similarity threshold is defensible on this data — the hardest trap scores *above* the mean
   for answerable questions. Nothing is claimed.
-- **BM25 alone beats the selected hybrid on hit@5.** Hybrid was chosen for MRR and
-  top-document accuracy; that trade-off is stated, not hidden.
+- **BM25 alone beats the selected hybrid on hit@5.** Hybrid was chosen for **MRR** — 0.420
+  against 0.365 and 0.366. It is at **parity with dense on top-document accuracy** (0.556
+  either way), so fusion cannot be credited for that number; the chunk size earned it.
+  Both trade-offs are stated, not hidden.
 - **Dev did not generalise**: hybrid scored 1.000 hit@5 on dev, 0.556 on test.
 - **No answer-quality metrics.** Only one local model is available and grading its own output
   is circular. Citation *correctness* is measured, because that needs an entailment model
