@@ -1,15 +1,104 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/header-dark.png">
+  <img alt="InsureAssist — measured retrieval-augmented question answering over the three NFIP Standard Flood Insurance Policy forms" src="docs/assets/header-light.png">
+</picture>
+
 # InsureAssist
 
+InsureAssist answers questions about the wording of the three NFIP Standard Flood Insurance
+Policy forms and returns citations that resolve to exact character offsets in the source
+regulation. It is built to be measured rather than demonstrated: every number published
+here is re-derived from one artefact by a guard that CI runs, including the numbers that
+look bad. It is for engineers who want to see what retrieval scores on near-duplicate legal
+documents, and where it fails.
+
 ![CI](https://github.com/mzquadri/insureassist-rag-mlops/actions/workflows/ci.yml/badge.svg)
-![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+![Python](https://img.shields.io/badge/python-3.11-blue)
 ![License](https://img.shields.io/badge/license-MIT%20(code)-green)
 
-**A retrieval-augmented question-answering service over real insurance policy documents,
-built to be measured rather than demonstrated.**
+## How it is built
 
-Ask *"What is the Increased Cost of Compliance limit?"* and the service retrieves the
-governing passages and answers from them, returning citations that resolve to exact
-character offsets in the source regulation.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/architecture-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/architecture.svg">
+  <img src="docs/architecture.svg" alt="System architecture: three NFIP policy forms chunked at 800/120 into 314 chunks, embedded with bge-small-en-v1.5 into Qdrant, then dense retrieval and BM25 fused by reciprocal rank fusion behind a FastAPI /ask endpoint">
+</picture>
+
+Ingestion chunks the three forms at 800 characters with 120 of overlap, which is 314 chunks,
+embeds them with `BAAI/bge-small-en-v1.5` and writes them to Qdrant. A query runs dense
+cosine search and Okapi BM25 side by side, takes 20 candidates from each, and fuses them by
+reciprocal rank fusion at k=60. The top 5 go to `llama3.2:3b` through Ollama with the
+offsets attached. Every label in the diagram is read from
+[`eval/reference_run.json`](eval/reference_run.json), so it describes the system that
+produced the numbers below rather than an intended one. Details in
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+## The result
+
+Held-out test split. Derived from [`eval/reference_run.json`](eval/reference_run.json).
+
+| | Hit@5 | MRR | Top-doc accuracy |
+|---|---|---|---|
+| *Starting point — dense, 600/100* | *0.611* | *0.366* | *0.167* |
+| Dense only (BGE), 800/120 | 0.500 | 0.365 | 0.556 |
+| BM25 only, 800/120 | **0.611** | 0.366 | 0.333 |
+| **Hybrid RRF — selected** | 0.556 | **0.420** | **0.556** |
+
+**Top-document accuracy 0.556**, up 3.3× from 0.167. That gain is the chunk size, not the
+fusion. Dense alone at 800/120 already reaches 0.556; holding the retriever fixed and moving
+600/100 → 800/120 is the whole 0.167 → 0.556. What fusion earned is the ranking: MRR 0.365 →
+0.420. hit rate@5 0.556 is not an improvement on the starting point's 0.611, and BM25 alone
+still retrieves more relevant chunks — 11 questions against 10, one question on a
+denominator of 18.
+
+Two things do not work, and they are measured too. The service rejects no unanswerable
+question: all **9** unanswerable questions in the test split were answered
+(`generation.abstention.false_answers`). And 5 of the 18 answered test questions cite a
+context block that was never supplied. Both are expanded under [Limitations](#limitations).
+
+p50 latency is **81.82 ms** over 27 questions on one machine, which is a fact about the
+machine and not a property of the system.
+
+The benchmark is **50** hand-authored labels — 32 answerable, 18 unanswerable — split
+deterministically into dev 23 and test 27. The 27 test questions include 9 unanswerable
+ones, which have no chunk to retrieve, so every retrieval number above is over the 18
+answerable test questions. One question is 5.6 percentage points at that size, and the 95%
+Wilson intervals for all three retrievers overlap at every depth.
+
+`python -m eval.verify_artifacts` re-derives 27 documented claims from the artefacts and
+fails if any document has drifted. CI runs it on every push. Full numbers, category
+breakdown and failure analysis: **[`docs/BENCHMARK.md`](docs/BENCHMARK.md)**.
+
+> On record, not yet fixed: [`docs/BENCHMARK.md`](docs/BENCHMARK.md) still reports "false
+> answers 4" and "all four unanswerable test questions" at lines 107 and 174, and quotes p50
+> ~50 ms at line 124, where the artefact says 9 false answers and 81.82 ms — and the figure
+> printed directly above that prose already draws 9.
+
+## Run it
+
+The repository pins **Python 3.11**: CI installs 3.11 and the container image is built from
+`python:3.11-slim`. Nothing here needs a GPU or a network beyond pip.
+
+```bash
+pip install -r requirements.txt -r requirements-dev.txt
+
+docker compose up -d qdrant                 # Qdrant v1.19.0, host port 6533
+python -m src.ingest                        # 314 chunks at 800/120
+python -m eval.validate_ground_truth
+python -m eval.reference_run --split test --out /tmp/reference_run.json
+python -m eval.compare_runs eval/reference_run.json /tmp/reference_run.json
+python -m eval.verify_artifacts             # "Documentation matches the reference run."
+```
+
+The committed artefact is left alone because the run is written to `/tmp` and compared
+against it, which is what CI does. For answers rather than retrieval, add
+`ollama pull llama3.2:3b` and `uvicorn src.api:app`.
+
+```bash
+pytest        # offline: no model, no Qdrant, no network
+```
+
+---
 
 ## What this is not
 
@@ -34,69 +123,15 @@ retriever matching on topic finds the right *provision* in the wrong *document*.
 That is exactly what the original system did: it returned the correct policy form only
 **17%** of the time.
 
-## Measured results — held-out test split
-
-| | Hit@5 | MRR | Top-doc accuracy |
-|---|---|---|---|
-| Dense only (BGE) | 0.500 | 0.365 | 0.556 |
-| BM25 only | **0.611** | 0.366 | 0.333 |
-| **Hybrid RRF — selected** | 0.556 | **0.420** | **0.556** |
-| *Starting point (dense, 600/100)* | *0.611* | *0.366* | *0.167* |
-
 ![Retrieval scorecard](docs/figures/01_retrieval_scorecard.png)
 
-**Top-document accuracy 0.556**, up 3.3× from 0.167 — and that gain is the **chunk size**,
-not the fusion. Dense alone at 800/120 already reaches 0.556; holding the retriever fixed
-and moving 600/100 → 800/120 is what takes 0.167 to 0.556. Fusion earns its place on **MRR,
-0.365 → 0.420**. hit rate@5 0.556 — *not* an improvement
-on the original dense baseline's 0.611; BM25 alone still retrieves more relevant chunks.
-Scored on the **18 answerable** test questions, so that gap is 11 questions against 10 —
-one question, well inside the noise of a benchmark this size.
-Full numbers, category breakdown and failure analysis: **[`docs/BENCHMARK.md`](docs/BENCHMARK.md)**.
-
-Everything published is derived from [`eval/reference_run.json`](eval/reference_run.json).
-`python -m eval.verify_artifacts` fails if any document drifts from it, and CI runs it.
-
-## Architecture
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/architecture-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="docs/architecture.svg">
-  <img src="docs/architecture.svg" alt="System architecture: hybrid retrieval over three NFIP policy forms">
-</picture>
-
-Every label in that diagram is read from
-[`eval/reference_run.json`](eval/reference_run.json), so it describes the system that
-produced the published numbers rather than an intended one.
-
-Details in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
-
-### How a change reaches production
+## How a change reaches production
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/mlops-pipeline-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="docs/mlops-pipeline.svg">
   <img src="docs/mlops-pipeline.svg" alt="Pipeline: ingest, evaluate, verify, containerize, deploy">
 </picture>
-
-## Reproduce locally
-
-```bash
-pip install -r requirements.txt -r requirements-dev.txt
-docker compose up -d qdrant
-QDRANT_COLLECTION=nfip_sfip python -m src.ingest
-python -m eval.validate_ground_truth
-QDRANT_COLLECTION=nfip_sfip python -m eval.reference_run --split test
-python -m eval.verify_artifacts
-```
-
-For answers, add `ollama pull llama3.2:3b` and `uvicorn src.api:app`.
-
-## Testing and CI
-
-```bash
-pytest        # offline: no model, no Qdrant, no network
-```
 
 CI runs four jobs: **quality** (lint, corpus checksums, ground-truth validation, doc/artefact
 reconciliation, offline tests), **retrieval-eval** (ingests into a real Qdrant, reproduces the
@@ -114,33 +149,6 @@ response carries a request ID; internal exceptions never reach the caller.
 The container is non-root with pinned dependencies and a healthcheck. **Kubernetes manifests
 are authored and CI-validated but have never been applied to a cluster**, and the GKE guide is
 untested guidance. See [`docs/PRODUCTION.md`](docs/PRODUCTION.md).
-
-## Hardware acceleration
-
-The embedder is the only component a GPU changes. BM25 is pure Python over a few hundred
-chunks, and generation is a separate Ollama process. So the question is narrow: does moving
-`BAAI/bge-small-en-v1.5` off the CPU help?
-
-For ingestion yes, for serving no. Measured by
-[`scripts/benchmark_embedding.py`](scripts/benchmark_embedding.py), median of 10 corpus
-passes and 50 query passes after warm-up:
-
-| Workload | CPU (Core Ultra 9 285H) | Intel Arc Pro 140T | |
-|---|---|---|---|
-| Whole corpus, 314 chunks — ingestion | 11,408 ms | **2,635 ms** | 4.3x faster |
-| One short query — serving | **17.2 ms** | 30.4 ms | 0.57x, slower |
-
-A single 40-character query does not fill the device, so dispatch and transfer cost more
-than the work saved. Batching 314 chunks does fill it. The useful conclusion is to ingest
-on the accelerator and serve from the CPU, which is what the numbers say rather than what a
-GPU is generally assumed to do.
-
-The two sets of vectors agree to a minimum cosine similarity of **0.99999988**, so the
-choice does not move retrieval. That is checked rather than assumed, because these
-embeddings are normalised and searched by cosine distance: a device that shifted them would
-change which chunk comes back, and a speed-up bought that way would not be one.
-
-Timings describe this machine. Nothing in CI depends on a GPU.
 
 ## Limitations
 
@@ -194,7 +202,38 @@ Timings describe this machine. Nothing in CI depends on a GPU.
 
 Full list: [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
 
-## Figures
+<details>
+<summary><b>Hardware acceleration — ingest on the accelerator, serve from the CPU</b></summary>
+
+The embedder is the only component a GPU changes. BM25 is pure Python over a few hundred
+chunks, and generation is a separate Ollama process. So the question is narrow: does moving
+`BAAI/bge-small-en-v1.5` off the CPU help?
+
+For ingestion yes, for serving no. Measured by
+[`scripts/benchmark_embedding.py`](scripts/benchmark_embedding.py), median of 10 corpus
+passes and 50 query passes after warm-up:
+
+| Workload | CPU (Core Ultra 9 285H) | Intel Arc Pro 140T | |
+|---|---|---|---|
+| Whole corpus, 314 chunks — ingestion | 11,408 ms | **2,635 ms** | 4.3x faster |
+| One short query — serving | **17.2 ms** | 30.4 ms | 0.57x, slower |
+
+A single 40-character query does not fill the device, so dispatch and transfer cost more
+than the work saved. Batching 314 chunks does fill it. The useful conclusion is to ingest
+on the accelerator and serve from the CPU, which is what the numbers say rather than what a
+GPU is generally assumed to do.
+
+The two sets of vectors agree to a minimum cosine similarity of **0.99999988**, so the
+choice does not move retrieval. That is checked rather than assumed, because these
+embeddings are normalised and searched by cosine distance: a device that shifted them would
+change which chunk comes back, and a speed-up bought that way would not be one.
+
+Timings describe this machine. Nothing in CI depends on a GPU.
+
+</details>
+
+<details>
+<summary><b>Figures — all six generated from the reference run</b></summary>
 
 All six are generated from [`eval/reference_run.json`](eval/reference_run.json) by one
 script, so none of them can disagree with the published result:
@@ -218,6 +257,8 @@ python scripts/figures/generate_diagrams.py   # architecture and pipeline SVGs
 `numeric_limit` and `single_chunk` retrieve nothing relevant in the top 5 — but they hold
 two questions each, so "0 of 2" is the whole story. The category worth acting on is
 `near_miss`, at 2 of 5.
+
+</details>
 
 ## Evidence
 

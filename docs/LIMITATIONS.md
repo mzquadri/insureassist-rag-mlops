@@ -14,8 +14,11 @@ The complete list. Nothing here is softened.
 ## Retrieval
 
 - **BM25 alone beats the selected hybrid on hit@5** (0.611 against 0.556). Hybrid was chosen
-  for MRR (0.420 against 0.366) and top-document accuracy (0.556 against 0.333). The
-  trade-off is real and is not presented as a clean win.
+  for MRR, 0.420 against 0.365 and 0.366, and that is the only thing fusion earned here. It
+  does beat BM25 on top-document accuracy, 0.556 against 0.333, but it is at **parity with
+  dense** on that metric — 0.556 either way — so fusion cannot be credited for the
+  0.167 to 0.556 gain; the chunk size earned it, and the entry below says so. The trade-off
+  is real and is not presented as a clean win.
 - **hit@5 did not improve** on the original dense baseline at the old chunking (0.611). What
   improved is form discrimination: top-document accuracy 0.167 to 0.556.
 - **Near-miss questions remain the weakest substantial category** at 0.400 hit@5. The three
