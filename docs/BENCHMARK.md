@@ -151,6 +151,56 @@ python -m eval.chunking_sweep --mlflow
 mlflow ui        # http://127.0.0.1:5000
 ```
 
+#### What re-running it actually produced
+
+Run on 18 October 2026, Python 3.11.14, `mlflow==3.17.1`, five configurations
+logged as nested runs under the MLflow experiment `insureassist-chunking`.
+Original rows are the `depth=10` rows of `eval/dev_chunking_sweep.json`, which is
+the depth the script uses.
+
+| Config | Chunks, stored / re-derived | Hit@5 stored | Hit@5 re-derived | MRR stored | MRR re-derived | Top-doc stored | Top-doc re-derived |
+|---|---|---|---|---|---|---|---|
+| 400/80 | 664 / 664 | 0.4286 | 0.5000 | 0.3824 | 0.3786 | 0.5000 | 0.5000 |
+| 600/100 | 426 / 426 | 0.6429 | 0.6429 | 0.4923 | 0.4202 | 0.5000 | 0.3571 |
+| 600/150 | 474 / 474 | 0.7143 | 0.7143 | 0.5185 | 0.3655 | 0.5000 | 0.4286 |
+| **800/120** | **314 / 314** | **1.0000** | **0.8571** | **0.6214** | **0.5649** | **0.5714** | **0.5000** |
+| 1000/150 | 251 / 251 | 0.7143 | 0.7143 | 0.6015 | 0.3495 | 0.6429 | 0.5000 |
+
+**The chunking reproduces exactly. The retrieval metrics do not.**
+
+Chunk counts match at all five settings, so the chunker is doing identically what
+it did before. Beyond that the two disagree: at 800/120 every one of the six
+metrics differs, and no configuration had an unscorable question, so this is not
+questions being dropped. The relevance labels are not the cause either - the rule
+reproduces the stored `relevant_chunk_ids` at 800/120 exactly, and
+`tests/test_chunking_sweep.py` fails the run if it ever does not. What differs is
+which chunks come back, which points at the embedding step.
+
+The stored numbers are not a one-off: `eval/retrieval_config.json`'s
+`dev_selection` block carries hit@5 1.000, MRR 0.6214 and top-doc 0.5714, the
+same row. Two committed artefacts agree with each other, and this run disagrees
+with both.
+
+The likeliest reason is that **the embedder was only ever pinned by name.**
+`cfg.EMBEDDING_MODEL` is `BAAI/bge-small-en-v1.5` with no revision, so a
+different snapshot can be served for the same name, and nothing recorded the
+version of the stack that produced the original file. This run used
+`sentence-transformers 5.7.0`, `transformers 5.20.1`, `torch 2.14.1+cpu`,
+`numpy 2.4.6`. That is a candidate cause, not a demonstrated one: pinning a
+revision and re-running is what would settle it, and that has not been done.
+
+**What survives and what does not.** The decision survives: 800/120 still has the
+best hit@5 and the best MRR of the five, so it is still what this grid selects,
+and the reasoning in the `chunking` note above is unaffected. What does not
+survive is the precision of the stored figures. The dev hit@5 of **1.000** in
+particular should be read as the small-sample result its own caveat already calls
+it - 14 questions, and a re-run lands at 0.857.
+
+None of this touches the headline test-split numbers in this document. Those come
+from `eval/reference_run.json` on the test split, a different artefact produced by
+a different script, and the dev sweep is only the record of how 800/120 was
+chosen.
+
 
 ---
 

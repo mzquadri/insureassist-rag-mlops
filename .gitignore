@@ -15,3 +15,10 @@ python
 
 # generated answer cache; regenerate with eval/citation_run.py
 eval/.citation_answers.json
+
+# MLflow local tracking store, written by eval/chunking_sweep.py --mlflow.
+# The reviewable records are eval/dev_chunking_sweep_reproduced.json and
+# eval/mlflow_chunking_runs.json; the SQLite file itself is a rebuildable binary.
+mlflow.db
+mlartifacts/
+.venv311/

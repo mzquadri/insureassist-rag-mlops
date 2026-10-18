@@ -1,0 +1,83 @@
+{
+  "stamp": {
+    "split": "dev",
+    "answerable_questions": 14,
+    "embedding_model": "BAAI/bge-small-en-v1.5",
+    "retrieval": "dense, exact cosine, depth 10",
+    "relevance": "chunk fully contains an evidence span",
+    "corpus_hash": "81650e214d2a138fa2073ae311983514d31b28e08bcb5c0fcbf292af68800e16",
+    "question_set_hash": "f754483ce633a08eca686900a42cea8225de225b8f51ee3c745d73617a20b548"
+  },
+  "configs": {
+    "400/80": {
+      "size": 400,
+      "overlap": 80,
+      "chunks": 664,
+      "n": 14,
+      "unscorable": [],
+      "embed_seconds": 138.63,
+      "hit1": 0.2857,
+      "hit3": 0.4286,
+      "hit5": 0.5,
+      "rec5": 0.5,
+      "mrr": 0.3786,
+      "topdoc": 0.5
+    },
+    "600/100": {
+      "size": 600,
+      "overlap": 100,
+      "chunks": 426,
+      "n": 14,
+      "unscorable": [],
+      "embed_seconds": 108.28,
+      "hit1": 0.2857,
+      "hit3": 0.5,
+      "hit5": 0.6429,
+      "rec5": 0.6071,
+      "mrr": 0.4202,
+      "topdoc": 0.3571
+    },
+    "600/150": {
+      "size": 600,
+      "overlap": 150,
+      "chunks": 474,
+      "n": 14,
+      "unscorable": [],
+      "embed_seconds": 148.94,
+      "hit1": 0.1429,
+      "hit3": 0.5714,
+      "hit5": 0.7143,
+      "rec5": 0.5952,
+      "mrr": 0.3655,
+      "topdoc": 0.4286
+    },
+    "800/120": {
+      "size": 800,
+      "overlap": 120,
+      "chunks": 314,
+      "n": 14,
+      "unscorable": [],
+      "embed_seconds": 136.8,
+      "hit1": 0.3571,
+      "hit3": 0.7143,
+      "hit5": 0.8571,
+      "rec5": 0.8214,
+      "mrr": 0.5649,
+      "topdoc": 0.5
+    },
+    "1000/150": {
+      "size": 1000,
+      "overlap": 150,
+      "chunks": 251,
+      "n": 14,
+      "unscorable": [],
+      "embed_seconds": 108.76,
+      "hit1": 0.1429,
+      "hit3": 0.6429,
+      "hit5": 0.7143,
+      "rec5": 0.6429,
+      "mrr": 0.3495,
+      "topdoc": 0.5
+    }
+  }
+}
