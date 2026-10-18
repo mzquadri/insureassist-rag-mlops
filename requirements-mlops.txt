@@ -1,0 +1,6 @@
+# Optional: experiment tracking for eval/chunking_sweep.py --mlflow.
+# Not needed by the service, the benchmark, or the test suite.
+#
+# Unpinned on purpose until the first real install: pin it to the version `pip freeze`
+# reports after that run, in the same commit, as the rest of this repository does.
+mlflow

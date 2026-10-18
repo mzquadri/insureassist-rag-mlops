@@ -138,6 +138,19 @@ Dev-selection evidence is in [`eval/dev_comparison.json`](../eval/dev_comparison
 [`eval/dev_chunking_sweep.json`](../eval/dev_chunking_sweep.json). The pre-selection dense
 baseline is preserved under [`eval/baselines/`](../eval/baselines/).
 
+`eval/dev_chunking_sweep.json` predates any script that produces it. The selection step can
+now be re-run with [`eval/chunking_sweep.py`](../eval/chunking_sweep.py), which re-derives
+relevance at each chunk size from the evidence spans (the rule reproduces the stored labels
+at 800/120 exactly), runs dense retrieval on DEV only, and writes
+`eval/dev_chunking_sweep_reproduced.json` beside the original rather than over it. With
+`--mlflow` each configuration is logged as a nested MLflow run:
+
+```bash
+pip install -r requirements-mlops.txt
+python -m eval.chunking_sweep --mlflow
+mlflow ui        # http://127.0.0.1:5000
+```
+
 
 ---
 
