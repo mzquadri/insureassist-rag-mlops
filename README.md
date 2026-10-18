@@ -1,6 +1,6 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/header-dark.png">
-  <img alt="InsureAssist — measured retrieval-augmented question answering over the three NFIP Standard Flood Insurance Policy forms" src="docs/assets/header-light.png">
+  <img alt="InsureAssist, measured retrieval-augmented question answering over the three NFIP Standard Flood Insurance Policy forms" src="docs/assets/header-light.png">
 </picture>
 
 # InsureAssist
@@ -39,16 +39,16 @@ Held-out test split. Derived from [`eval/reference_run.json`](eval/reference_run
 
 | | Hit@5 | MRR | Top-doc accuracy |
 |---|---|---|---|
-| *Starting point — dense, 600/100* | *0.611* | *0.366* | *0.167* |
+| *Starting point, dense, 600/100* | *0.611* | *0.366* | *0.167* |
 | Dense only (BGE), 800/120 | 0.500 | 0.365 | 0.556 |
 | BM25 only, 800/120 | **0.611** | 0.366 | 0.333 |
-| **Hybrid RRF — selected** | 0.556 | **0.420** | **0.556** |
+| **Hybrid RRF, selected** | 0.556 | **0.420** | **0.556** |
 
-**Top-document accuracy 0.556**, up 3.3× from 0.167. That gain is the chunk size, not the
+**Top-document accuracy 0.556**, up 3.3x from 0.167. That gain is the chunk size, not the
 fusion. Dense alone at 800/120 already reaches 0.556; holding the retriever fixed and moving
-600/100 → 800/120 is the whole 0.167 → 0.556. What fusion earned is the ranking: MRR 0.365 →
+600/100 to 800/120 is the whole 0.167 to 0.556. What fusion earned is the ranking: MRR 0.365  to
 0.420. hit rate@5 0.556 is not an improvement on the starting point's 0.611, and BM25 alone
-still retrieves more relevant chunks — 11 questions against 10, one question on a
+still retrieves more relevant chunks, 11 questions against 10, one question on a
 denominator of 18.
 
 Two things do not work, and they are measured too. The service rejects no unanswerable
@@ -59,7 +59,7 @@ context block that was never supplied. Both are expanded under [Limitations](#li
 p50 latency is **81.82 ms** over 27 questions on one machine, which is a fact about the
 machine and not a property of the system.
 
-The benchmark is **50** hand-authored labels — 32 answerable, 18 unanswerable — split
+The benchmark is **50** hand-authored labels, 32 answerable, 18 unanswerable, split
 deterministically into dev 23 and test 27. The 27 test questions include 9 unanswerable
 ones, which have no chunk to retrieve, so every retrieval number above is over the 18
 answerable test questions. One question is 5.6 percentage points at that size, and the 95%
@@ -71,7 +71,7 @@ breakdown and failure analysis: **[`docs/BENCHMARK.md`](docs/BENCHMARK.md)**.
 
 > On record, not yet fixed: [`docs/BENCHMARK.md`](docs/BENCHMARK.md) still reports "false
 > answers 4" and "all four unanswerable test questions" at lines 107 and 174, and quotes p50
-> ~50 ms at line 124, where the artefact says 9 false answers and 81.82 ms — and the figure
+> ~50 ms at line 124, where the artefact says 9 false answers and 81.82 ms, and the figure
 > printed directly above that prose already draws 9.
 
 ## Run it
@@ -112,7 +112,7 @@ character offsets, rather than the prose.
 
 ## Why this benchmark is hard
 
-The corpus is the three **NFIP Standard Flood Insurance Policy** forms — real policy wording,
+The corpus is the three **NFIP Standard Flood Insurance Policy** forms, real policy wording,
 enacted as federal regulation (44 CFR Part 61) and therefore redistributable.
 
 They are **near-duplicates by design**. All three share a skeleton and much verbatim wording,
@@ -155,9 +155,9 @@ untested guidance. See [`docs/PRODUCTION.md`](docs/PRODUCTION.md).
 - **Unanswerable questions are not detected.** Unanswerable rejection rate is 0.000. A
   similarity threshold was tested on an enlarged set of 18 unanswerable questions and
   rejected: balanced accuracy 0.802 on dev collapses to 0.556 on test, and 17 of the 18 score
-  above the weakest answerable question. No similarity threshold is defensible on this data — the hardest trap scores *above* the mean
+  above the weakest answerable question. No similarity threshold is defensible on this data, the hardest trap scores *above* the mean
   for answerable questions. Nothing is claimed.
-- **BM25 alone beats the selected hybrid on hit@5.** Hybrid was chosen for **MRR** — 0.420
+- **BM25 alone beats the selected hybrid on hit@5.** Hybrid was chosen for **MRR**, 0.420
   against 0.365 and 0.366. It is at **parity with dense on top-document accuracy** (0.556
   either way), so fusion cannot be credited for that number; the chunk size earned it.
   Both trade-offs are stated, not hidden.
@@ -169,33 +169,33 @@ untested guidance. See [`docs/PRODUCTION.md`](docs/PRODUCTION.md).
   specificity floors declared before the run.
 - **Two entailment judges clear the same calibration and disagree on recall by a third.**
   `DeBERTa-v3-large` reaches 0.938 calibration sensitivity against the base model's 0.844 at
-  the same specificity, and scores recall 12/15, 0.8000 [0.548, 0.930] — against 0.4667. The
+  the same specificity, and scores recall 12/15, 0.8000 [0.548, 0.930], against 0.4667. The
   intervals meet only between 0.548 and 0.699, and the disagreement is one-directional: the
   large judge's supported set strictly contains the base judge's, five sentences to none.
   Precision survives it (0.3333 against 0.3600), so *most citations being redundant* holds
   either way; **no recall figure is established.** Preferring the better-calibrated judge
   after seeing its answer is the post-hoc choice the declared floors exist to prevent, so the
-  human labelling pass in [`eval/citation_gold/`](eval/citation_gold/) is the adjudicator —
+  human labelling pass in [`eval/citation_gold/`](eval/citation_gold/) is the adjudicator,
   and it is still unlabelled.
 - **The model cites before it claims, and no prompt tried here changes it.** 12 of 16 cited
   sentences open with a citation marker rather than ending with one, and 16 of 16 do under a
   variant that states the valid range. Paired on the 13 questions that cited something under
   both prompts, 12 lead under both: McNemar p = 1.0. The `[n]` convention assumes the marker
   follows the statement it supports, so a marker preceding every claim leaves the attachment
-  ambiguous — the offsets resolve exactly, and they cannot say which sentence they belong to.
+  ambiguous, the offsets resolve exactly, and they cannot say which sentence they belong to.
   This is also what corrupted the first correctness figure, stranding punctuation at the
   front of nine hypotheses and emptying one. Measured without a judge by
   [`eval/citation_placement_run.py`](eval/citation_placement_run.py).
 - **28% of answers cite a block that was never supplied.** The prompt numbers five context
-  blocks; on the 18 answerable test questions the model produced `[6]`, `[7]` and `[16]` —
+  blocks; on the 18 answerable test questions the model produced `[6]`, `[7]` and `[16]`,
   5 of 18, 27.8% [12.5%, 50.9%]. Every answer cited something, so the failure is a dangling
   reference rather than a missing one. The `citations` field itself still resolves to exact
-  offsets, because it lists the retrieved blocks rather than the ones the answer used — mean
+  offsets, because it lists the retrieved blocks rather than the ones the answer used, mean
   coverage 27.8%, so most listed citations support nothing in the text beside them. Measured
   without a judge by [`eval/citation_run.py`](eval/citation_run.py); these are facts about
   the string, not opinions about the answer.
 - **One jurisdiction, one peril, three documents.** Results do not transfer.
-- **Fine-tuning is archived, not used** — its training data was the old evaluation set. See
+- **Fine-tuning is archived, not used**, its training data was the old evaluation set. See
   [`archive/README.md`](archive/README.md).
 
 ![Abstention and citations](docs/figures/05_abstention_and_citations.png)
@@ -203,7 +203,7 @@ untested guidance. See [`docs/PRODUCTION.md`](docs/PRODUCTION.md).
 Full list: [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
 
 <details>
-<summary><b>Hardware acceleration — ingest on the accelerator, serve from the CPU</b></summary>
+<summary><b>Hardware acceleration, ingest on the accelerator, serve from the CPU</b></summary>
 
 The embedder is the only component a GPU changes. BM25 is pure Python over a few hundred
 chunks, and generation is a separate Ollama process. So the question is narrow: does moving
@@ -215,8 +215,8 @@ passes and 50 query passes after warm-up:
 
 | Workload | CPU (Core Ultra 9 285H) | Intel Arc Pro 140T | |
 |---|---|---|---|
-| Whole corpus, 314 chunks — ingestion | 11,408 ms | **2,635 ms** | 4.3x faster |
-| One short query — serving | **17.2 ms** | 30.4 ms | 0.57x, slower |
+| Whole corpus, 314 chunks, ingestion | 11,408 ms | **2,635 ms** | 4.3x faster |
+| One short query, serving | **17.2 ms** | 30.4 ms | 0.57x, slower |
 
 A single 40-character query does not fill the device, so dispatch and transfer cost more
 than the work saved. Batching 314 chunks does fill it. The useful conclusion is to ingest
@@ -233,7 +233,7 @@ Timings describe this machine. Nothing in CI depends on a GPU.
 </details>
 
 <details>
-<summary><b>Figures — all six generated from the reference run</b></summary>
+<summary><b>Figures, all six generated from the reference run</b></summary>
 
 All six are generated from [`eval/reference_run.json`](eval/reference_run.json) by one
 script, so none of them can disagree with the published result:
@@ -246,7 +246,7 @@ python scripts/figures/generate_diagrams.py   # architecture and pipeline SVGs
 | Figure | What it shows |
 |---|---|
 | [Retrieval scorecard](docs/figures/01_retrieval_scorecard.png) | hybrid against both baselines, with the question count behind every rate |
-| [Confidence intervals](docs/figures/02_confidence_intervals.png) | the same numbers with 95% Wilson intervals — they all overlap |
+| [Confidence intervals](docs/figures/02_confidence_intervals.png) | the same numbers with 95% Wilson intervals, they all overlap |
 | [By category](docs/figures/03_by_category.png) | where retrieval fails, and how few questions each category holds |
 | [Benchmark composition](docs/figures/04_benchmark_composition.png) | the corpus and the 50 questions |
 | [Abstention and citations](docs/figures/05_abstention_and_citations.png) | the part that does not work |
@@ -254,7 +254,7 @@ python scripts/figures/generate_diagrams.py   # architecture and pipeline SVGs
 
 ![Where retrieval fails](docs/figures/03_by_category.png)
 
-`numeric_limit` and `single_chunk` retrieve nothing relevant in the top 5 — but they hold
+`numeric_limit` and `single_chunk` retrieve nothing relevant in the top 5, but they hold
 two questions each, so "0 of 2" is the whole story. The category worth acting on is
 `near_miss`, at 2 of 5.
 
@@ -275,5 +275,5 @@ two questions each, so "0 of 2" is the whole story. The category worth acting on
 ## License
 
 The [MIT License](LICENSE) covers **the code only**. The NFIP forms under `data/corpus/` are
-US Government works carrying no copyright (17 U.S.C. 105) and are not relicensed here — see
+US Government works carrying no copyright (17 U.S.C. 105) and are not relicensed here, see
 [`NOTICE`](NOTICE).
