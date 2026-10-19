@@ -213,8 +213,14 @@ job.batch/ingest   Complete   1/1   32m
 ```
 
 Qdrant's 7 restarts are the CrashLoopBackOff from defect 1, before the fix. The
-image is **453 MB**, and `torch 2.14.1+cpu` with `torch.version.cuda` of `None`
-inside it, which is defect 2 fixed.
+image is **2.11 GB** as `docker images` reports it, and carries
+`torch 2.14.1+cpu` with `torch.version.cuda` of `None`, which is defect 2 fixed.
+
+Two different sizes are reported for the same image and both are correct, so
+which one is quoted matters. `docker images` gives the uncompressed size,
+**2.11 GB**. `crictl images` on the kind node gives **453 MB**, the compressed
+size in the content store. The uncompressed figure is the one to compare against
+"several gigabytes of NVIDIA wheels", because that is also uncompressed.
 
 ### Ingestion
 

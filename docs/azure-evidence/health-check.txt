@@ -1,0 +1,12 @@
+=== GET /health (cold start from min-replicas 0) ===
+requested at 2026-10-19T12:21:57Z
+{"status":"ok"}
+HTTP 200  total 2.218089s
+
+=== GET /health (warm) ===
+{"status":"ok"}
+HTTP 200  total 0.636457s
+
+=== GET /ready (no Qdrant deployed) ===
+{"status":"not_ready","dependencies":{"embedder":{"ready":true},"lexical_index":{"ready":true},"vector_store":{"ready":false,"detail":"ResponseHandlingException"}},"request_id":"b76b0effc3264b2895b6e9f6b0226656"}
+HTTP 503

@@ -1,0 +1,32 @@
+=== resources in rg-insureassist ===
+Name                          Location
+----------------------------  -------------
+workspace-rginsureassist0fXM  francecentral
+insureassist-env              francecentral
+cacd7b38a858acr               francecentral
+insureassist-api              francecentral
+
+=== container app scale + image ===
+WARNING: The behavior of this command has been altered by the following extension: containerapp
+{
+  "cpu": 1.0,
+  "fqdn": "insureassist-api.ashytree-3df1e747.francecentral.azurecontainerapps.io",
+  "image": "cacd7b38a858acr.azurecr.io/insureassist:v0.2.0",
+  "maxReplicas": 1,
+  "memory": "2.0Gi",
+  "minReplicas": 0
+}
+
+=== environment workload profile (Consumption-only check) ===
+WARNING: The behavior of this command has been altered by the following extension: containerapp
+{
+  "location": "France Central",
+  "name": "insureassist-env",
+  "workloadProfiles": [
+    {
+      "enableFips": false,
+      "name": "Consumption",
+      "workloadProfileType": "Consumption"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+Azure charges for rg-insureassist
+=================================
+
+Deployment completed 2026-10-19 ~12:21 UTC (France Central).
+
+Reading 1 - baseline, taken minutes after deployment
+---------------------------------------------------
+Query: Cost Management ActualCost, MonthToDate, grouped by Meter
+  az rest --method post --url ".../Microsoft.CostManagement/query?api-version=2024-08-01"
+
+Result: NO CHARGES RECORDED (no cost rows returned)
+
+This is expected and is NOT evidence that the deployment is free. Azure cost
+data lags usage by several hours, so a reading taken immediately after
+deployment cannot show anything yet. The reading that matters is the later one
+below.
+
+The specific question being checked is whether the "Environment Management
+Hour" meter ($0.125/hour in France Central) is billed for a Consumption-only
+environment. The environment reports:
+
+  workloadProfiles: [ { name: Consumption, workloadProfileType: Consumption } ]
+
+and that meter is documented against Dedicated workload profiles, so the
+expectation is that it is not charged. Expectation is not evidence, hence this
+file.
+
+Known fixed cost regardless: ACR Basic at $0.1666/day, for the registry that
+holds the pushed image. ACR Tasks is not permitted on this subscription, so the
+registry cannot be avoided by building server-side.
+
+Reading 2 - pending
+-------------------
+To be taken at least one hour after deployment, and re-taken if still empty.

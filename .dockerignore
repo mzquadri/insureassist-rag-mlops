@@ -1,5 +1,9 @@
 # Keep the build context small and the image clean.
-.venv/
+# .venv* rather than .venv, so a second interpreter's environment is excluded
+# too. A 3.11 venv alongside the default one is ~2 GB, and with a remote builder
+# an un-ignored venv is uploaded before the build starts.
+.venv*/
+mlflow.db
 __pycache__/
 *.pyc
 .git/
