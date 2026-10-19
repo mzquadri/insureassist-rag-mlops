@@ -1,5 +1,24 @@
 # Deploying to Azure Container Apps
 
+**Only the API container is hosted on Azure. Nothing else is.** There is no
+Qdrant and no generator in this resource group, deliberately, because each would
+add cost for no additional thing demonstrated. The consequences, stated up front
+rather than discovered by trying it:
+
+- `GET /health` returns **200**. The service is up and serving.
+- `GET /ready` returns **503**, and it is correct to. The vector store is not
+  deployed here, so the readiness check reports `vector_store: ready: false`
+  while confirming the embedder and the BM25 index are both ready.
+- `POST /ask` cannot answer. It needs both the vector store and a generator.
+
+**Full retrieval is not demonstrated on Azure, and is not meant to be.** It runs
+locally and on a local kind cluster: see [`KUBERNETES_RUN.md`](KUBERNETES_RUN.md),
+where the whole stack is deployed, the corpus is ingested to 314 points, and
+hybrid retrieval is executed inside the API pod against an in-cluster Qdrant.
+
+What this deployment shows is the containerised service running on managed
+infrastructure, reachable over the public internet, scaling to zero when idle.
+
 The API runs on Azure Container Apps, scaling to zero when idle.
 
 **URL:** <https://insureassist-api.ashytree-3df1e747.francecentral.azurecontainerapps.io>
