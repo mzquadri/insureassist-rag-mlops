@@ -19,7 +19,7 @@ from __future__ import annotations
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 EXPERIMENT = "insureassist-chunking"
@@ -62,7 +62,7 @@ def main() -> int:
     )
 
     record = {
-        "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generated_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "environment": {
             "python": ".".join(str(n) for n in sys.version_info[:3]),
             "mlflow": mlflow.__version__,

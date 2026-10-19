@@ -26,6 +26,32 @@ spec:
       containers:
         - name: qdrant
           image: qdrant/qdrant:v1.19.0
+          # Both paths pushed inside the mounted volume, which is the only
+          # directory this container can write to.
+          #
+          # Qdrant's defaults are `./storage` and `./snapshots`, relative to its
+          # working directory `/qdrant`. That directory belongs to the image and
+          # is owned by root, while `runAsUser: 1000` above means the process is
+          # not root. Qdrant then panicked during startup and exited 101 on every
+          # attempt, having logged only a warning about an unrelated init file:
+          #
+          #   Qdrant gRPC listening on 6334
+          #   ERROR qdrant::startup: Panic backtrace:
+          #
+          # The HTTP API on 6333 never bound, so the readiness probe refused
+          # connections and the pod sat in CrashLoopBackOff. `./storage` happened
+          # to work because the volume is mounted over it; `./snapshots` had
+          # nothing mounted and is what the process could not create.
+          #
+          # Do not set `workingDir` to move the defaults instead. The image's
+          # entrypoint is `./entrypoint.sh`, so a different working directory
+          # makes it unresolvable and the container fails to start at all
+          # (exit 128, StartError).
+          env:
+            - name: QDRANT__STORAGE__STORAGE_PATH
+              value: /qdrant/storage/collections
+            - name: QDRANT__STORAGE__SNAPSHOTS_PATH
+              value: /qdrant/storage/snapshots
           ports:
             - containerPort: 6333
               name: http

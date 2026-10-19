@@ -1,0 +1,873 @@
+{
+  "generated_utc": "2026-10-19T10:55:55Z",
+  "environment": {
+    "python": "3.11.14",
+    "langgraph": "1.2.16"
+  },
+  "note": "Both policies run through src/graph.py compiled with decide_only=True, so the graph ends at the decision node. The generator passed in raises if called, and was not called.",
+  "corpus_hash": "81650e214d2a138fa2073ae311983514d31b28e08bcb5c0fcbf292af68800e16",
+  "question_set_hash": "f754483ce633a08eca686900a42cea8225de225b8f51ee3c745d73617a20b548",
+  "threshold": 0.739515735,
+  "outcomes": [
+    {
+      "policy": "no_evidence",
+      "split": "dev",
+      "threshold": null,
+      "answerable": 14,
+      "unanswerable": 9,
+      "sensitivity": 1.0,
+      "specificity": 0.0,
+      "balanced_accuracy": 0.5,
+      "youden_j": 0.0,
+      "false_abstentions": 0,
+      "false_answers": 9,
+      "decisions": [
+        {
+          "question_id": "nfip-001",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.8241348
+        },
+        {
+          "question_id": "nfip-003",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.7496475
+        },
+        {
+          "question_id": "nfip-006",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.6885191
+        },
+        {
+          "question_id": "nfip-007",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.69215983
+        },
+        {
+          "question_id": "nfip-010",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.8213892
+        },
+        {
+          "question_id": "nfip-011",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.6894863
+        },
+        {
+          "question_id": "nfip-012",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.8339867
+        },
+        {
+          "question_id": "nfip-013",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.76765895
+        },
+        {
+          "question_id": "nfip-018",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.79085404
+        },
+        {
+          "question_id": "nfip-019",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.80408525
+        },
+        {
+          "question_id": "nfip-026",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.7649758
+        },
+        {
+          "question_id": "nfip-027",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.68823117
+        },
+        {
+          "question_id": "nfip-029",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.7433744
+        },
+        {
+          "question_id": "nfip-030",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.7914755
+        },
+        {
+          "question_id": "nfip-034",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.7874239
+        },
+        {
+          "question_id": "nfip-036",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.728891
+        },
+        {
+          "question_id": "nfip-037",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.7279017
+        },
+        {
+          "question_id": "nfip-040",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.7323201
+        },
+        {
+          "question_id": "nfip-041",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.6827984
+        },
+        {
+          "question_id": "nfip-042",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.5923573
+        },
+        {
+          "question_id": "nfip-043",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.72800374
+        },
+        {
+          "question_id": "nfip-046",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.735657
+        },
+        {
+          "question_id": "nfip-047",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.6692214
+        }
+      ]
+    },
+    {
+      "policy": "threshold",
+      "split": "dev",
+      "threshold": 0.739515735,
+      "answerable": 14,
+      "unanswerable": 9,
+      "sensitivity": 0.7143,
+      "specificity": 0.8889,
+      "balanced_accuracy": 0.8016,
+      "youden_j": 0.6032,
+      "false_abstentions": 4,
+      "false_answers": 1,
+      "decisions": [
+        {
+          "question_id": "nfip-001",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.8241 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.8241348
+        },
+        {
+          "question_id": "nfip-003",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.7496 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.7496475
+        },
+        {
+          "question_id": "nfip-006",
+          "answerable": true,
+          "decision": "abstain",
+          "reason": "top dense score 0.6885 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.6885191
+        },
+        {
+          "question_id": "nfip-007",
+          "answerable": true,
+          "decision": "abstain",
+          "reason": "top dense score 0.6922 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.69215983
+        },
+        {
+          "question_id": "nfip-010",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.8214 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.8213892
+        },
+        {
+          "question_id": "nfip-011",
+          "answerable": true,
+          "decision": "abstain",
+          "reason": "top dense score 0.6895 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.6894863
+        },
+        {
+          "question_id": "nfip-012",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.8340 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.8339867
+        },
+        {
+          "question_id": "nfip-013",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.7677 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.76765895
+        },
+        {
+          "question_id": "nfip-018",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.7909 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.79085404
+        },
+        {
+          "question_id": "nfip-019",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.8041 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.80408525
+        },
+        {
+          "question_id": "nfip-026",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.7650 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.7649758
+        },
+        {
+          "question_id": "nfip-027",
+          "answerable": true,
+          "decision": "abstain",
+          "reason": "top dense score 0.6882 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.68823117
+        },
+        {
+          "question_id": "nfip-029",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.7434 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.7433744
+        },
+        {
+          "question_id": "nfip-030",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.7915 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.7914755
+        },
+        {
+          "question_id": "nfip-034",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "top dense score 0.7874 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.7874239
+        },
+        {
+          "question_id": "nfip-036",
+          "answerable": false,
+          "decision": "abstain",
+          "reason": "top dense score 0.7289 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.728891
+        },
+        {
+          "question_id": "nfip-037",
+          "answerable": false,
+          "decision": "abstain",
+          "reason": "top dense score 0.7279 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.7279017
+        },
+        {
+          "question_id": "nfip-040",
+          "answerable": false,
+          "decision": "abstain",
+          "reason": "top dense score 0.7323 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.7323201
+        },
+        {
+          "question_id": "nfip-041",
+          "answerable": false,
+          "decision": "abstain",
+          "reason": "top dense score 0.6828 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.6827984
+        },
+        {
+          "question_id": "nfip-042",
+          "answerable": false,
+          "decision": "abstain",
+          "reason": "top dense score 0.5924 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.5923573
+        },
+        {
+          "question_id": "nfip-043",
+          "answerable": false,
+          "decision": "abstain",
+          "reason": "top dense score 0.7280 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.72800374
+        },
+        {
+          "question_id": "nfip-046",
+          "answerable": false,
+          "decision": "abstain",
+          "reason": "top dense score 0.7357 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.735657
+        },
+        {
+          "question_id": "nfip-047",
+          "answerable": false,
+          "decision": "abstain",
+          "reason": "top dense score 0.6692 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.6692214
+        }
+      ]
+    },
+    {
+      "policy": "no_evidence",
+      "split": "test",
+      "threshold": null,
+      "answerable": 18,
+      "unanswerable": 9,
+      "sensitivity": 1.0,
+      "specificity": 0.0,
+      "balanced_accuracy": 0.5,
+      "youden_j": 0.0,
+      "false_abstentions": 0,
+      "false_answers": 9,
+      "decisions": [
+        {
+          "question_id": "nfip-002",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.77431834
+        },
+        {
+          "question_id": "nfip-004",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.75450206
+        },
+        {
+          "question_id": "nfip-005",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.73373365
+        },
+        {
+          "question_id": "nfip-008",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.80473995
+        },
+        {
+          "question_id": "nfip-009",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.71316206
+        },
+        {
+          "question_id": "nfip-014",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.7901511
+        },
+        {
+          "question_id": "nfip-015",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.8243798
+        },
+        {
+          "question_id": "nfip-016",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.8067714
+        },
+        {
+          "question_id": "nfip-017",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.77281034
+        },
+        {
+          "question_id": "nfip-020",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.7012764
+        },
+        {
+          "question_id": "nfip-021",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.7245409
+        },
+        {
+          "question_id": "nfip-022",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.7256665
+        },
+        {
+          "question_id": "nfip-023",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.67496735
+        },
+        {
+          "question_id": "nfip-024",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.82644534
+        },
+        {
+          "question_id": "nfip-025",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.7664657
+        },
+        {
+          "question_id": "nfip-028",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.69876695
+        },
+        {
+          "question_id": "nfip-031",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.63681185
+        },
+        {
+          "question_id": "nfip-032",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.7444246
+        },
+        {
+          "question_id": "nfip-033",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.8001238
+        },
+        {
+          "question_id": "nfip-035",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.65090144
+        },
+        {
+          "question_id": "nfip-038",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.6987634
+        },
+        {
+          "question_id": "nfip-039",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.717201
+        },
+        {
+          "question_id": "nfip-044",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.71876466
+        },
+        {
+          "question_id": "nfip-045",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.7518312
+        },
+        {
+          "question_id": "nfip-048",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.77221763
+        },
+        {
+          "question_id": "nfip-049",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.68844223
+        },
+        {
+          "question_id": "nfip-050",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "contexts retrieved",
+          "contexts": 5,
+          "top_dense_score": 0.7509507
+        }
+      ]
+    },
+    {
+      "policy": "threshold",
+      "split": "test",
+      "threshold": 0.739515735,
+      "answerable": 18,
+      "unanswerable": 9,
+      "sensitivity": 0.5556,
+      "specificity": 0.5556,
+      "balanced_accuracy": 0.5556,
+      "youden_j": 0.1111,
+      "false_abstentions": 8,
+      "false_answers": 4,
+      "decisions": [
+        {
+          "question_id": "nfip-002",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.7743 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.77431834
+        },
+        {
+          "question_id": "nfip-004",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.7545 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.75450206
+        },
+        {
+          "question_id": "nfip-005",
+          "answerable": true,
+          "decision": "abstain",
+          "reason": "top dense score 0.7337 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.73373365
+        },
+        {
+          "question_id": "nfip-008",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.8047 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.80473995
+        },
+        {
+          "question_id": "nfip-009",
+          "answerable": true,
+          "decision": "abstain",
+          "reason": "top dense score 0.7132 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.71316206
+        },
+        {
+          "question_id": "nfip-014",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.7902 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.7901511
+        },
+        {
+          "question_id": "nfip-015",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.8244 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.8243798
+        },
+        {
+          "question_id": "nfip-016",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.8068 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.8067714
+        },
+        {
+          "question_id": "nfip-017",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.7728 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.77281034
+        },
+        {
+          "question_id": "nfip-020",
+          "answerable": true,
+          "decision": "abstain",
+          "reason": "top dense score 0.7013 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.7012764
+        },
+        {
+          "question_id": "nfip-021",
+          "answerable": true,
+          "decision": "abstain",
+          "reason": "top dense score 0.7245 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.7245409
+        },
+        {
+          "question_id": "nfip-022",
+          "answerable": true,
+          "decision": "abstain",
+          "reason": "top dense score 0.7257 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.7256665
+        },
+        {
+          "question_id": "nfip-023",
+          "answerable": true,
+          "decision": "abstain",
+          "reason": "top dense score 0.6750 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.67496735
+        },
+        {
+          "question_id": "nfip-024",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.8264 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.82644534
+        },
+        {
+          "question_id": "nfip-025",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.7665 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.7664657
+        },
+        {
+          "question_id": "nfip-028",
+          "answerable": true,
+          "decision": "abstain",
+          "reason": "top dense score 0.6988 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.69876695
+        },
+        {
+          "question_id": "nfip-031",
+          "answerable": true,
+          "decision": "abstain",
+          "reason": "top dense score 0.6368 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.63681185
+        },
+        {
+          "question_id": "nfip-032",
+          "answerable": true,
+          "decision": "answer",
+          "reason": "top dense score 0.7444 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.7444246
+        },
+        {
+          "question_id": "nfip-033",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "top dense score 0.8001 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.8001238
+        },
+        {
+          "question_id": "nfip-035",
+          "answerable": false,
+          "decision": "abstain",
+          "reason": "top dense score 0.6509 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.65090144
+        },
+        {
+          "question_id": "nfip-038",
+          "answerable": false,
+          "decision": "abstain",
+          "reason": "top dense score 0.6988 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.6987634
+        },
+        {
+          "question_id": "nfip-039",
+          "answerable": false,
+          "decision": "abstain",
+          "reason": "top dense score 0.7172 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.717201
+        },
+        {
+          "question_id": "nfip-044",
+          "answerable": false,
+          "decision": "abstain",
+          "reason": "top dense score 0.7188 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.71876466
+        },
+        {
+          "question_id": "nfip-045",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "top dense score 0.7518 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.7518312
+        },
+        {
+          "question_id": "nfip-048",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "top dense score 0.7722 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.77221763
+        },
+        {
+          "question_id": "nfip-049",
+          "answerable": false,
+          "decision": "abstain",
+          "reason": "top dense score 0.6884 below threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.68844223
+        },
+        {
+          "question_id": "nfip-050",
+          "answerable": false,
+          "decision": "answer",
+          "reason": "top dense score 0.7510 at or above threshold 0.7395",
+          "contexts": 5,
+          "top_dense_score": 0.7509507
+        }
+      ]
+    }
+  ]
+}

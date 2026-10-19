@@ -1,0 +1,14 @@
+# Optional: the LangGraph flow in src/graph.py and its evaluation.
+#
+# Not needed by the service, the benchmark or the offline test suite. src/api.py
+# never imports src.graph, and build_graph() raises an ImportError naming this
+# file rather than failing at import time, so a plain install stays unaffected.
+#
+# Pinned to the version the first real run installed, as `pip freeze` reported
+# it. docs/GRAPH.md records that run.
+#
+# Installing this downgrades `websockets` from 17.2 to 16.1.1, because
+# langgraph-sdk caps it. uvicorn[standard] also depends on websockets, so that
+# downgrade reaches the service's own dependency tree - which is a second reason
+# this file is separate from requirements.txt rather than folded into it.
+langgraph==1.2.16

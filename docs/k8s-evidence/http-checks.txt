@@ -1,0 +1,10 @@
+=== GET /health ===
+{"status":"ok"}
+HTTP 200
+
+=== GET /ready ===
+{"status":"ready","dependencies":{"embedder":{"ready":true},"lexical_index":{"ready":true},"vector_store":{"ready":true}},"request_id":"4750c02b61cb47c0825f550fa1c60292"}
+HTTP 200
+=== POST /ask (no generator deployed) ===
+{"status":"dependency_unavailable","detail":"generator 'llama3.2:3b' at http://ollama:11434 did not answer","dependency":"generator","request_id":"c57ab10da8d943109d9eb0731214dcdc"}
+HTTP 503

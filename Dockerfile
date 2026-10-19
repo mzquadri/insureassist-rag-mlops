@@ -16,7 +16,40 @@ WORKDIR /build
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+
+# CPU-only torch, installed first and on purpose.
+#
+# torch is not listed in requirements.txt; it arrives transitively because
+# sentence-transformers needs it. On Linux, PyPI's default torch wheel is the
+# CUDA build, so a plain `pip install -r requirements.txt` pulls the whole NVIDIA
+# stack - cuBLAS alone is a 423 MB wheel, and nvshmem, cuDNN, NCCL and the rest
+# follow it. That is several gigabytes of accelerator libraries in an image whose
+# own README says "Nothing here needs a GPU", serving a 33 M-parameter embedding
+# model from the CPU.
+#
+# One resolve, with PyTorch's CPU index as the PRIMARY index and PyPI as the
+# fallback. pip resolves torch from the first index that offers it and finds
+# everything else on PyPI.
+#
+# Installing CPU torch in a separate earlier step does not work, and was tried:
+# the second `pip install -r requirements.txt` re-resolves the whole graph,
+# decides sentence-transformers wants torch from the default index, and replaces
+# the CPU build - the NVIDIA wheels reappear in the second step having been
+# absent from the first.
+#
+# --extra-index-url is also not enough on its own. An extra index is a fallback
+# that pip consults in addition to the default, and with both offering torch it
+# can still take PyPI's CUDA wheel.
+# A BuildKit cache mount for pip's download cache, rather than --no-cache-dir.
+#
+# The wheels here are large - torch is most of a gigabyte before unpacking - and
+# a build interrupted part way through downloads all of them again next time.
+# The mount is not part of any layer, so the runtime image is the same size it
+# would be with --no-cache-dir; only rebuilds get faster.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt \
+      --index-url https://download.pytorch.org/whl/cpu \
+      --extra-index-url https://pypi.org/simple
 
 
 FROM python:3.11-slim AS runtime

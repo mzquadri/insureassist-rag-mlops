@@ -22,3 +22,8 @@ eval/.citation_answers.json
 mlflow.db
 mlartifacts/
 .venv311/
+
+# Local build and run logs
+.img-build.log
+.kind-create*.log
+.af-*.log

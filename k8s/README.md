@@ -29,8 +29,16 @@ or the generator, so it is a liveness check and nothing more.
 
 ## Part B — Kubernetes
 
+These manifests have now been applied to a local kind cluster and the run is
+written up in [`../docs/KUBERNETES_RUN.md`](../docs/KUBERNETES_RUN.md), with the
+raw output in [`../docs/k8s-evidence/`](../docs/k8s-evidence/). Doing so found
+three defects, one of which meant **Qdrant could not have started under these
+manifests on any cluster**: with `runAsUser: 1000` its default snapshots path
+lands in the root-owned image directory, so it panicked at startup and the HTTP
+API never bound.
+
 The manifests in this folder deploy the system to a cluster:
-- `qdrant.yaml`         — the vector DB (Deployment + Service)
+- `qdrant.yaml`         — the vector DB (StatefulSet + PersistentVolumeClaim + Service)
 - `configmap.yaml`      — non-secret config (URLs, model names)
 - `api-deployment.yaml` — the RAG API (2 replicas, health probes, resource limits)
 - `api-service.yaml`    — exposes the API (LoadBalancer)

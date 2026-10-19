@@ -1,0 +1,21 @@
+=== retrieval executed inside the API pod, against the in-cluster Qdrant ===
+pod: insureassist-api-7b9698c89f-9rmx5
+question: How long do I have to send a proof of loss after a flood under the Dwelling Form?
+contexts returned: 5
+  nfip-sfip-rcbap#d026af40c528 doc=nfip-sfip-rcbap              rrf=0.032018 dense=0.8282
+  nfip-sfip-dwelling#e5de6486dc67 doc=nfip-sfip-dwelling           rrf=0.031514 dense=0.8157
+  nfip-sfip-general-property#823f35c2549f doc=nfip-sfip-general-property   rrf=0.031514 dense=0.7922
+  nfip-sfip-dwelling#b1e73cc5a690 doc=nfip-sfip-dwelling           rrf=0.031319 dense=0.7887
+  nfip-sfip-rcbap#032a6c69a1a0 doc=nfip-sfip-rcbap              rrf=0.030366 dense=0.7763
+
+top chunk offsets: 45560 - 46360
+top chunk text (first 260 chars):
+ase of Loss
+
+In case of a flood loss to insured property, you must:
+
+1. Give prompt written notice to us.
+
+2. As soon as reasonably possible, separate the damaged and undamaged property, putting it in the best possible order so that we may examine it.
+
+3. Prep
