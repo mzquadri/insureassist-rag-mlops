@@ -32,3 +32,37 @@ registry cannot be avoided by building server-side.
 Reading 2 - pending
 -------------------
 To be taken at least one hour after deployment, and re-taken if still empty.
+
+Reading 2 - about two hours after deployment
+--------------------------------------------
+Taken 2026-10-19 ~14:20 UTC, roughly two hours after the app went live.
+
+  Cost Management ActualCost, MonthToDate, grouped by Meter : NO ROWS
+  az consumption usage list --top 50                        : EMPTY
+
+Still nothing. Azure's billing pipeline lags usage, commonly 8 to 24 hours on a
+pay-as-you-go or Student subscription, so this reading does not answer the
+question either.
+
+Stated explicitly because it would be easy to misread: **an empty cost query is
+not evidence that the deployment is free.** It is evidence that Azure has not
+published the data yet. The two are different and only one of them is a reason
+to relax.
+
+What the exposure actually is, while this is unresolved:
+
+  ACR Basic registry unit            0.1666 USD/day   certain
+  Environment Management Hour        0.125  USD/hour  unknown whether it applies
+  Container Apps vCPU + memory       negligible       min-replicas 0, no traffic
+
+So the daily cost is either about **0.17 USD/day** (the meter does not apply to
+a Consumption-only environment, which is the expectation) or about **3.17
+USD/day** (it does). Over seven days that is either 1.19 USD or 22.19 USD, and
+the subscription's remaining credit is around 88 USD.
+
+Reading 3 - pending
+-------------------
+To be taken at least 24 hours after deployment, which is when the data should
+exist. The rule agreed with the owner: any charge on the Environment Management
+Hour meter and rg-insureassist is deleted immediately; none, and it stays up for
+seven days so the URL is usable in applications, then is deleted.
