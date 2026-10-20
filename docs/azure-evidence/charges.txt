@@ -60,9 +60,61 @@ a Consumption-only environment, which is the expectation) or about **3.17
 USD/day** (it does). Over seven days that is either 1.19 USD or 22.19 USD, and
 the subscription's remaining credit is around 88 USD.
 
-Reading 3 - pending
+Reading 3 - about thirty hours after deployment. THE QUESTION IS ANSWERED
+-------------------------------------------------------------------------
+Taken 2026-10-20 18:57 UTC, roughly 30 hours after the app went live. The data
+exists this time.
+
+  az rest --method post --url ".../resourceGroups/rg-insureassist/providers\
+      /Microsoft.CostManagement/query?api-version=2024-08-01"
+  body: ActualCost, MonthToDate, granularity None, grouped by Meter
+
+  Meter                          Cost (EUR)
+  -----------------------------  ----------
+  Basic Registry Unit              0.150788
+  Standard vCPU Active Usage       0.014903
+  Standard Memory Active Usage     0.003726
+  Analytics Logs Data Ingestion    0.000000
+  -----------------------------  ----------
+  TOTAL                            0.169417
+
+**There is no "Environment Management Hour" row.** The same query run against
+the whole subscription rather than this resource group also returns no meter
+whose name contains "Environment". So the expectation recorded under Reading 1
+was correct: that meter is billed against Dedicated workload profiles, and this
+environment is Consumption-only, so it is not charged. The uncertainty that
+made this file necessary is resolved, and the answer is the cheaper one.
+
+Cross-checked against a second, independent source. The budget object reports
+its own spend figure:
+
+  az consumption budget list
+  insureassist-10usd  amount 10.0  timeGrain Monthly  currentSpend 0.169417 EUR
+
+That is the same number to all printed digits, from a different API than the
+Cost Management query above.
+
+Daily split, same query at Daily granularity:
+
+  2026-10-19   0.096115 EUR   (partial day, deployed ~12:21 UTC)
+  2026-10-20   0.073302 EUR   (partial day, read at 18:57 UTC)
+
+So the run rate is about **0.17 EUR/day**, and the ACR Basic registry unit is
+89% of it. The compute is 0.0186 EUR over thirty hours, which is what
+min-replicas 0 and no traffic should look like.
+
+Health at the time of this reading:
+
+  GET https://insureassist-api.ashytree-3df1e747.francecentral.azurecontainerapps.io/health
+  {"status":"ok"}
+
+Decision under the rule agreed with the owner: no charge appeared on the
+Environment Management Hour meter, so rg-insureassist is **not** deleted
+immediately. It stays up for seven days from deployment so the URL is usable in
+applications, which puts teardown on **26 October 2026**. Seven days at the
+measured rate is about 1.19 EUR against roughly 88 USD of remaining credit.
+
+Reading 4 - pending
 -------------------
-To be taken at least 24 hours after deployment, which is when the data should
-exist. The rule agreed with the owner: any charge on the Environment Management
-Hour meter and rg-insureassist is deleted immediately; none, and it stays up for
-seven days so the URL is usable in applications, then is deleted.
+The final reading, to be taken immediately before deletion on 26 October 2026,
+together with a final /health, both saved here before `az group delete` runs.
