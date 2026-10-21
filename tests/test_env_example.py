@@ -13,14 +13,14 @@ documented ones, with nothing to say why.
 These tests are the reason that cannot happen again silently.
 """
 
+import ast
 from pathlib import Path
 
 import pytest
 
-from src.config import Config
-
 ROOT = Path(__file__).resolve().parents[1]
 ENV_EXAMPLE = ROOT / ".env.example"
+CONFIG_PY = ROOT / "src" / "config.py"
 
 #: Settings frozen by the evaluation. eval/retrieval_config.json records the configuration
 #: every published metric was measured at; these three define the index itself.
@@ -51,12 +51,60 @@ def _unquote(value: str) -> str:
 
 
 def config_defaults() -> dict[str, str]:
-    """Every setting Config exposes, as the string a .env file would carry."""
-    return {
-        name: str(getattr(Config, name))
-        for name in dir(Config)
-        if name.isupper() and not name.startswith("_")
-    }
+    """Every setting src/config.py defines, as the string a .env file would carry.
+
+    Read out of the source, not off the imported `Config`. `config.py` calls
+    `load_dotenv()` at import, so on a machine that has a `.env` the imported
+    values are that developer's settings and not the defaults at all. These
+    tests would then compare `.env.example` against the wrong thing.
+
+    That is not hypothetical. A `.env` carrying the superseded
+    `QDRANT_COLLECTION=insurance_docs` and `LORA_ADAPTER_PATH=./finetune/adapter`
+    made both comparison tests fail here while `.env.example` and `config.py`
+    agreed with each other perfectly, and the failure message pointed at
+    `.env.example`. CI has no `.env`, so it passed, which is the worse half:
+    the suite was green on the one machine that could not reproduce the
+    problem.
+
+    An AST read answers the question the docstring at the top of this file
+    actually asks, which is what `src/config.py` *defaults to*, and no
+    environment can contaminate it.
+    """
+    tree = ast.parse(CONFIG_PY.read_text(encoding="utf-8"))
+    defaults: dict[str, str] = {}
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+            continue
+        target = node.targets[0]
+        if not isinstance(target, ast.Name) or not target.id.isupper():
+            continue
+        call = _getenv_call(node.value)
+        if call is None or len(call.args) < 2:
+            continue
+        try:
+            defaults[target.id] = str(ast.literal_eval(call.args[1]))
+        except ValueError:  # a computed default; nothing a .env line can mirror
+            continue
+    return defaults
+
+
+def _getenv_call(node: ast.expr) -> ast.Call | None:
+    """The `os.getenv(...)` inside an assignment, unwrapping one coercion.
+
+    `TOP_K = int(os.getenv("TOP_K", "5"))` is the shape that needs this: the
+    default is still the string literal, and the `int()` around it is how the
+    application reads it rather than part of what the file documents.
+    """
+    if not isinstance(node, ast.Call):
+        return None
+    func = node.func
+    if isinstance(func, ast.Attribute) and func.attr == "getenv":
+        return node
+    if isinstance(func, ast.Name) and func.id == "getenv":
+        return node
+    if node.args:
+        return _getenv_call(node.args[0])
+    return None
 
 
 def test_the_file_is_parseable_and_not_empty():
@@ -73,7 +121,7 @@ def test_the_frozen_retrieval_settings_are_the_evaluated_ones(key):
     three are pinned to their literal values for that reason.
     """
     assert parse_env_example()[key] == FROZEN[key]
-    assert str(getattr(Config, key)) == FROZEN[key]
+    assert config_defaults()[key] == FROZEN[key]
 
 
 def test_every_documented_value_equals_the_default():
@@ -142,4 +190,4 @@ def test_the_query_prefix_keeps_its_trailing_space():
         "BGE_QUERY_PREFIX lost its trailing space, so queries would embed as "
         '"...passages:Who is covered?" instead of "...passages: Who is covered?"'
     )
-    assert prefix == Config.BGE_QUERY_PREFIX
+    assert prefix == config_defaults()["BGE_QUERY_PREFIX"]

@@ -1,5 +1,17 @@
 # Deploying to Google Cloud (GKE)
 
+> **This has never been run.** It is a written procedure, not a record of one.
+> No GKE cluster was created, the placeholder values below were never replaced,
+> and no command here has been checked against a real deployment.
+>
+> What has been deployed: the API on Azure Container Apps
+> ([`AZURE_DEPLOY.md`](AZURE_DEPLOY.md), reachable now) and the whole stack on a
+> local kind cluster ([`KUBERNETES_RUN.md`](KUBERNETES_RUN.md), with `kubectl`
+> output as evidence). Applying those manifests for real found three defects
+> that reading them had not, one of which stopped Qdrant starting at all. That
+> is the reason this notice is here rather than a quiet assumption that an
+> untried guide works.
+
 This deploys the whole system — Qdrant, Ollama (the LLM), and the API — to a managed
 **GKE Autopilot** cluster, with a public endpoint. It's self-contained: no external API
 keys needed.

@@ -1,64 +1,127 @@
-# Phase 6 — CI/CD with GitHub Actions.
-# On every push to main: build the Docker image, push it to Artifact Registry, and
-# roll it out to GKE. This is "continuous deployment".
+# Deploy the API to Azure Container Apps.
 #
-# Before it works you must add these repo secrets (GitHub -> Settings -> Secrets -> Actions):
-#   GCP_PROJECT           your GCP project id
-#   GCP_SA_KEY            a service-account JSON key with GKE + Artifact Registry access
-#   GKE_CLUSTER           insureassist-cluster
-#   GKE_LOCATION          europe-west3
+# This file used to describe a GKE pipeline. It was replaced because that
+# pipeline never ran and could not have: it wanted GCP_PROJECT, GCP_SA_KEY,
+# GKE_CLUSTER and GKE_LOCATION, none of which exist, and its header announced
+# "on every push to main" above a trigger that was workflow_dispatch only.
+# `docs/gcp_deploy.md` still carries placeholder values like
+# `insureassist-<yourname>`, which is what a recipe looks like before anyone
+# follows it.
 #
-# Until then, this file simply documents the pipeline (it won't run without the secrets).
+# What does exist, and is reachable right now, is Azure. The resource names
+# below were read back from the live deployment, not copied from a plan:
+#
+#   resource group   rg-insureassist
+#   container app    insureassist-api        min replicas 0, max 1
+#   registry         cacd7b38a858acr.azurecr.io
+#   region           France Central
+#
+# Scope, so a green run is not read as more than it is: **only the API is
+# deployed.** Qdrant and the generator are not, so /health answers 200 and
+# /ready answers 503 by design. docs/AZURE_DEPLOY.md sets out why, and
+# docs/KUBERNETES_RUN.md is where the whole stack does run.
+#
+# Shape follows Microsoft's documented pattern for Container Apps with GitHub
+# Actions: azure/login, then azure/container-apps-deploy-action, with the image
+# tagged by commit SHA rather than a moving tag, which that documentation calls
+# out explicitly.
+# https://learn.microsoft.com/azure/container-apps/github-actions
 
-name: build-and-deploy
+name: deploy-to-azure
 
 on:
-  # MANUAL ONLY. This deploy needs GCP secrets (added in Phase 5/6), so it must NOT run
-  # on every push (that would fail). Run it yourself from the GitHub "Actions" tab once
-  # you've added the secrets: GCP_PROJECT, GCP_SA_KEY, GKE_CLUSTER, GKE_LOCATION.
+  # Manual, deliberately. This subscription is Azure for Students and this is a
+  # portfolio service that scales to zero; firing a build and a registry push on
+  # every commit would spend the credit to redeploy code no one is waiting for.
+  # Run it from the Actions tab when a deployed change is actually wanted.
   workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why this deploy is being run (recorded in the run title)"
+        required: false
+        default: "manual redeploy"
+
+run-name: "deploy-to-azure: ${{ inputs.reason }}"
 
 env:
-  REGION: europe-west3
-  REPO: insureassist
-  IMAGE: api
+  RESOURCE_GROUP: rg-insureassist
+  CONTAINER_APP: insureassist-api
+  ACR_NAME: cacd7b38a858acr
 
 jobs:
-  build-deploy:
+  deploy:
+    name: build, push, and roll out a revision
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    timeout-minutes: 30
 
-      - name: Verify GCP secrets are configured
+    steps:
+      - uses: actions/checkout@v4
+
+      # Fails with an instruction rather than a stack trace, because the thing
+      # that is missing is a repository setting and not a code defect. Kept from
+      # the GKE version, which got this part right.
+      - name: Check the Azure credential is configured
         run: |
-          if [ -z "${{ secrets.GCP_PROJECT }}" ] || [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
-            echo "::error::GCP secrets are not set yet. Add GCP_PROJECT, GCP_SA_KEY, GKE_CLUSTER, GKE_LOCATION under Settings > Secrets and variables > Actions, then re-run.";
-            exit 1;
+          if [ -z "${{ secrets.AZURE_CREDENTIALS }}" ]; then
+            echo "::error::AZURE_CREDENTIALS is not set. Create a service principal scoped to the resource group:"
+            echo "::error::  az ad sp create-for-rbac --name insureassist-deploy --role contributor \\"
+            echo "::error::    --scopes /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/${RESOURCE_GROUP} --json-auth"
+            echo "::error::then paste the JSON into Settings > Secrets and variables > Actions as AZURE_CREDENTIALS."
+            exit 1
           fi
 
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
+      - name: Log in to Azure
+        uses: azure/login@v3
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Set up gcloud
-        uses: google-github-actions/setup-gcloud@v2
+      # The action builds from the Dockerfile at the repository root, pushes to
+      # ACR and creates a new revision. imageToDeploy carries the commit SHA so
+      # a revision can always be traced back to the code that produced it, and
+      # so a redeploy of a different commit is never a no-op against a cached
+      # `latest`.
+      - name: Build and deploy a new revision
+        uses: azure/container-apps-deploy-action@v2
         with:
-          project_id: ${{ secrets.GCP_PROJECT }}
+          appSourcePath: ${{ github.workspace }}
+          acrName: ${{ env.ACR_NAME }}
+          containerAppName: ${{ env.CONTAINER_APP }}
+          resourceGroup: ${{ env.RESOURCE_GROUP }}
+          imageToDeploy: ${{ env.ACR_NAME }}.azurecr.io/insureassist:${{ github.sha }}
 
-      - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
-
-      - name: Build and push image
+      # Deploying is not the same as serving. The app scales to zero, so the
+      # first request is a cold start and a single immediate curl would be a
+      # coin toss; this retries, and only then decides.
+      - name: The new revision answers /health
         run: |
-          IMG=${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ env.REPO }}/${{ env.IMAGE }}:${{ github.sha }}
-          docker build -t $IMG .
-          docker push $IMG
-          echo "IMG=$IMG" >> $GITHUB_ENV
+          FQDN=$(az containerapp show \
+            --name "$CONTAINER_APP" --resource-group "$RESOURCE_GROUP" \
+            --query properties.configuration.ingress.fqdn -o tsv)
+          echo "deployed at https://$FQDN"
+          for i in $(seq 1 10); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "https://$FQDN/health" || true)
+            if [ "$code" = "200" ]; then
+              echo "/health answered 200 on attempt $i"
+              exit 0
+            fi
+            echo "attempt $i: /health answered ${code:-no response}"
+            sleep 10
+          done
+          echo "::error::/health never answered 200"
+          exit 1
 
-      - name: Deploy to GKE
+      # Asserted, not assumed. 503 here is the correct answer for this
+      # deployment, and a sudden 200 would mean the scope above has changed
+      # without the documentation changing with it.
+      - name: Readiness still reports the vector store absent
         run: |
-          gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER }} --location ${{ secrets.GKE_LOCATION }}
-          kubectl set image deployment/insureassist-api api=$IMG
-          kubectl rollout status deployment/insureassist-api
+          FQDN=$(az containerapp show \
+            --name "$CONTAINER_APP" --resource-group "$RESOURCE_GROUP" \
+            --query properties.configuration.ingress.fqdn -o tsv)
+          code=$(curl -s -o /tmp/ready.json -w "%{http_code}" --max-time 60 "https://$FQDN/ready" || true)
+          cat /tmp/ready.json || true
+          if [ "$code" != "503" ]; then
+            echo "::error::expected 503 from /ready on this deployment, got $code. Either Qdrant is now deployed, in which case docs/AZURE_DEPLOY.md and this workflow both need updating, or something else changed."
+            exit 1
+          fi
+          echo "/ready answered 503, as documented"

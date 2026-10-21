@@ -146,9 +146,22 @@ CI does not run a language model. Generation quality is therefore not measured i
 and returns 503 with per-dependency status. Missing dependencies are 503, never 500; every
 response carries a request ID; internal exceptions never reach the caller.
 
-The container is non-root with pinned dependencies and a healthcheck. **Kubernetes manifests
-are authored and CI-validated but have never been applied to a cluster**, and the GKE guide is
-untested guidance. See [`docs/PRODUCTION.md`](docs/PRODUCTION.md).
+The container is non-root with pinned dependencies and a healthcheck.
+
+The Kubernetes manifests **have been applied**, on a local [kind](https://kind.sigs.k8s.io/)
+cluster. Doing so found three defects that CI validation could not, one of which meant Qdrant
+could never have started under them on any cluster. The whole stack runs there and hybrid
+retrieval executes inside the API pod against an in-cluster Qdrant:
+[`docs/KUBERNETES_RUN.md`](docs/KUBERNETES_RUN.md), with raw `kubectl` output in
+[`docs/k8s-evidence/`](docs/k8s-evidence/).
+
+The API is also **deployed on Azure Container Apps**, reachable over the public internet and
+scaling to zero when idle: [`docs/AZURE_DEPLOY.md`](docs/AZURE_DEPLOY.md). Only the API is
+hosted there, so `/health` answers 200 and `/ready` answers 503 by design, which is stated
+there rather than left to be discovered.
+
+**The GKE guide remains untested guidance** and still carries placeholder values; nothing has
+been deployed to Google Cloud. See [`docs/PRODUCTION.md`](docs/PRODUCTION.md).
 
 ## Limitations
 
