@@ -33,6 +33,45 @@ offsets attached. Every label in the diagram is read from
 produced the numbers below rather than an intended one. Details in
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
+The same thing as a flow, with the two retrievers side by side, since that split is the
+point and a single arrow hides it:
+
+```mermaid
+flowchart TB
+    subgraph IDX["index time, run once"]
+        direction LR
+        F["3 NFIP policy forms<br/>44 CFR Part 61"] --> CH["chunk<br/>800 chars, 120 overlap"]
+        CH --> N["<b>314 chunks</b><br/>offsets kept"]
+        N --> EM["embed<br/>bge-small-en-v1.5"]
+        EM --> QD[("Qdrant<br/>nfip_sfip")]
+    end
+
+    subgraph QRY["query time, every request"]
+        direction TB
+        Q["question"] --> DN["dense cosine<br/>20 candidates"]
+        Q --> BM["Okapi BM25<br/>k1 1.5, b 0.75<br/>20 candidates"]
+        DN --> RRF{"reciprocal rank fusion<br/>k = 60"}
+        BM --> RRF
+        RRF --> TOP["top 5"]
+        TOP --> GEN["llama3.2:3b<br/>via Ollama"]
+        GEN --> ANS["answer plus citations<br/>resolving to character offsets"]
+    end
+
+    QD -.->|"searched by both"| DN
+    QD -.-> BM
+
+    linkStyle 0,1,2,3 stroke:#2563EB
+    linkStyle 4,5 stroke:#7C3AED
+    linkStyle 6,7 stroke:#D97706
+    linkStyle 8,9,10 stroke:#059669
+    linkStyle 11,12 stroke:#9CA3AF
+```
+
+Both retrievers read the same collection, and fusion reads **rank positions only**. Dense
+cosine and BM25 scores sit on different unnormalised scales, so combining the scores
+themselves would mean inventing a weighting; k=60 is the Cormack et al. default and was
+not tuned.
+
 ## The result
 
 Held-out test split. Derived from [`eval/reference_run.json`](eval/reference_run.json).
@@ -274,6 +313,39 @@ two questions each, so "0 of 2" is the whole story. The category worth acting on
 </details>
 
 ## Evidence
+
+Every number in this README comes from one artefact, and CI re-derives it rather than
+trusting it. That loop is the reason a bad number here fails a build instead of being
+read by someone:
+
+```mermaid
+flowchart LR
+    C["3 policy forms<br/>pinned by SHA-256"] --> ING["src.ingest<br/>into a real Qdrant"]
+    G["50 ground-truth labels<br/>chunk IDs and offsets"] --> REF
+    ING --> REF["eval.reference_run<br/>held-out test split"]
+    REF --> FRESH["a fresh run"]
+    COMMITTED["eval/reference_run.json<br/>committed"] --> CMP
+    FRESH --> CMP{"eval.compare_runs"}
+    CMP -->|"drift"| FAIL["build fails"]
+    COMMITTED --> VER{"eval.verify_artifacts<br/>27 claims"}
+    DOCS["this README<br/>and docs/"] --> VER
+    VER -->|"a claim disagrees"| FAIL
+
+    CHK["scripts.fetch_nfip_corpus --check"] --> C
+    VGT["eval.validate_ground_truth"] --> G
+
+    linkStyle 0,1,2,3 stroke:#2563EB
+    linkStyle 4,5 stroke:#7C3AED
+    linkStyle 6 stroke:#DC2626
+    linkStyle 7,8 stroke:#D97706
+    linkStyle 9 stroke:#DC2626
+    linkStyle 10,11 stroke:#059669
+```
+
+Retrieval is deterministic, so a difference between the committed run and a fresh one
+means the corpus, the labels, the chunking or the retriever changed without the artefact
+being regenerated. `verify_artifacts` closes the other half: it reads the prose and fails
+if a published figure no longer matches the run it claims to come from.
 
 | | |
 |---|---|

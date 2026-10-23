@@ -1,4 +1,4 @@
-# Deploy the API to Azure Container Apps.
+﻿# Deploy the API to Azure Container Apps.
 #
 # This file used to describe a GKE pipeline. It was replaced because that
 # pipeline never ran and could not have: it wanted GCP_PROJECT, GCP_SA_KEY,
@@ -48,6 +48,16 @@ env:
   CONTAINER_APP: insureassist-api
   ACR_NAME: cacd7b38a858acr
 
+# Least privilege, per GitHub's "Security hardening for GitHub Actions".
+#
+# `contents: read` is enough and this is deliberate rather than copied: Azure is reached
+# with a service principal from secrets.AZURE_CREDENTIALS through azure/login, not with
+# OIDC federation, so the job never needs `id-token: write`. If this workflow is ever
+# moved to OIDC, that permission has to be added here or azure/login will fail with no
+# token to exchange.
+permissions:
+  contents: read
+
 jobs:
   deploy:
     name: build, push, and roll out a revision
@@ -55,7 +65,7 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Fails with an instruction rather than a stack trace, because the thing
       # that is missing is a repository setting and not a code defect. Kept from

@@ -1,4 +1,7 @@
-# CI: three jobs, each producing real evidence.
+﻿# CI: four jobs, each producing real evidence.
+#
+# It said "three" while defining four. The README has always said four, and the fourth,
+# `manifests`, is the one that was being undercounted.
 #
 # The old workflow ran compileall and ruff and called that green. It never installed the
 # dependencies, never imported the application, never started a database and never made an
@@ -15,13 +18,26 @@ on:
   push:
   pull_request:
 
+# Least privilege, per GitHub's "Security hardening for GitHub Actions". Nothing in this
+# workflow writes to the repository: it installs, lints, compiles, verifies checksums,
+# reproduces the reference run, builds an image locally and parses the manifests. Setting
+# it here means a change to the repository or organisation default cannot widen the token
+# these four jobs get.
+permissions:
+  contents: read
+
 jobs:
   quality:
     name: lint, types, offline tests
     runs-on: ubuntu-latest
+    # Every job carries a timeout. Without one the default is six hours, so a hung
+    # service container or a stalled download holds a runner for an afternoon and the
+    # branch never gets a result. These are generous against observed run times, which
+    # sit around four minutes for the whole workflow.
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -55,14 +71,15 @@ jobs:
   retrieval-eval:
     name: retrieval reference run
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       qdrant:
         image: qdrant/qdrant:v1.19.0
         ports:
           - 6333:6333
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -114,11 +131,15 @@ jobs:
   container-integration:
     name: docker build and live HTTP
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
+          # This job installs both requirements files too, so it gets the same pip cache
+          # as the other two. It was the one job without it.
+          cache: pip
 
       - name: Build the image
         run: docker build -t insureassist:test .
@@ -142,9 +163,10 @@ jobs:
   manifests:
     name: kubernetes manifests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - name: Validate YAML parses
